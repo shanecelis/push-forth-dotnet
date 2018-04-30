@@ -68,5 +68,28 @@ internal class StackParser {
     from trailingSpaces in Parse.Char(' ').Many()
     select new Stack(contents.Reverse().ToArray());
 
+  internal static readonly Parser<Stack> resolveStackRep =
+    from lbracket in Parse.Char('[')
+    from leadingSpaces in Parse.Char(' ').Many()
+    from contents in cell.Or(Parse.Ref(() => stackRep)).Many()
+    // from contents in cell.Many()
+    from rbracket in Parse.Char(']')
+    from trailingSpaces in Parse.Char(' ').Many()
+    select new Stack(contents.Reverse().ToArray());
+
+  public static Stack ParseWithResolution<T>(string s, Dictionary<string, T> dict) {
+    Parser<object> cell =
+      quotedString.ToCell().Or(floatRep.ToCell()).Or(doubleRep.ToCell()).Or(integer.ToCell()).Or(symbol.Resolve(dict));
+    Parser<Stack> stackRep = null;
+    stackRep =
+      from lbracket in Parse.Char('[')
+      from leadingSpaces in Parse.Char(' ').Many()
+      from contents in cell.Or(Parse.Ref(() => stackRep)).Many()
+      // from contents in cell.Many()
+      from rbracket in Parse.Char(']')
+      from trailingSpaces in Parse.Char(' ').Many()
+      select new Stack(contents.Reverse().ToArray());
+    return stackRep.Parse(s);
+  }
 }
 }
