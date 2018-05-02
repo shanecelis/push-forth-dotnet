@@ -51,13 +51,19 @@ public class Interpreter {
     //       stack.Push(new Continuation(code));
     //     }
     //   });
-    instructions["car"] = new UnaryFunc<Stack, object>(stack => {
+    AddInstruction("car", (Stack stack) => {
         if (stack.Any())
           return stack.Pop();
         else
           throw new NoResultException();
       });
-    instructions["eval"]= new UnaryFunc<Stack, Stack>(stack => {
+    // instructions["car"] = new UnaryInstruction<Stack, object>(stack => {
+    //     if (stack.Any())
+    //       return stack.Pop();
+    //     else
+    //       throw new NoResultException();
+    //   });
+    instructions["eval"]= UnaryInstruction<Stack>.WithFunc<Stack>(stack => {
         return Eval(stack);
       });
 
@@ -84,7 +90,12 @@ public class Interpreter {
     //   });
 
     // This looks like it's returning a code continuation.
-    instructions["cdr"] = new UnaryFunc<Stack, object>(stack => {
+    // instructions["cdr"] = new UnaryInstruction<Stack, object>(stack => {
+    //     if (stack.Any())
+    //       stack.Pop();
+    //     return stack;
+    //   });
+    AddInstruction("cdr",(Stack stack) => {
         if (stack.Any())
           stack.Pop();
         return stack;
@@ -106,8 +117,9 @@ public class Interpreter {
             stack.Push(b);
           }
         });
-    instructions["cons"] = new BinaryFunc<object, Stack, Stack>((a, b) => Cons(a, b));
-    instructions["cat"] = new BinaryFunc<object, object, Stack>((a, b) =>
+    // instructions["cons"] = new BinaryInstruction<object, Stack, Stack>((a, b) => Cons(a, b));
+    AddInstruction("cons",(object a, Stack b) => Cons(a, b));
+    AddInstruction("cat",(object a, object b) =>
         {
           var s = new Stack();
           s.Push(b);
@@ -129,14 +141,20 @@ public class Interpreter {
           }
           return stack;
         });
-    instructions["unit"] = new UnaryFunc<object, Stack>(a => {
+    // instructions["unit"] = new UnaryInstruction<object, Stack>(a => {
+    //     var s = new Stack();
+    //     s.Push(a);
+    //     return s;
+    //   });
+    AddInstruction("unit",(object a) => {
         var s = new Stack();
         s.Push(a);
         return s;
       });
 
-    instructions["minus"] = new BinaryFunc<int, int, int>((a, b) => a - b);
-    instructions["add"] = new BinaryFunc<int, int, int>((a, b) => a + b);
+    // instructions["minus"] = new BinaryInstruction<int, int, int>((a, b) => a - b);
+    AddInstruction("minus", (int a, int b) => a - b);
+    AddInstruction("add", (int a, int b) => a + b);
     // InstructionFunc you have to do all your own error handling.
     instructions["+"] = new InstructionFunc(stack => {
         if (stack.Count < 2)
@@ -184,7 +202,7 @@ public class Interpreter {
     //     }
     //     return stack;
     //   });
-    instructions["while"] = new TrinaryFunc<Stack, Stack, object>((stack, x, z, y) => {
+    instructions["while"] = new TrinaryInstruction<Stack, Stack, object>((stack, x, z, y) => {
         if (! z.Any()) {
           stack.Push(y);
         } else {
@@ -202,6 +220,30 @@ public class Interpreter {
           stack.Push(new Continuation(code));
         }
       });
+  }
+
+  public void AddInstruction(string name, Instruction i) {
+    instructions[name] = i;
+  }
+
+  public void AddInstruction(string name, Action action) {
+    instructions[name] = new NullaryInstruction((stack) => action());
+  }
+
+  public void AddInstruction<X>(string name, Func<X> func) {
+    instructions[name] = NullaryInstruction.WithFunc(func);
+  }
+
+  public void AddInstruction<X,Y>(string name, Func<X,Y> func) {
+    instructions[name] = UnaryInstruction<X>.WithFunc(func);
+  }
+
+  public void AddInstruction<X,Y,Z>(string name, Func<X,Y,Z> func) {
+    instructions[name] = BinaryInstruction<X,Y>.WithFunc(func);
+  }
+
+  public void AddInstruction<X,Y,Z,W>(string name, Func<X,Y,Z,W> func) {
+    instructions[name] = TrinaryInstruction<X,Y,Z>.WithFunc(func);
   }
 
   public static Stack Cons(object o, Stack stack) {

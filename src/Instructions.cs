@@ -26,25 +26,32 @@ public class InstructionFunc : Instruction {
 
 public class NoResultException : Exception { }
 
-public class NullaryFunc<X> : Instruction {
-  Func<X> func;
-  public NullaryFunc(Func<X> func) {
+public class NullaryInstruction : Instruction {
+  Action<Stack> func;
+  public NullaryInstruction(Action<Stack> func) {
     this.func = func;
   }
 
   public Stack Apply(Stack stack) {
-    try {
-      stack.Push(func());
-    } catch(NoResultException) {
-      // No-op.
-    }
+    func(stack);
     return stack;
   }
+
+  public static NullaryInstruction WithFunc<X>(Func <X> func) {
+    return new NullaryInstruction((stack) => {
+        try {
+          stack.Push(func());
+        } catch(NoResultException) {
+          // No-op.
+        }
+      });
+  }
+
 }
 
-public class UnaryFunc<X, Y> : Instruction {
-  Func<X, Y> func;
-  public UnaryFunc(Func<X, Y> func) {
+public class UnaryInstruction<X> : Instruction {
+  Action<Stack, X> func;
+  public UnaryInstruction(Action<Stack, X> func) {
     this.func = func;
   }
 
@@ -60,18 +67,24 @@ public class UnaryFunc<X, Y> : Instruction {
       stack.Push(code);
       return stack;
     }
-    try {
-      stack.Push(func((X) a));
-    } catch(NoResultException) {
-      // No-op.
-    }
+    func(stack, (X) a);
     return stack;
+  }
+
+  public static UnaryInstruction<X> WithFunc<Y>(Func <X,Y> func) {
+    return new UnaryInstruction<X>((stack, a) => {
+        try {
+          stack.Push(func(a));
+        } catch(NoResultException) {
+          // No-op.
+        }
+      });
   }
 }
 
-public class BinaryFunc<X, Y, Z> : Instruction {
-  Func<X, Y, Z> func;
-  public BinaryFunc(Func<X, Y, Z> func) {
+public class BinaryInstruction<X, Y> : Instruction {
+  Action<Stack, X, Y> func;
+  public BinaryInstruction(Action<Stack, X, Y> func) {
     this.func = func;
   }
 
@@ -96,27 +109,24 @@ public class BinaryFunc<X, Y, Z> : Instruction {
       stack.Push(new Continuation(code));
       return stack;
     }
-    try {
-      stack.Push(func((X) a, (Y) b));
-    } catch(NoResultException) {
-      // No-op.
-    }
+    func(stack, (X) a, (Y) b);
     return stack;
   }
-}
 
-public class TrinaryFunc<X, Y, Z> : Instruction {
-  Action<Stack, X, Y, Z> func;
-  public static TrinaryFunc<X, Y, Z> Func<W>(Func<X, Y, Z, W> func) {
-    return new TrinaryFunc<X, Y, Z>((stack, a, b, c) => {
+  public static BinaryInstruction<X,Y> WithFunc<Z>(Func <X,Y,Z> func) {
+    return new BinaryInstruction<X,Y>((stack, a, b) => {
         try {
-          stack.Push(func(a, b, c));
+          stack.Push(func(a, b));
         } catch(NoResultException) {
           // No-op.
         }
       });
   }
-  public TrinaryFunc(Action<Stack, X, Y, Z> func) {
+}
+
+public class TrinaryInstruction<X, Y, Z> : Instruction {
+  Action<Stack, X, Y, Z> func;
+  public TrinaryInstruction(Action<Stack, X, Y, Z> func) {
     this.func = func;
   }
 
@@ -153,6 +163,16 @@ public class TrinaryFunc<X, Y, Z> : Instruction {
     }
     func(stack, (X) a, (Y) b, (Z) c);
     return stack;
+  }
+
+  public static TrinaryInstruction<X, Y, Z> WithFunc<W>(Func<X, Y, Z, W> func) {
+    return new TrinaryInstruction<X, Y, Z>((stack, a, b, c) => {
+        try {
+          stack.Push(func(a, b, c));
+        } catch(NoResultException) {
+          // No-op.
+        }
+      });
   }
 }
 
