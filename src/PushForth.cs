@@ -8,157 +8,6 @@ using Sprache;
 
 namespace SeawispHunter.PushForth {
 
-public interface Instruction {
-  Stack Apply(Stack stack);
-}
-
-public class InstructionFunc : Instruction {
-  Func<Stack, Stack> func;
-  public InstructionFunc(Func<Stack, Stack> func) {
-    this.func = func;
-  }
-
-  public InstructionFunc(Action<Stack> action)
-    : this(stack => { action(stack); return stack; }) {
-  }
-
-  public Stack Apply(Stack stack) {
-    return func(stack);
-  }
-}
-
-public class NoResultException : Exception { }
-
-public class NullaryFunc<X> : Instruction {
-  Func<X> func;
-  public NullaryFunc(Func<X> func) {
-    this.func = func;
-  }
-
-  public Stack Apply(Stack stack) {
-    try {
-      stack.Push(func());
-    } catch(NoResultException) {
-      // No-op.
-    }
-    return stack;
-  }
-}
-
-public class UnaryFunc<X, Y> : Instruction {
-  Func<X, Y> func;
-  public UnaryFunc(Func<X, Y> func) {
-    this.func = func;
-  }
-
-  public Stack Apply(Stack stack) {
-    if (stack.Count < 1)
-      return stack;
-    object a;
-    a = stack.Pop();
-    if (! (a is X)) {
-      var code = new Stack();
-      code.Push(a);
-      code.Push(this);
-      stack.Push(code);
-      return stack;
-    }
-    try {
-      stack.Push(func((X) a));
-    } catch(NoResultException) {
-      // No-op.
-    }
-    return stack;
-  }
-}
-
-public class BinaryFunc<X, Y, Z> : Instruction {
-  Func<X, Y, Z> func;
-  public BinaryFunc(Func<X, Y, Z> func) {
-    this.func = func;
-  }
-
-  public Stack Apply(Stack stack) {
-    if (stack.Count < 2)
-      return stack;
-    object a, b;
-    a = stack.Pop();
-    if (! (a is X)) {
-      var code = new Stack();
-      code.Push(a);
-      code.Push(this);
-      stack.Push(new Continuation(code));
-      return stack;
-    }
-    b = stack.Pop();
-    if (! (b is Y)) {
-      var code = new Stack();
-      code.Push(b);
-      code.Push(this);
-      stack.Push(a);
-      stack.Push(new Continuation(code));
-      return stack;
-    }
-    try {
-      stack.Push(func((X) a, (Y) b));
-    } catch(NoResultException) {
-      // No-op.
-    }
-    return stack;
-  }
-}
-
-public class TrinaryFunc<X, Y, Z> : Instruction {
-  Action<Stack, X, Y, Z> func;
-  public static TrinaryFunc<X, Y, Z> Func<W>(Func<X, Y, Z, W> func) {
-    return new TrinaryFunc<X, Y, Z>((stack, a, b, c) => {
-        try {
-          stack.Push(func(a, b, c));
-        } catch(NoResultException) {
-          // No-op.
-        }
-      });
-  }
-  public TrinaryFunc(Action<Stack, X, Y, Z> func) {
-    this.func = func;
-  }
-
-  public Stack Apply(Stack stack) {
-    if (stack.Count < 3)
-      return stack;
-    object a, b, c;
-    a = stack.Pop();
-    if (! (a is X)) {
-      var code = new Stack();
-      code.Push(a);
-      code.Push(this);
-      stack.Push(new Continuation(code));
-      return stack;
-    }
-    b = stack.Pop();
-    if (! (b is Y)) {
-      var code = new Stack();
-      code.Push(b);
-      code.Push(this);
-      stack.Push(a);
-      stack.Push(new Continuation(code));
-      return stack;
-    }
-    c = stack.Pop();
-    if (! (c is Z)) {
-      var code = new Stack();
-      code.Push(c);
-      code.Push(this);
-      stack.Push(b);
-      stack.Push(a);
-      stack.Push(new Continuation(code));
-      return stack;
-    }
-    func(stack, (X) a, (Y) b, (Z) c);
-    return stack;
-  }
-}
-
 public class Symbol : Tuple<string> {
   public Symbol(string s) : base(s) { }
 
@@ -172,11 +21,12 @@ public class Continuation : Tuple<Stack> {
   public Stack stack => Item1;
 }
 
-public class Cell : OneOfBase<Symbol, int, string> { }
+// public class Cell : OneOfBase<Symbol, int, string> { }
 
 public class Interpreter {
 
-  public Dictionary<string, Instruction> instructions = new Dictionary<string, Instruction>();
+  public Dictionary<string, Instruction> instructions
+    = new Dictionary<string, Instruction>();
 
   public Interpreter() {
     instructions["i"] = new InstructionFunc(stack => {
@@ -417,6 +267,27 @@ public class Interpreter {
     var sb = new StringBuilder();
     ToStringHelper(s, sb);
     return sb.ToString();
+  }
+
+  public bool IsHalted(Stack s) {
+    var x = s.Peek();
+    if (x is Stack code) {
+      return ! code.Any();
+    } else {
+      return true;
+    }
+  }
+
+  public Stack Run(Stack s, int maxSteps = -1) {
+    int steps = 0;
+    if (maxSteps < 0) {
+      while (! IsHalted(s))
+        s = Eval(s);
+    } else {
+      while (! IsHalted(s) && steps++ < maxSteps)
+        s = Eval(s);
+    }
+    return s;
   }
 
   void ToStringHelper(Stack s, StringBuilder sb) {

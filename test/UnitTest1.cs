@@ -344,6 +344,13 @@ public class UnitTest1
   }
 
   [Fact]
+  public void TestRun() {
+    var interpreter = new Interpreter();
+    var d0 = Interpreter.ParseString("[[while] [1 +] [[]] 0]");
+    var d1 = interpreter.Run(d0);
+    Assert.Equal("[[] [1 +] 1]", interpreter.StackToString(d1));
+  }
+  [Fact]
   public void TestEval() {
     var interpreter = new Interpreter();
     var d0 = Interpreter.ParseString("[[eval] [[+] 1 2]]");
