@@ -37,7 +37,7 @@ public class NullaryInstruction : Instruction {
     return stack;
   }
 
-  public static NullaryInstruction WithFunc<X>(Func <X> func) {
+  public static NullaryInstruction WithResult<X>(Func <X> func) {
     return new NullaryInstruction((stack) => {
         try {
           stack.Push(func());
@@ -64,14 +64,14 @@ public class UnaryInstruction<X> : Instruction {
       var code = new Stack();
       code.Push(a);
       code.Push(this);
-      stack.Push(code);
+      stack.Push(new Continuation(code));
       return stack;
     }
     func(stack, (X) a);
     return stack;
   }
 
-  public static UnaryInstruction<X> WithFunc<Y>(Func <X,Y> func) {
+  public static UnaryInstruction<X> WithResult<Y>(Func <X,Y> func) {
     return new UnaryInstruction<X>((stack, a) => {
         try {
           stack.Push(func(a));
@@ -113,7 +113,7 @@ public class BinaryInstruction<X, Y> : Instruction {
     return stack;
   }
 
-  public static BinaryInstruction<X,Y> WithFunc<Z>(Func <X,Y,Z> func) {
+  public static BinaryInstruction<X,Y> WithResult<Z>(Func <X,Y,Z> func) {
     return new BinaryInstruction<X,Y>((stack, a, b) => {
         try {
           stack.Push(func(a, b));
@@ -165,7 +165,7 @@ public class TrinaryInstruction<X, Y, Z> : Instruction {
     return stack;
   }
 
-  public static TrinaryInstruction<X, Y, Z> WithFunc<W>(Func<X, Y, Z, W> func) {
+  public static TrinaryInstruction<X, Y, Z> WithResult<W>(Func<X, Y, Z, W> func) {
     return new TrinaryInstruction<X, Y, Z>((stack, a, b, c) => {
         try {
           stack.Push(func(a, b, c));

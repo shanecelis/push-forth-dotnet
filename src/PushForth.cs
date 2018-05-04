@@ -29,72 +29,37 @@ public class Interpreter {
     = new Dictionary<string, Instruction>();
 
   public Interpreter() {
-    instructions["i"] = new InstructionFunc(stack => {
-        if (stack.Any()) {
-          var x = stack.Pop();
-          Stack code;
-          if (x is Stack s) {
-            code = s;
-          } else {
-            // Bad argument.
-            code = new Stack();
-            code.Push(x);
-            code.Push(instructions["i"]);
-          }
-          stack.Push(new Continuation(code));
-        }
-      });
     // instructions["i"] = new InstructionFunc(stack => {
     //     if (stack.Any()) {
-    //       var code = new Stack();
-    //       code.Push(stack.Pop());
+    //       var x = stack.Pop();
+    //       Stack code;
+    //       if (x is Stack s) {
+    //         code = s;
+    //       } else {
+    //         // Bad argument.
+    //         code = new Stack();
+    //         code.Push(x);
+    //         code.Push(instructions["i"]);
+    //       }
     //       stack.Push(new Continuation(code));
     //     }
     //   });
-    AddInstruction("car", (Stack stack) => {
-        if (stack.Any())
-          return stack.Pop();
-        else
-          throw new NoResultException();
+    instructions["i"] = new UnaryInstruction<Stack>((stack, code) => {
+          stack.Push(new Continuation(code));
       });
-    // instructions["car"] = new UnaryInstruction<Stack, object>(stack => {
+    AddInstruction("car", new UnaryInstruction<Stack>((Stack stack, Stack s) => {
+        if (s.Any())
+          stack.Push(s.Pop());
+        }));
+    // AddInstruction("car", (Stack stack) => {
     //     if (stack.Any())
     //       return stack.Pop();
     //     else
     //       throw new NoResultException();
     //   });
-    instructions["eval"]= UnaryInstruction<Stack>.WithFunc<Stack>(stack => {
+    instructions["eval"]= UnaryInstruction<Stack>.WithResult<Stack>(stack => {
         return Eval(stack);
       });
-
-    // instructions["cdr"] = new InstructionFunc(stack => {
-    //     if (stack.Count < 1)
-    //       return stack;
-    //     object a;
-    //     a = stack.Pop();
-    //     Stack code;
-    //     if (! (a is Stack)) {
-    //       code = new Stack();
-    //       code.Push(a);
-    //       code.Push(this);
-    //       stack.Push(code);
-    //       return stack;
-    //     }
-    //     var s = (Stack) a;
-    //     s.Pop();
-    //     // Add a dummy code stack.
-    //     code = new Stack();
-    //     stack.Push(s);
-    //     stack.Push(code);
-    //     return stack;
-    //   });
-
-    // This looks like it's returning a code continuation.
-    // instructions["cdr"] = new UnaryInstruction<Stack, object>(stack => {
-    //     if (stack.Any())
-    //       stack.Pop();
-    //     return stack;
-    //   });
     AddInstruction("cdr",(Stack stack) => {
         if (stack.Any())
           stack.Pop();
@@ -117,36 +82,34 @@ public class Interpreter {
             stack.Push(b);
           }
         });
-    // instructions["cons"] = new BinaryInstruction<object, Stack, Stack>((a, b) => Cons(a, b));
-    AddInstruction("cons",(object a, Stack b) => Cons(a, b));
-    AddInstruction("cat",(object a, object b) =>
+    AddInstruction("cons", (object a, Stack b) => Cons(a, b));
+    AddInstruction("cat", (object a, object b) =>
         {
           var s = new Stack();
           s.Push(b);
           s.Push(a);
           return s;
         });
-    instructions["split"] = new InstructionFunc(stack =>
+    // instructions["split"] = new InstructionFunc(stack =>
+    //     {
+    //       if (stack.Any()) {
+    //         object o = stack.Pop();
+    //         if (o is Stack s) {
+    //           return Append(s, stack);
+    //         } else {
+    //           var code = new Stack();
+    //           code.Push(o);
+    //           code.Push(instructions["split"]);
+    //           stack.Push(new Continuation(code));
+    //         }
+    //       }
+    //       return stack;
+    //     });
+    instructions["split"] = new UnaryInstruction<Stack>((stack, s) =>
         {
-          if (stack.Any()) {
-            object o = stack.Pop();
-            if (o is Stack s) {
-              return Append(s, stack);
-            } else {
-              var code = new Stack();
-              code.Push(o);
-              code.Push(instructions["split"]);
-              stack.Push(new Continuation(code));
-            }
-          }
-          return stack;
+          stack = Append(s, stack);
         });
-    // instructions["unit"] = new UnaryInstruction<object, Stack>(a => {
-    //     var s = new Stack();
-    //     s.Push(a);
-    //     return s;
-    //   });
-    AddInstruction("unit",(object a) => {
+    AddInstruction("unit", (object a) => {
         var s = new Stack();
         s.Push(a);
         return s;
@@ -155,7 +118,7 @@ public class Interpreter {
     // instructions["minus"] = new BinaryInstruction<int, int, int>((a, b) => a - b);
     AddInstruction("minus", (int a, int b) => a - b);
     AddInstruction("add", (int a, int b) => a + b);
-    // InstructionFunc you have to do all your own error handling.
+    // With InstructionFunc you have to do all your own error handling.
     instructions["+"] = new InstructionFunc(stack => {
         if (stack.Count < 2)
           return stack;
@@ -231,19 +194,19 @@ public class Interpreter {
   }
 
   public void AddInstruction<X>(string name, Func<X> func) {
-    instructions[name] = NullaryInstruction.WithFunc(func);
+    instructions[name] = NullaryInstruction.WithResult(func);
   }
 
   public void AddInstruction<X,Y>(string name, Func<X,Y> func) {
-    instructions[name] = UnaryInstruction<X>.WithFunc(func);
+    instructions[name] = UnaryInstruction<X>.WithResult(func);
   }
 
   public void AddInstruction<X,Y,Z>(string name, Func<X,Y,Z> func) {
-    instructions[name] = BinaryInstruction<X,Y>.WithFunc(func);
+    instructions[name] = BinaryInstruction<X,Y>.WithResult(func);
   }
 
   public void AddInstruction<X,Y,Z,W>(string name, Func<X,Y,Z,W> func) {
-    instructions[name] = TrinaryInstruction<X,Y,Z>.WithFunc(func);
+    instructions[name] = TrinaryInstruction<X,Y,Z>.WithResult(func);
   }
 
   public static Stack Cons(object o, Stack stack) {
