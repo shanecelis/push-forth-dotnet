@@ -183,6 +183,58 @@ public class Interpreter {
           stack.Push(new Continuation(code));
         }
       });
+
+    AddInstruction("==", (int a, int b) => a == b);
+    AddInstruction("<", (int a, int b) => a < b);
+    AddInstruction(">", (int a, int b) => a > b);
+    instructions["while2"] = new TrinaryInstruction<Stack, bool, object>((stack, x, z, y) => {
+        if (! z) {
+          stack.Push(y);
+        } else {
+          var code = new Stack();
+          code.Push(instructions["i"]);
+          // code.Push(new Symbol("i"));
+          var subcode = new Stack();
+          subcode.Push(instructions["while2"]);
+          // subcode.Push(new Symbol("while"));
+          subcode.Push(x);
+          code.Push(subcode);
+          code = Append(x, code);
+          // code.Push(x);
+          stack.Push(y);
+          stack.Push(new Continuation(code));
+        }
+      });
+
+    instructions["while3"] = new BinaryInstruction<Stack, bool>((stack, x, z) => {
+        // Let's do it again but with no code re-writing to make it compilable.
+        while (z) {
+          // Must make a copy of the code x, as the Stack is destroyed when
+          // it is run.
+
+          // stack.Push(x);
+          stack.Push(Append(x, new Stack()));
+          stack = Run(stack);
+          object code = stack.Pop(); // drop empty code stack.
+          if (code is Stack s) {
+            if (s.Any()) {
+              Console.WriteLine("Code stack had stuff in it.");
+              break;
+            }
+          } else {
+            Console.WriteLine("Got non-stack for code");
+            break;
+          }
+          object Z = stack.Pop();
+          if (Z is bool zb)
+            z = zb;
+          else {
+            Console.WriteLine("Got non-bool for z " + Z);
+            z = false;
+          }
+          // z = (bool) stack.Pop();
+        }
+      });
   }
 
   public void AddInstruction(string name, Instruction i) {

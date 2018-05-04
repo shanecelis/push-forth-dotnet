@@ -64,6 +64,16 @@ public class UnitTest1
     Assert.Equal(Interpreter.ParseString("[[] a 3]"), d6);
   }
 
+
+  [Fact]
+  public void TestBoolParsing()
+  {
+    var d0 = Interpreter.ParseString("[true false]");
+    var s = new Stack();
+    s.Push(false);
+    s.Push(true);
+    Assert.Equal(s, d0);
+  }
   [Fact]
   public void TestSkippingWithResolution()
   {
@@ -344,12 +354,53 @@ public class UnitTest1
   }
 
   [Fact]
+  public void TestWhile2() {
+    var interpreter = new Interpreter();
+    var d0 = Interpreter.ParseString("[[while2] [1 + dup 5 >] true 0]");
+    var d1 = interpreter.Run(d0);
+    // Assert.Equal(Interpreter.ParseString("[[[1 +] [[1 +] while] i] 0]"), d1);
+    Assert.Equal("[[] 5]", interpreter.StackToString(d1));
+  }
+
+  public string Run(string code) {
+    var interpreter = new Interpreter();
+    var d0 = Interpreter.ParseString(code);
+    var d1 = interpreter.Run(d0);
+  // Assert.Equal(Interpreter.ParseString("[[[1 +] [[1 +] while] i] 0]"), d1);
+    return interpreter.StackToString(d1);
+  }
+
+  [Fact]
+  public void TestWhile3() {
+    var interpreter = new Interpreter();
+    var d0 = Interpreter.ParseString("[[while3] [1 + dup 5 >] true 0]");
+    var d1 = interpreter.Run(d0);
+    // Assert.Equal(Interpreter.ParseString("[[[1 +] [[1 +] while] i] 0]"), d1);
+    Assert.Equal("[[] 5]", interpreter.StackToString(d1));
+  }
+
+  [Fact]
+  public void TestWhile3Post() {
+    Assert.Equal("[[] 2 5]", Run("[[while3 2] [1 + dup 5 >] true 0]"));
+  }
+
+  [Fact]
+  public void TestWhile2False() {
+    var interpreter = new Interpreter();
+    var d0 = Interpreter.ParseString("[[while2] [1 + dup 5 >] false 0]");
+    var d1 = interpreter.Run(d0);
+    // Assert.Equal(Interpreter.ParseString("[[[1 +] [[1 +] while] i] 0]"), d1);
+    Assert.Equal("[[] 0]", interpreter.StackToString(d1));
+  }
+
+  [Fact]
   public void TestRun() {
     var interpreter = new Interpreter();
     var d0 = Interpreter.ParseString("[[while] [1 +] [[]] 0]");
     var d1 = interpreter.Run(d0);
     Assert.Equal("[[] [1 +] 1]", interpreter.StackToString(d1));
   }
+
   [Fact]
   public void TestEval() {
     var interpreter = new Interpreter();

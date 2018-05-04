@@ -42,6 +42,19 @@ internal class StackParser {
     from trailingSpaces in Parse.Char(' ').Many()
     select float.Parse(num) * (op.IsDefined ? -1 : 1);
 
+  private static readonly Parser<bool> trueLiteral =
+    from s in Parse.String("true")
+    from trailingSpaces in Parse.Char(' ').Many()
+    select true;
+
+  private static readonly Parser<bool> falseLiteral =
+    from s in Parse.String("false")
+    from trailingSpaces in Parse.Char(' ').Many()
+    select false;
+
+  private static readonly Parser<bool> booleanLiteral =
+    trueLiteral.Or(falseLiteral);
+
   private static readonly Parser<double> doubleRep =
     from op in Parse.Optional(Parse.Char('-').Token())
     from num in Parse.Number
@@ -57,7 +70,7 @@ internal class StackParser {
   private static readonly Parser<object> cell =
     // quotedString.Or(bareWord).Or(integer.Select(i => i.ToString()));
     // quotedString.ToCell().Or(integer.ToCell()).Or(symbol.ToCell());
-    quotedString.ToCell().Or(floatRep.ToCell()).Or(doubleRep.ToCell()).Or(integer.ToCell()).Or(symbol.ToCell());
+    quotedString.ToCell().Or(booleanLiteral.ToCell()).Or(floatRep.ToCell()).Or(doubleRep.ToCell()).Or(integer.ToCell()).Or(symbol.ToCell());
 
   internal static readonly Parser<Stack> stackRep =
     from lbracket in Parse.Char('[')
@@ -79,7 +92,7 @@ internal class StackParser {
 
   public static Stack ParseWithResolution<T>(string s, Dictionary<string, T> dict) {
     Parser<object> cell =
-      quotedString.ToCell().Or(floatRep.ToCell()).Or(doubleRep.ToCell()).Or(integer.ToCell()).Or(symbol.Resolve(dict));
+      quotedString.ToCell().Or(booleanLiteral.ToCell()).Or(floatRep.ToCell()).Or(doubleRep.ToCell()).Or(integer.ToCell()).Or(symbol.Resolve(dict));
     Parser<Stack> stackRep = null;
     stackRep =
       from lbracket in Parse.Char('[')
