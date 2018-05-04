@@ -3,6 +3,7 @@ using System.Text;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+
 using OneOf;
 using Sprache;
 
@@ -27,8 +28,11 @@ public class Interpreter {
 
   public Dictionary<string, Instruction> instructions
     = new Dictionary<string, Instruction>();
+  bool _isStrict;
+  public bool isStrict { get { return _isStrict; } }
 
-  public Interpreter() {
+  public Interpreter(bool isStrict = false) {
+    _isStrict = isStrict;
     // instructions["i"] = new InstructionFunc(stack => {
     //     if (stack.Any()) {
     //       var x = stack.Pop();
@@ -44,38 +48,38 @@ public class Interpreter {
     //       stack.Push(new Continuation(code));
     //     }
     //   });
-    instructions["i"] = new UnaryInstruction<Stack>((stack, code) => {
-          stack.Push(new Continuation(code));
+    AddInstruction("i", (Stack stack, Stack code) => {
+        stack.Push(new Continuation(code));
       });
-    AddInstruction("car", new UnaryInstruction<Stack>((Stack stack, Stack s) => {
-        if (s.Any())
+    AddInstruction("car", (Stack stack, Stack s) => {
+        if (isStrict || s.Any())
           stack.Push(s.Pop());
-        }));
+      });
     // AddInstruction("car", (Stack stack) => {
     //     if (stack.Any())
     //       return stack.Pop();
     //     else
     //       throw new NoResultException();
     //   });
-    instructions["eval"]= UnaryInstruction<Stack>.WithResult<Stack>(stack => {
+    AddInstruction("eval", (Stack stack) => {
         return Eval(stack);
       });
     AddInstruction("cdr",(Stack stack) => {
-        if (stack.Any())
+        if (isStrict || stack.Any())
           stack.Pop();
         return stack;
       });
     instructions["pop"] = new InstructionFunc(stack => {
-        if (stack.Any())
+        if (isStrict || stack.Any())
           stack.Pop();
       });
     instructions["dup"] = new InstructionFunc(stack => {
-        if (stack.Any())
+        if (isStrict || stack.Any())
           stack.Push(stack.Peek());
       });
     instructions["swap"] = new InstructionFunc(stack =>
         {
-          if (stack.Count >= 2) {
+          if (isStrict || stack.Count >= 2) {
             var a = stack.Pop();
             var b = stack.Pop();
             stack.Push(a);
@@ -105,7 +109,7 @@ public class Interpreter {
     //       }
     //       return stack;
     //     });
-    instructions["split"] = new UnaryInstruction<Stack>((stack, s) =>
+    AddInstruction("split", (Stack stack, Stack s) =>
         {
           stack = Append(s, stack);
         });
@@ -242,25 +246,67 @@ public class Interpreter {
   }
 
   public void AddInstruction(string name, Action action) {
-    instructions[name] = new NullaryInstruction((stack) => action());
+    if (! isStrict)
+      instructions[name] = new NullaryInstruction((stack) => action());
+    else
+      instructions[name] = new StrictNullaryInstruction((stack) => action());
+  }
+
+  public void AddInstruction(string name, Action<Stack> func) {
+    if (! isStrict)
+      instructions[name] = new NullaryInstruction(func);
+    else
+      instructions[name] = new StrictNullaryInstruction(func);
   }
 
   public void AddInstruction<X>(string name, Func<X> func) {
-    instructions[name] = NullaryInstruction.WithResult(func);
+    if (! isStrict)
+      instructions[name] = NullaryInstruction.WithResult(func);
+    else
+      instructions[name] = StrictNullaryInstruction.WithResult(func);
+  }
+
+  public void AddInstruction<X>(string name, Action<Stack,X> func) {
+    if (! isStrict)
+      instructions[name] = new UnaryInstruction<X>(func);
+    else
+      instructions[name] = new StrictUnaryInstruction<X>(func);
   }
 
   public void AddInstruction<X,Y>(string name, Func<X,Y> func) {
-    instructions[name] = UnaryInstruction<X>.WithResult(func);
+    if (! isStrict)
+      instructions[name] = UnaryInstruction<X>.WithResult(func);
+    else
+      instructions[name] = StrictUnaryInstruction<X>.WithResult(func);
   }
 
   public void AddInstruction<X,Y,Z>(string name, Func<X,Y,Z> func) {
-    instructions[name] = BinaryInstruction<X,Y>.WithResult(func);
+    if (! isStrict)
+      instructions[name] = BinaryInstruction<X,Y>.WithResult(func);
+    else
+      instructions[name] = StrictBinaryInstruction<X,Y>.WithResult(func);
+  }
+
+  public void AddInstruction<X,Y>(string name, Action<Stack,X,Y> func) {
+    if (! isStrict)
+      instructions[name] = new BinaryInstruction<X,Y>(func);
+    else
+      instructions[name] = new StrictBinaryInstruction<X,Y>(func);
   }
 
   public void AddInstruction<X,Y,Z,W>(string name, Func<X,Y,Z,W> func) {
-    instructions[name] = TrinaryInstruction<X,Y,Z>.WithResult(func);
+    if (! isStrict)
+      instructions[name] = TrinaryInstruction<X,Y,Z>.WithResult(func);
+    else
+      instructions[name] = StrictTrinaryInstruction<X,Y,Z>.WithResult(func);
   }
 
+  public void AddInstruction<X,Y,Z>(string name, Action<Stack,X,Y,Z> func) {
+    if (! isStrict)
+      instructions[name] = new TrinaryInstruction<X,Y,Z>(func);
+    else
+      instructions[name] = new StrictTrinaryInstruction<X,Y,Z>(func);
+  }
   public static Stack Cons(object o, Stack stack) {
     stack.Push(o);
     return stack;

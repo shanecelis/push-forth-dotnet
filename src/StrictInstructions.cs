@@ -21,7 +21,6 @@ public class StrictNullaryInstruction : Instruction {
           stack.Push(func());
       });
   }
-
 }
 
 public class StrictUnaryInstruction<X> : Instruction {
