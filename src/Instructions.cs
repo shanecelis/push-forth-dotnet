@@ -9,6 +9,10 @@ public interface Instruction {
   Stack Apply(Stack stack);
 }
 
+public interface StrictInstruction : Instruction {
+  bool isStrict { get; }
+}
+
 public class InstructionFunc : Instruction {
   Func<Stack, Stack> func;
   public InstructionFunc(Func<Stack, Stack> func) {
@@ -24,8 +28,6 @@ public class InstructionFunc : Instruction {
   }
 }
 
-public class NoResultException : Exception { }
-
 public class NullaryInstruction : Instruction {
   Action<Stack> func;
   public NullaryInstruction(Action<Stack> func) {
@@ -39,11 +41,7 @@ public class NullaryInstruction : Instruction {
 
   public static NullaryInstruction WithResult<X>(Func <X> func) {
     return new NullaryInstruction((stack) => {
-        try {
-          stack.Push(func());
-        } catch(NoResultException) {
-          // No-op.
-        }
+        stack.Push(func());
       });
   }
 
@@ -73,11 +71,7 @@ public class UnaryInstruction<X> : Instruction {
 
   public static UnaryInstruction<X> WithResult<Y>(Func <X,Y> func) {
     return new UnaryInstruction<X>((stack, a) => {
-        try {
           stack.Push(func(a));
-        } catch(NoResultException) {
-          // No-op.
-        }
       });
   }
 }
@@ -115,11 +109,7 @@ public class BinaryInstruction<X, Y> : Instruction {
 
   public static BinaryInstruction<X,Y> WithResult<Z>(Func <X,Y,Z> func) {
     return new BinaryInstruction<X,Y>((stack, a, b) => {
-        try {
           stack.Push(func(a, b));
-        } catch(NoResultException) {
-          // No-op.
-        }
       });
   }
 }
@@ -167,11 +157,7 @@ public class TrinaryInstruction<X, Y, Z> : Instruction {
 
   public static TrinaryInstruction<X, Y, Z> WithResult<W>(Func<X, Y, Z, W> func) {
     return new TrinaryInstruction<X, Y, Z>((stack, a, b, c) => {
-        try {
-          stack.Push(func(a, b, c));
-        } catch(NoResultException) {
-          // No-op.
-        }
+        stack.Push(func(a, b, c));
       });
   }
 }
