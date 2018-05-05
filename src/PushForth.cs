@@ -28,11 +28,10 @@ public class Interpreter {
 
   public Dictionary<string, Instruction> instructions
     = new Dictionary<string, Instruction>();
-  bool _isStrict;
-  public bool isStrict { get { return _isStrict; } }
+  public readonly bool isStrict;
 
   public Interpreter(bool isStrict = false) {
-    _isStrict = isStrict;
+    this.isStrict = isStrict;
     // instructions["i"] = new InstructionFunc(stack => {
     //     if (stack.Any()) {
     //       var x = stack.Pop();
@@ -210,7 +209,7 @@ public class Interpreter {
         }
       });
 
-    instructions["while3"] = new BinaryInstruction<Stack, bool>((stack, x, z) => {
+    AddInstruction("while3", (Stack stack, Stack x, bool z) => {
         // Let's do it again but with no code re-writing to make it compilable.
         while (z) {
           // Must make a copy of the code x, as the Stack is destroyed when
@@ -222,6 +221,8 @@ public class Interpreter {
           object code = stack.Pop(); // drop empty code stack.
           if (code is Stack s) {
             if (s.Any()) {
+              if (isStrict)
+                throw new Exception("Code stack not empty.");
               Console.WriteLine("Code stack had stuff in it.");
               break;
             }
@@ -233,11 +234,48 @@ public class Interpreter {
           if (Z is bool zb)
             z = zb;
           else {
+            if (isStrict)
+              throw new Exception("No boolean on top of stack for while.");
             Console.WriteLine("Got non-bool for z " + Z);
             z = false;
           }
           // z = (bool) stack.Pop();
         }
+      });
+
+    AddInstruction("while4", (Stack stack, Stack x) => {
+        // Let's do it again but with no code re-writing to make it compilable.
+        bool z;
+        do {
+          // Must make a copy of the code x, as the Stack is destroyed when
+          // it is run.
+
+          // stack.Push(x);
+          // This is a shallow copy.
+          stack.Push(Append(x, new Stack()));
+          stack = Run(stack);
+          object code = stack.Pop(); // drop empty code stack.
+          if (code is Stack s) {
+            if (s.Any()) {
+              if (isStrict)
+                throw new Exception("Code stack not empty.");
+              Console.WriteLine("Code stack had stuff in it.");
+              break;
+            }
+          } else {
+            Console.WriteLine("Got non-stack for code");
+            break;
+          }
+          object Z = stack.Pop();
+          if (Z is bool zb)
+            z = zb;
+          else {
+            if (isStrict)
+              throw new Exception("No boolean on top of stack for while.");
+            Console.WriteLine("Got non-bool for z " + Z);
+            z = false;
+          }
+        } while (z);
       });
   }
 

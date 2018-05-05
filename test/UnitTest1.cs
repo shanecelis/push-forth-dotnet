@@ -385,6 +385,11 @@ public class UnitTest1
   }
 
   [Fact]
+  public void TestWhile4Post() {
+    Assert.Equal("[[] 2 5]", Run("[[while4 2] [1 + dup 5 >] 0]"));
+  }
+
+  [Fact]
   public void TestWhile2False() {
     var interpreter = new Interpreter();
     var d0 = Interpreter.ParseString("[[while2] [1 + dup 5 >] false 0]");

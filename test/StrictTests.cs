@@ -352,6 +352,7 @@ public class StrictTests
   [Fact]
   public void TestWhile3Post() {
     Assert.Equal("[[] 2 5]", Run("[[while3 2] [1 + dup 5 >] true 0]"));
+    Assert.Throws<InvalidCastException>(() => Run("[[while3 2] [1 + dup 5 >] blah true 0]"));
   }
 
   [Fact]
