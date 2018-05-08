@@ -9,10 +9,6 @@ public interface Instruction {
   Stack Apply(Stack stack);
 }
 
-public interface StrictInstruction : Instruction {
-  bool isStrict { get; }
-}
-
 public class InstructionFunc : Instruction {
   Func<Stack, Stack> func;
   public InstructionFunc(Func<Stack, Stack> func) {

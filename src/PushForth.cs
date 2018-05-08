@@ -19,7 +19,7 @@ public class Symbol : Tuple<string> {
 public class Continuation : Tuple<Stack> {
   public Continuation(Stack s) : base(s) { }
 
-  public Stack stack => Item1;
+  public Stack code => Item1;
 }
 
 // public class Cell : OneOfBase<Symbol, int, string> { }
@@ -356,6 +356,10 @@ public class Interpreter {
     return b;
   }
 
+  public static Stack ShallowCopy(Stack a) {
+    return Append(a, new Stack());
+  }
+
   public static Stack ParseString(string s) {
     return StackParser.stackRep.Parse(s);
   }
@@ -365,13 +369,17 @@ public class Interpreter {
   }
 
   public Stack Eval(Stack stack) {
-    if (! stack.Any())
+    if (! stack.Any()) {
+      // We add an empty stack which causes it to halt.
+      stack.Push(new Stack());
       return stack; // halt
+    }
     object first = stack.Pop();
     if (first is Stack code) {
-      if (! code.Any())
-        // Program is halted.
+      if (! code.Any()) {
+        // The program is halted.
         return Cons(code, stack);
+      }
       var data = stack;
       object obj = code.Pop();
       Instruction ins;
@@ -381,26 +389,27 @@ public class Interpreter {
           obj = ins;
         }
       }
-      if (obj is Instruction) {
-        ins = (Instruction) obj;
+      if (obj is Instruction i) {
+        ins = i;
         var result = ins.Apply(data);
         // Console.WriteLine("result " + string.Join(" ", result.ToArray()));
         if (! result.Any())
           return Cons(code, result);
 
         object ret = result.Peek();
-        if (! (ret is Continuation))
-          return Cons(code, result);
-        else
-          code = Append(((Continuation) ret).stack, code);
-        result.Pop();
+        if (ret is Continuation continuation) {
+          code = Append(continuation.code, code);
+          result.Pop();
+        }
         data = result;
       } else {
         data = Cons(obj, data);
       }
       return Cons(code, data);
     } else {
-      return Cons(first, stack);
+      // No code stack as first item, so we add an empty stack which causes it
+      // to halt in the next eval.
+      return Cons(new Stack(), Cons(first, stack));
     }
   }
 
@@ -410,12 +419,14 @@ public class Interpreter {
     return sb.ToString();
   }
 
-  public bool IsHalted(Stack s) {
+  public static bool IsHalted(Stack s) {
+    if (! s.Any())
+      return false;
     var x = s.Peek();
     if (x is Stack code) {
       return ! code.Any();
     } else {
-      return true;
+      return false;
     }
   }
 

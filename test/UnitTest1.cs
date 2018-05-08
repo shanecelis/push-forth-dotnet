@@ -7,6 +7,31 @@ namespace test
 {
 public class UnitTest1
 {
+
+  Interpreter interpreter;
+  public UnitTest1() {
+    interpreter = new Interpreter(true);
+  }
+  public string Run(string code) {
+    var d0 = Interpreter.ParseString(code);
+    var d1 = interpreter.Run(d0);
+    // Assert.Equal(Interpreter.ParseString("[[[1 +] [[1 +] while] i] 0]"), d1);
+    return interpreter.StackToString(d1);
+  }
+
+  public string Eval(string code) {
+    var d0 = Interpreter.ParseString(code);
+    var d1 = interpreter.Eval(d0);
+    // Assert.Equal(Interpreter.ParseString("[[[1 +] [[1 +] while] i] 0]"), d1);
+    return interpreter.StackToString(d1);
+  }
+
+  public bool IsHalted(string program) {
+    var d0 = Interpreter.ParseString(program);
+    var d1 = Interpreter.IsHalted(d0);
+    return d1;
+  }
+
   [Fact]
   public void Test1()
   {
@@ -362,14 +387,6 @@ public class UnitTest1
     Assert.Equal("[[] 5]", interpreter.StackToString(d1));
   }
 
-  public string Run(string code) {
-    var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString(code);
-    var d1 = interpreter.Run(d0);
-  // Assert.Equal(Interpreter.ParseString("[[[1 +] [[1 +] while] i] 0]"), d1);
-    return interpreter.StackToString(d1);
-  }
-
   [Fact]
   public void TestWhile3() {
     var interpreter = new Interpreter();
@@ -412,6 +429,20 @@ public class UnitTest1
     var d0 = Interpreter.ParseString("[[eval] [[+] 1 2]]");
     var d1 = interpreter.Eval(d0);
     Assert.Equal("[[] [[] 3]]", interpreter.StackToString(d1));
+  }
+
+  [Fact]
+  public void TestEvalRules() {
+    Assert.Equal("[[] 1 2 3]", Eval("[1 2 3]"));
+    Assert.Equal("[[]]", Eval("[]"));
+  }
+
+  [Fact]
+  public void TestIsHalted() {
+    Assert.False(IsHalted("[1 2 3]"));
+    Assert.True(IsHalted("[[] 1 2 3]"));
+    Assert.False(IsHalted("[]"));
+    Assert.True(IsHalted("[[]]"));
   }
 }
 }
