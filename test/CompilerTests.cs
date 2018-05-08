@@ -103,5 +103,51 @@ public class CompilerTests
   //   Assert.Equal(3, r.Pop());
   // }
 
+  [Fact]
+  public void TestAddStack() {
+    DynamicMethod dynMeth = new DynamicMethod("Run",
+                                              typeof(int),
+                                              new [] {typeof(Stack)},
+                                              typeof(CompilerTests).Module);
+
+    ILGenerator il = dynMeth.GetILGenerator(256);
+    var ils = new ILStack();
+    ils.ilgen = il;
+    var bi = new BinaryInstructionCompiler();
+    bi.ilStack = ils;
+    var s = new Stack();
+    s.Push(1);
+    s.Push(4);
+    var r = bi.Apply(s);
+    // Load the first arVgument, which is a string, onto the stack.
+    il.Emit(OpCodes.Ret);
+    var f = (Func<Stack, int>) dynMeth.CreateDelegate(typeof(Func<Stack, int>));
+    Assert.Equal(5, f(s));
+  }
+
+  [Fact]
+  public void TestAddStackMultipleTimes() {
+    DynamicMethod dynMeth = new DynamicMethod("Run",
+                                              typeof(int),
+                                              new [] {typeof(Stack)},
+                                              typeof(CompilerTests).Module);
+
+    ILGenerator il = dynMeth.GetILGenerator(256);
+    var ils = new ILStack();
+    ils.ilgen = il;
+    var bi = new BinaryInstructionCompiler();
+    bi.ilStack = ils;
+    var s = new Stack();
+    s.Push(1);
+    s.Push(4);
+    s.Push(5);
+    var r = bi.Apply(s);
+    var t = bi.Apply(r);
+    // Load the first arVgument, which is a string, onto the stack.
+    il.Emit(OpCodes.Ret);
+    var f = (Func<Stack, int>) dynMeth.CreateDelegate(typeof(Func<Stack, int>));
+    Assert.Equal(10, f(s));
+  }
+
 }
 }

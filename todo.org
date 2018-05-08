@@ -1,0 +1,17 @@
+* TODO
+  - [ ] Predicates
+  - [ ] Compiler
+* Compiler Notes
+** Compilation Modes
+*** Program + Data
+    Why bother with a stack if I can consume the stack in the compilation phase?
+**** All data provided
+**** A fixed stack layout with slots for variables
+*** Program
+    The data (stack) is provided by an outside entity, so the stack operations
+    for input and output must be preserved.
+** Functional
+   No state but what is provided by the stack.
+** Stateful/IO
+   Operations that change external resources must be threaded/perserved.
+   (Monad?)
