@@ -32,21 +32,6 @@ public class Interpreter {
 
   public Interpreter(bool isStrict = false) {
     this.isStrict = isStrict;
-    // instructions["i"] = new InstructionFunc(stack => {
-    //     if (stack.Any()) {
-    //       var x = stack.Pop();
-    //       Stack code;
-    //       if (x is Stack s) {
-    //         code = s;
-    //       } else {
-    //         // Bad argument.
-    //         code = new Stack();
-    //         code.Push(x);
-    //         code.Push(instructions["i"]);
-    //       }
-    //       stack.Push(new Continuation(code));
-    //     }
-    //   });
     AddInstruction("i", (Stack stack, Stack code) => {
         stack.Push(new Continuation(code));
       });
@@ -74,7 +59,7 @@ public class Interpreter {
       });
     instructions["dup"] = new InstructionFunc(stack => {
         if (isStrict || stack.Any())
-          stack.Push(stack.Peek());
+          stack.Push(Duplicate(stack.Peek()));
       });
     instructions["swap"] = new InstructionFunc(stack =>
         {
@@ -459,6 +444,14 @@ public class Interpreter {
         sb.Append(" ");
     }
     sb.Append("]");
+  }
+
+  object Duplicate(object o) {
+    if (o is Stack s) {
+      return s.Clone();
+    } else {
+      return o;
+    }
   }
 }
 

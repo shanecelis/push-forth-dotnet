@@ -113,7 +113,7 @@ public class CompilerTests
     ILGenerator il = dynMeth.GetILGenerator(256);
     var ils = new ILStack();
     ils.ilgen = il;
-    var bi = new BinaryInstructionCompiler();
+    var bi = new AddInstructionCompiler();
     bi.ilStack = ils;
     var s = new Stack();
     s.Push(1);
@@ -135,7 +135,7 @@ public class CompilerTests
     ILGenerator il = dynMeth.GetILGenerator(256);
     var ils = new ILStack();
     ils.ilgen = il;
-    var bi = new BinaryInstructionCompiler();
+    var bi = new AddInstructionCompiler();
     bi.ilStack = ils;
     var s = new Stack();
     s.Push(1);
@@ -147,6 +147,51 @@ public class CompilerTests
     il.Emit(OpCodes.Ret);
     var f = (Func<Stack, int>) dynMeth.CreateDelegate(typeof(Func<Stack, int>));
     Assert.Equal(10, f(s));
+  }
+
+  [Fact]
+  public void TestReturnStack() {
+    DynamicMethod dynMeth = new DynamicMethod("Run",
+                                              typeof(Stack),
+                                              new Type[] {},
+                                              typeof(CompilerTests).Module);
+
+    ILGenerator il = dynMeth.GetILGenerator(256);
+    var ils = new ILStack();
+    ils.ilgen = il;
+    ils.Push(1);
+    ils.Push(4);
+    ils.Push(5);
+    ils.MakeReturnStack();
+    il.Emit(OpCodes.Ret);
+    var f = (Func<Stack>) dynMeth.CreateDelegate(typeof(Func<Stack>));
+
+    var r = new Stack();
+    r.Push(5);
+    r.Push(4);
+    r.Push(1);
+    // Unfortunately, it's kind of backwards.
+    Assert.Equal(r, f());
+  }
+
+  [Fact]
+  public void TestReturnArray() {
+    DynamicMethod dynMeth = new DynamicMethod("Run",
+                                              typeof(int[]),
+                                              new Type[] {},
+                                              typeof(CompilerTests).Module);
+    ILGenerator il = dynMeth.GetILGenerator(256);
+    var ils = new ILStack();
+    ils.ilgen = il;
+    ils.Push(1);
+    ils.Push(4);
+    ils.Push(5);
+    ils.MakeReturnArray();
+    il.Emit(OpCodes.Ret);
+    var f = (Func<int[]>) dynMeth.CreateDelegate(typeof(Func<int[]>));
+
+    // That's better.
+    Assert.Equal(new [] {5, 4, 1}, f());
   }
 
 }

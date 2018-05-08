@@ -281,6 +281,8 @@ public class UnitTest1
     var d0 = Interpreter.ParseString("[[car] [2]]");
     var d1 = interpreter.Eval(d0);
     Assert.Equal(Interpreter.ParseString("[[] 2]"), d1);
+    Assert.Equal("[[] 2 [2 3]]", Run("[[dup car] [2 3]]"));
+    Assert.Equal("[[] [2] [[2] 3]]", Run("[[dup car] [[2] 3]]"));
   }
 
   [Fact]
