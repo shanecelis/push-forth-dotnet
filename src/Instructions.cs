@@ -73,10 +73,14 @@ public class UnaryInstruction<X> : Instruction {
 }
 
 public class BinaryInstruction<X, Y> : Instruction {
-  Action<Stack, X, Y> func;
+  Action<Stack, object, object> func;
   Func<object, bool> predicateX = x => x is X;
   Func<object, bool> predicateY = y => y is Y;
-  public BinaryInstruction(Action<Stack, X, Y> func) {
+  public BinaryInstruction(Action<Stack, X, Y> func)
+    : this(true, (stack, a, b) => func(stack, (X) a, (Y) b)) {
+  }
+
+  BinaryInstruction(bool dummy, Action<Stack, object, object> func) {
     this.func = func;
   }
 
@@ -101,11 +105,7 @@ public class BinaryInstruction<X, Y> : Instruction {
       stack.Push(new Continuation(code));
       return stack;
     }
-    // func(stack, (X) a, (Y) b);
-    // func(stack, a as X, b as Y);
-    func(stack,
-         a is X ? (X) a : default(X),
-         b is Y ? (Y) b : default(Y));
+    func(stack, a, b);
     return stack;
   }
 
@@ -116,27 +116,15 @@ public class BinaryInstruction<X, Y> : Instruction {
   }
 
   public static BinaryInstruction<X,Y> Reorder<Z>(string name) {
-    Reorder ra, rb;
-    ra = rb = null;
-    var ins = new BinaryInstruction<X,Y>((stack, a, b) => {
+    var ins = new BinaryInstruction<X,Y>(true, (stack, a, b) => {
         var s = new Stack();
         s.Push(new Symbol(name));
-        if (ra == null)
-          s.Push(a);
-        else
-          s.Push(ra);
-        if (rb == null)
-          s.Push(b);
-        else
-          s.Push(rb);
-        // s.Push(ra ?? a);
-        // s.Push(rb ?? b);
-        // stack.Push(new Dummy(typeof(Z)));
+        s.Push(a);
+        s.Push(b);
         stack.Push(new Reorder(s, typeof(Z)));
-        ra = rb = null;
       });
-    ins.predicateX = x => x is X || (x is Reorder r && (ra = r).type == typeof(X));
-    ins.predicateY = y => y is Y || (y is Reorder r && (rb = r).type == typeof(Y));
+    ins.predicateX = x => x is X || (x is Reorder r && r.type == typeof(X));
+    ins.predicateY = y => y is Y || (y is Reorder r && r.type == typeof(Y));
     return ins;
   }
 }

@@ -463,8 +463,8 @@ public class UnitTest1
     // var d4b = Interpreter.ParseString("[[reorder] [[+ a ] 1 2] []]");
     // var d5 = interpreter.Eval(d4b);
     Assert.Equal("[[] [[a] R<System.Int32>[2 1 +]]]",
-                 Eval("[[reorder] [[+ a ] 1 2]]"));
-    var e1 = interpreter.Eval("[[reorder] [[+ a ] 1 2]]".ToStack());
+                 Eval("[[reorder-pre] [[+ a ] 1 2]]"));
+    var e1 = interpreter.Eval("[[reorder-pre] [[+ a ] 1 2]]".ToStack());
     Assert.Equal("[[] [[a] R<System.Int32>[2 1 +]]]",
                  e1.ToRepr());
     e1.Pop();
@@ -498,7 +498,7 @@ public class UnitTest1
     s1.Push(new Reorder("[2 3 +]".ToStack(), typeof(int)));
     s1.Push(code);
     Assert.Equal("[[+] R<System.Int32>[2 3 +] 1]", s1.ToRepr());
-    var s2 = interpreter.Reorder(s1);
+    var s2 = interpreter.ReorderPre(s1);
     // Assert.Equal("", s2.ToRepr());
     Assert.Equal("[[] R<System.Int32>[1 R<System.Int32>[2 3 +] +]]", interpreter.StackToString(s2, new [] {interpreter.reorderInstructions, interpreter.instructions }));
   }
@@ -507,10 +507,12 @@ public class UnitTest1
   public void testLotsOfReordering() {
     Assert.Equal("[[] d c b a 10]", Run("[[2 a 3 b c 5 + d +]]"));
 
-    Stack s1;
-    Assert.Equal("[[] d c b a R<System.Int32>[2 R<System.Int32>[3 5 +] +]]", (s1 = interpreter.RunReorder("[[2 a 3 b c 5 + d +]]".ToStack())).ToRepr());
+    Stack s1, s2;
+    Assert.Equal("[[] d c b a R<System.Int32>[2 R<System.Int32>[3 5 +] +]]", (s1 = interpreter.RunReorderPre("[[2 a 3 b c 5 + d +]]".ToStack())).ToRepr());
 
-    Assert.Equal("[[2 3 5 + + a b c d]]", interpreter.RunReorderPost(s1).ToRepr());
+    Assert.Equal("[[2 3 5 + + a b c d]]", (s2 = interpreter.RunReorderPost(s1)).ToRepr());
+    var strict = new Interpreter(true);
+    Assert.Equal("[[] d c b a 10]", strict.Run(s2).ToRepr());
   }
 }
 }

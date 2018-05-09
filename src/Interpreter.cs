@@ -48,8 +48,8 @@ public class Interpreter {
     AddInstruction("eval", (Stack stack) => {
         return Eval(stack);
       });
-    AddInstruction("reorder", (Stack program) => {
-        return Reorder(program);
+    AddInstruction("reorder-pre", (Stack program) => {
+        return ReorderPre(program);
       });
     AddInstruction("reorder-post", (Stack program) => {
         return ReorderPost(program);
@@ -346,6 +346,10 @@ public class Interpreter {
   }
 
   public Stack Reorder(Stack stack) {
+    return RunReorderPost(RunReorderPre(stack));
+  }
+
+  public Stack ReorderPre(Stack stack) {
     return Eval(stack, new [] { reorderInstructions, instructions });
   }
 
@@ -357,8 +361,8 @@ public class Interpreter {
     return done;
   }
 
-  public Stack RunReorder(Stack stack) {
-    return Run(stack, IsHalted, Reorder);
+  public Stack RunReorderPre(Stack stack) {
+    return Run(stack, IsHalted, ReorderPre);
   }
 
   public Stack RunReorderPost(Stack stack) {
