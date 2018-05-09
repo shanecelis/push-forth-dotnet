@@ -41,11 +41,24 @@ public class NullaryInstruction : Instruction {
       });
   }
 
+  public static NullaryInstruction Reorder<X>(string name) {
+    var ins = new NullaryInstruction((stack) => {
+        var s = new Stack();
+        s.Push(new Symbol(name));
+        stack.Push(new Reorder(s, typeof(X)));
+      });
+    return ins;
+  }
 }
 
 public class UnaryInstruction<X> : Instruction {
-  Action<Stack, X> func;
-  public UnaryInstruction(Action<Stack, X> func) {
+  Action<Stack, object> func;
+  Func<object, bool> predicateX = x => x is X;
+
+  public UnaryInstruction(Action<Stack, X> func)
+    : this(true, (stack, x) => func(stack, (X) x)) {
+  }
+  public UnaryInstruction(bool dummy, Action<Stack, object> func) {
     this.func = func;
   }
 
@@ -54,14 +67,14 @@ public class UnaryInstruction<X> : Instruction {
       return stack;
     object a;
     a = stack.Pop();
-    if (! (a is X)) {
+    if (! predicateX(a)) {
       var code = new Stack();
       code.Push(a);
       code.Push(this);
       stack.Push(new Continuation(code));
       return stack;
     }
-    func(stack, (X) a);
+    func(stack, a);
     return stack;
   }
 
@@ -69,6 +82,17 @@ public class UnaryInstruction<X> : Instruction {
     return new UnaryInstruction<X>((stack, a) => {
           stack.Push(func(a));
       });
+  }
+
+  public static UnaryInstruction<X> Reorder<Z>(string name) {
+    var ins = new UnaryInstruction<X>(true, (stack, a) => {
+        var s = new Stack();
+        s.Push(new Symbol(name));
+        s.Push(a);
+        stack.Push(new Reorder(s, typeof(Z)));
+      });
+    ins.predicateX = x => x is X || (x is Reorder r && r.type == typeof(X));
+    return ins;
   }
 }
 
@@ -115,13 +139,13 @@ public class BinaryInstruction<X, Y> : Instruction {
       });
   }
 
-  public static BinaryInstruction<X,Y> Reorder<Z>(string name) {
+  public static BinaryInstruction<X,Y> Reorder(string name, Type t) {
     var ins = new BinaryInstruction<X,Y>(true, (stack, a, b) => {
         var s = new Stack();
         s.Push(new Symbol(name));
         s.Push(a);
         s.Push(b);
-        stack.Push(new Reorder(s, typeof(Z)));
+        stack.Push(new Reorder(s, t));
       });
     ins.predicateX = x => x is X || (x is Reorder r && r.type == typeof(X));
     ins.predicateY = y => y is Y || (y is Reorder r && r.type == typeof(Y));
@@ -153,8 +177,15 @@ public class Dummy {
 }
 
 public class TrinaryInstruction<X, Y, Z> : Instruction {
-  Action<Stack, X, Y, Z> func;
-  public TrinaryInstruction(Action<Stack, X, Y, Z> func) {
+  Action<Stack, object, object, object> func;
+  Func<object, bool> predicateX = x => x is X;
+  Func<object, bool> predicateY = y => y is Y;
+  Func<object, bool> predicateZ = z => z is Z;
+  public TrinaryInstruction(Action<Stack, X, Y, Z> func)
+    : this(true, (stack, a, b, c) => func(stack, (X) a, (Y) b, (Z) c)){
+  }
+
+  TrinaryInstruction(bool dummy, Action<Stack, object, object, object> func) {
     this.func = func;
   }
 
@@ -163,7 +194,7 @@ public class TrinaryInstruction<X, Y, Z> : Instruction {
       return stack;
     object a, b, c;
     a = stack.Pop();
-    if (! (a is X)) {
+    if (! predicateX(a)) {
       var code = new Stack();
       code.Push(a);
       code.Push(this);
@@ -171,7 +202,7 @@ public class TrinaryInstruction<X, Y, Z> : Instruction {
       return stack;
     }
     b = stack.Pop();
-    if (! (b is Y)) {
+    if (! predicateY(b)) {
       var code = new Stack();
       code.Push(b);
       code.Push(this);
@@ -180,7 +211,7 @@ public class TrinaryInstruction<X, Y, Z> : Instruction {
       return stack;
     }
     c = stack.Pop();
-    if (! (c is Z)) {
+    if (! predicateZ(c)) {
       var code = new Stack();
       code.Push(c);
       code.Push(this);
@@ -189,7 +220,7 @@ public class TrinaryInstruction<X, Y, Z> : Instruction {
       stack.Push(new Continuation(code));
       return stack;
     }
-    func(stack, (X) a, (Y) b, (Z) c);
+    func(stack, a, b, c);
     return stack;
   }
 
@@ -197,6 +228,21 @@ public class TrinaryInstruction<X, Y, Z> : Instruction {
     return new TrinaryInstruction<X, Y, Z>((stack, a, b, c) => {
         stack.Push(func(a, b, c));
       });
+  }
+
+  public static TrinaryInstruction<X,Y,Z> Reorder<W>(string name) {
+    var ins = new TrinaryInstruction<X,Y,Z>(true, (stack, a, b, c) => {
+        var s = new Stack();
+        s.Push(new Symbol(name));
+        s.Push(a);
+        s.Push(b);
+        s.Push(c);
+        stack.Push(new Reorder(s, typeof(W)));
+      });
+    ins.predicateX = x => x is X || (x is Reorder r && r.type == typeof(X));
+    ins.predicateY = y => y is Y || (y is Reorder r && r.type == typeof(Y));
+    ins.predicateZ = z => z is Z || (z is Reorder r && r.type == typeof(Z));
+    return ins;
   }
 }
 

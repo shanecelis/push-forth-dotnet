@@ -7,7 +7,7 @@ using OneOf;
 
 namespace SeawispHunter.PushForth {
 
-internal class StackParser {
+public class StackParser {
 
   private static readonly Parser<char> _quotedText =
     Parse.AnyChar.Except(Parse.Char('"'));
@@ -24,7 +24,7 @@ internal class StackParser {
     from trailingSpaces in Parse.Char(' ').Many()
     select text;
 
-  public static readonly Parser<string> bareWord = Parse.CharExcept(" []").AtLeastOnce().Text().Token();
+  public static readonly Parser<string> bareWord = Parse.CharExcept(" []•").AtLeastOnce().Text().Token();
 
   public static readonly Parser<Symbol> symbol = bareWord.Select(s => new Symbol(s));
 
@@ -81,14 +81,30 @@ internal class StackParser {
     from trailingSpaces in Parse.Char(' ').Many()
     select new Stack(contents.Reverse().ToArray());
 
-  internal static readonly Parser<Stack> resolveStackRep =
+  private static readonly Parser<char> pivotChar =
+    from c in Parse.Char('•')
+    select c;
+
+  internal static readonly Parser<Stack> pivotRep =
     from lbracket in Parse.Char('[')
     from leadingSpaces in Parse.Char(' ').Many()
-    from contents in cell.Or(Parse.Ref(() => stackRep)).Many()
+    from code in cell.Or(Parse.Ref(() => stackRep)).Many()
+    // from code in Parse.Not(pivotChar).Then(c => cell.Or(Parse.Ref(() => stackRep)).Many())
+    from pivot in pivotChar
+    from pivotSpaces in Parse.Char(' ').Many()
+    from data in cell.Or(Parse.Ref(() => stackRep)).Many()
     // from contents in cell.Many()
     from rbracket in Parse.Char(']')
     from trailingSpaces in Parse.Char(' ').Many()
-    select new Stack(contents.Reverse().ToArray());
+    select Interpreter.Cons(new Stack(code.ToArray()), new Stack(data.Reverse().ToArray()));
+
+  public static Stack ParseStack(string s) {
+    return stackRep.Parse(s);
+  }
+
+  public static Stack ParsePivot(string s) {
+    return pivotRep.Parse(s);
+  }
 
   public static Stack ParseWithResolution<T>(string s, Dictionary<string, T> dict) {
     Parser<object> cell =

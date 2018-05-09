@@ -1,9 +1,11 @@
 using System;
+using System.Linq;
 using System.Collections;
+using System.Collections.Generic;
 using Xunit;
 using SeawispHunter.PushForth;
 
-namespace test
+namespace SeawispHunter.PushForth 
 {
 public class UnitTest1
 {
@@ -19,11 +21,23 @@ public class UnitTest1
     return interpreter.StackToString(d1);
   }
 
+  public string Reorder(string code) {
+    var d0 = Interpreter.ParseString(code);
+    var d1 = interpreter.Reorder(d0);
+    // Assert.Equal(Interpreter.ParseString("[[[1 +] [[1 +] while] i] 0]"), d1);
+    return interpreter.StackToString(d1);
+  }
+
   public string Eval(string code) {
     var d0 = Interpreter.ParseString(code);
     var d1 = interpreter.Eval(d0);
     // Assert.Equal(Interpreter.ParseString("[[[1 +] [[1 +] while] i] 0]"), d1);
     return interpreter.StackToString(d1);
+  }
+
+  public IEnumerable<string> EvalStream(string code) {
+    var d0 = Interpreter.ParseString(code);
+    return interpreter.EvalStream(d0).Select(x => interpreter.StackToString(x));
   }
 
   public bool IsHalted(string program) {
@@ -514,5 +528,94 @@ public class UnitTest1
     var strict = new Interpreter(true);
     Assert.Equal("[[] d c b a 10]", strict.Run(s2).ToRepr());
   }
+
+  [Fact]
+  public void testMoreReordering() {
+    var strict = new Interpreter(true);
+    // The non-strict interpreter moves around arguments such that they will continue to work.
+    Assert.Equal("[[] d c b a 6]", Run("[[2 a negate 3 b c 5 + d +]]"));
+    Assert.Equal("[[2 negate 3 5 + + a b c d]]", interpreter.Reorder("[[2 a negate 3 b c 5 + d +]]".ToStack()).ToRepr());
+    Assert.Equal("[[] d c b a 6]", strict.Run("[[2 negate 3 5 + + a b c d]]".ToStack()).ToRepr());
+    // Can't run the original with the strict interpreter.
+    Assert.Throws<InvalidCastException>(() => strict.Run("[[2 a negate 3 b c 5 + d +]]".ToStack()));
+  }
+
+  [Fact]
+  public void testMoreReordering2() {
+    var strict = new Interpreter(true);
+    // The non-strict interpreter moves around arguments such that they will continue to work.
+    Assert.Equal("[[] d c b a 6]", Run("[[2 a negate 3 b c 5 + d + +]]"));
+    Assert.Equal("[[2 negate 3 5 + + a b c d]]", interpreter.Reorder("[[2 a negate 3 b c 5 + d + +]]".ToStack()).ToRepr());
+    // The same output is produced.
+    Assert.Equal("[[] d c b a 6]", strict.Run("[[2 negate 3 5 + + a b c d]]".ToStack()).ToRepr());
+    // Can't run the original with the strict interpreter.
+    Assert.Throws<InvalidCastException>(() => strict.Run("[[2 a negate 3 b c 5 + d + +]]".ToStack()));
+    Assert.Throws<InvalidOperationException>(() => strict.Run("[[2 +]]".ToStack()));
+    Assert.Throws<InvalidOperationException>(() => strict.Run("[[+]]".ToStack()));
+  }
+
+  [Fact]
+  public void testMoreReordering3() {
+    var e = EvalStream("[[2 a ! a]]").GetEnumerator();
+    e.MoveNext();
+    Assert.Equal("[[a ! a] 2]", e.Current);
+    e.MoveNext();
+    Assert.Equal("[[! a] a 2]", e.Current);
+    e.MoveNext();
+    Assert.Equal("[[a]]", e.Current);
+    e.MoveNext();
+    Assert.Equal("[[] 2]", e.Current);
+
+    // The symbol a is set as an instruction. We need a new interpreter to not
+    // be polluted by it.
+    interpreter = new Interpreter();
+    e = EvalStream("[[2 a 3 ! a]]").GetEnumerator();
+    Assert.True(e.MoveNext());
+    Assert.Equal("[[a 3 ! a] 2]", e.Current);
+    e.MoveNext();
+    Assert.Equal("[[3 ! a] a 2]", e.Current);
+    e.MoveNext();
+    Assert.Equal("[[! a] 3 a 2]", e.Current);
+    e.MoveNext();
+    Assert.Equal("[[! 3 a] a 2]", e.Current);
+    e.MoveNext();
+    Assert.Equal("[[3 a]]", e.Current);
+    e.MoveNext();
+    Assert.Equal("[[a] 3]", e.Current);
+    e.MoveNext();
+    Assert.Equal("[[] 2 3]", e.Current);
+    Assert.False(e.MoveNext());
+
+    interpreter = new Interpreter();
+    var e2 = interpreter.EvalStream("[[! a] 3 a 2]".ToStack(), Interpreter.IsHalted, interpreter.ReorderPre)
+      .Select(s => interpreter.StackToString(s, new [] {interpreter.reorderInstructions, interpreter.instructions}))
+      .GetEnumerator();
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[[! 3 a] a 2]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[[3 a] R[2 a !]]", e2.Current);
+
+    Assert.Equal("[[2 a ! 3 a]]", Reorder("[[2 a 3 ! a]]"));
+
+  }
+
+  [Fact]
+  public void TestPivotString() {
+    var e2 = interpreter.EvalStream("[[1 1 +]]".ToStack()).Select(x => x.ToPivot()).GetEnumerator();
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[+ 1 • 1]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[+ • 1 1]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[• 2]", e2.Current);
+    Assert.False(e2.MoveNext());
+  }
+
+  [Fact]
+  public void TestParsePivot() {
+    var s = "[[1 1 +]]".ToStack();
+    Assert.Equal(s, StackParser.ParsePivot("[+ 1 1 •]"));
+  }
+
 }
 }

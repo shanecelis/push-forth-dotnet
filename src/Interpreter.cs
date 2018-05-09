@@ -4,9 +4,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-using OneOf;
-using Sprache;
-
 namespace SeawispHunter.PushForth {
 
 public class Symbol : Tuple<string> {
@@ -54,6 +51,9 @@ public class Interpreter {
     AddInstruction("reorder-post", (Stack program) => {
         return ReorderPost(program);
       });
+    AddInstruction("!", (Stack stack, Symbol s, object x) => {
+        AddInstruction(s.name, () => x);
+      });
     AddInstruction("cdr",(Stack stack) => {
         if (isStrict || stack.Any())
           stack.Pop();
@@ -91,9 +91,10 @@ public class Interpreter {
         return s;
       });
 
-    // instructions["minus"] = new BinaryInstruction<int, int, int>((a, b) => a - b);
     AddInstruction("minus", (int a, int b) => a - b);
+    AddInstruction("-", (int a, int b) => a - b);
     AddInstruction("+", (int a, int b) => a + b);
+    AddInstruction("negate", (int a) => -a);
     // With InstructionFunc you have to do all your own error handling.
     instructions["add"] = new InstructionFunc(stack => {
         if (stack.Count < 2)
@@ -257,10 +258,11 @@ public class Interpreter {
   }
 
   public void AddInstruction(string name, Action action) {
+    // These actions don't even take a stack.
     if (! isStrict)
-      instructions[name] = new NullaryInstruction((stack) => action());
+      instructions[name] = new NullaryInstruction(_ => action());
     else
-      instructions[name] = new StrictNullaryInstruction((stack) => action());
+      instructions[name] = new StrictNullaryInstruction(_ => action());
   }
 
   public void AddInstruction(string name, Action<Stack> func) {
@@ -275,6 +277,7 @@ public class Interpreter {
       instructions[name] = NullaryInstruction.WithResult(func);
     else
       instructions[name] = StrictNullaryInstruction.WithResult(func);
+    reorderInstructions[name] = NullaryInstruction.Reorder<X>(name);
   }
 
   public void AddInstruction<X>(string name, Action<Stack,X> func) {
@@ -289,6 +292,7 @@ public class Interpreter {
       instructions[name] = UnaryInstruction<X>.WithResult(func);
     else
       instructions[name] = StrictUnaryInstruction<X>.WithResult(func);
+    reorderInstructions[name] = UnaryInstruction<X>.Reorder<Y>(name);
   }
 
   public void AddInstruction<X,Y,Z>(string name, Func<X,Y,Z> func) {
@@ -297,7 +301,7 @@ public class Interpreter {
     else
       instructions[name] = StrictBinaryInstruction<X,Y>.WithResult(func);
 
-    reorderInstructions[name] = BinaryInstruction<X,Y>.Reorder<Z>(name);
+    reorderInstructions[name] = BinaryInstruction<X,Y>.Reorder(name, typeof(Z));
   }
 
   public void AddInstruction<X,Y>(string name, Action<Stack,X,Y> func) {
@@ -305,6 +309,7 @@ public class Interpreter {
       instructions[name] = new BinaryInstruction<X,Y>(func);
     else
       instructions[name] = new StrictBinaryInstruction<X,Y>(func);
+    reorderInstructions[name] = BinaryInstruction<X,Y>.Reorder(name, null);
   }
 
   public void AddInstruction<X,Y,Z,W>(string name, Func<X,Y,Z,W> func) {
@@ -312,6 +317,8 @@ public class Interpreter {
       instructions[name] = TrinaryInstruction<X,Y,Z>.WithResult(func);
     else
       instructions[name] = StrictTrinaryInstruction<X,Y,Z>.WithResult(func);
+
+    reorderInstructions[name] = TrinaryInstruction<X,Y,Z>.Reorder<W>(name);
   }
 
   public void AddInstruction<X,Y,Z>(string name, Action<Stack,X,Y,Z> func) {
@@ -338,7 +345,7 @@ public class Interpreter {
   }
 
   public static Stack ParseString(string s) {
-    return StackParser.stackRep.Parse(s);
+    return StackParser.ParseStack(s);
   }
 
   public Stack ParseWithResolution(string s) {
@@ -386,6 +393,20 @@ public class Interpreter {
       }
     }
     return Cons(code, data);
+  }
+
+  public IEnumerable<Stack> EvalStream(Stack stack) {
+    while (! IsHalted(stack)) {
+      stack = Eval(stack);
+      yield return stack;
+    }
+  }
+
+  public IEnumerable<Stack> EvalStream(Stack stack, Func<Stack, bool> isHalted, Func<Stack, Stack> eval) {
+    while (! isHalted(stack)) {
+      stack = eval(stack);
+      yield return stack;
+    }
   }
 
   public Stack Eval(Stack stack, IEnumerable<Dictionary<string, Instruction>> instructionSets = null) {
@@ -516,67 +537,6 @@ public class Interpreter {
       return o;
     }
   }
-}
-
-public static class PushForthExtensions {
-  public static bool Any(this Stack s) {
-    return s.Count != 0;
-  }
-
-  public static Parser<object> ToCell<T>(this Parser<T> parser) {
-    return parser.Select(t => (object) t);
-  }
-
-  public static Parser<object> Resolve<T>(this Parser<Symbol> parser, Dictionary<string, T> dict) {
-    return parser.Select(s => {
-        T obj;
-        if (dict.TryGetValue(s.name, out obj))
-          return (object) obj;
-        else
-          return (object) s;
-      });
-  }
-
-  public static Stack ToStack(this string repr) {
-    return Interpreter.ParseString(repr);
-  }
-
-  public static string ToRepr(this Stack s) {
-    var sb = new StringBuilder();
-    ToReprHelper(s, sb);
-    return sb.ToString();
-  }
-
-  private static void ToReprHelper(Stack s, StringBuilder sb) {
-    sb.Append("[");
-    var a = s.ToArray();
-    Array.Reverse(a);
-    s = new Stack(a);
-    while (s.Any()) {
-      object x = s.Pop();
-      if (x is Stack substack)
-        ToReprHelper(substack, sb);
-      // else if (x is Instruction i)
-      //   sb.Append(instructions.First(kv => kv.Value == i).Key);
-      else
-        sb.Append(x.ToString());
-      if (s.Any())
-        sb.Append(" ");
-    }
-    sb.Append("]");
-  }
-
-  // public static Parser<Cell> ToCell(this Parser<string> parser) {
-  //   return parser.Select(t => (Cell) t);
-  // }
-
-  // public static Parser<Cell> ToCell(this Parser<int> parser) {
-  //   return parser.Select(t => (Cell) t);
-  // }
-
-  // public static Parser<Cell> ToCell(this Parser<Symbol> parser) {
-  //   return parser.Select(t => (Cell) t);
-  // }
 }
 
 }
