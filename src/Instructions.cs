@@ -101,7 +101,11 @@ public class BinaryInstruction<X, Y> : Instruction {
       stack.Push(new Continuation(code));
       return stack;
     }
-    func(stack, (X) a, (Y) b);
+    // func(stack, (X) a, (Y) b);
+    // func(stack, a as X, b as Y);
+    func(stack,
+         a is X ? (X) a : default(X),
+         b is Y ? (Y) b : default(Y));
     return stack;
   }
 
@@ -112,24 +116,42 @@ public class BinaryInstruction<X, Y> : Instruction {
   }
 
   public static BinaryInstruction<X,Y> Reorder<Z>(string name) {
+    Reorder ra, rb;
+    ra = rb = null;
     var ins = new BinaryInstruction<X,Y>((stack, a, b) => {
         var s = new Stack();
         s.Push(new Symbol(name));
-        s.Push(a);
-        s.Push(b);
-        stack.Push(new Dummy(typeof(Z)));
-        stack.Push(new Reorder(s));
+        if (ra == null)
+          s.Push(a);
+        else
+          s.Push(ra);
+        if (rb == null)
+          s.Push(b);
+        else
+          s.Push(rb);
+        // s.Push(ra ?? a);
+        // s.Push(rb ?? b);
+        // stack.Push(new Dummy(typeof(Z)));
+        stack.Push(new Reorder(s, typeof(Z)));
+        ra = rb = null;
       });
-    ins.predicateX = a => a is X || (a is Dummy d && d.type is X);
-    ins.predicateY = a => a is Y || (a is Dummy d && d.type is Y);
+    ins.predicateX = x => x is X || (x is Reorder r && (ra = r).type == typeof(X));
+    ins.predicateY = y => y is Y || (y is Reorder r && (rb = r).type == typeof(Y));
     return ins;
   }
 }
 
-public class Reorder : Tuple<Stack> {
-  public Reorder(Stack s) : base(s) { }
+public class Reorder : Tuple<Stack, Type> {
+  public Reorder(Stack s) : base(s, null) { }
+  public Reorder(Stack s, Type t) : base(s, t) { }
   public Stack stack => Item1;
-  public Type type;
+  public Type type => Item2;
+  public override string ToString() {
+    if (type != null)
+      return $"R<{type}>{stack.ToRepr()}";
+    else
+      return $"R{stack.ToRepr()}";
+  }
 }
 
 public class Dummy {

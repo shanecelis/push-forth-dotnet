@@ -20,6 +20,9 @@ public class Continuation : Tuple<Stack> {
   public Continuation(Stack s) : base(s) { }
 
   public Stack code => Item1;
+  public override string ToString() {
+    return "C" + code.ToRepr();
+  }
 }
 
 // public class Cell : OneOfBase<Symbol, int, string> { }
@@ -45,10 +48,11 @@ public class Interpreter {
     AddInstruction("eval", (Stack stack) => {
         return Eval(stack);
       });
-    AddInstruction("reorder", (Stack stack, Stack program, Stack reordered) => {
-        var (s, r) = Reorder(program, reordered);
-        stack.Push(r);
-        stack.Push(s);
+    AddInstruction("reorder", (Stack program) => {
+        return Reorder(program);
+      });
+    AddInstruction("reorder-post", (Stack program) => {
+        return ReorderPost(program);
       });
     AddInstruction("cdr",(Stack stack) => {
         if (isStrict || stack.Any())
@@ -341,20 +345,43 @@ public class Interpreter {
     return StackParser.ParseWithResolution(s, instructions);
   }
 
-  public (Stack, Stack) Reorder(Stack stack, Stack reordered) {
-    Stack s = Eval(stack, new [] { reorderInstructions, instructions });
-    object code = s.Pop();
-    object o = s.Peek();
-    if (o is Reorder r) {
-      s.Pop();
-      reordered = Append(r.stack, reordered);
+  public Stack Reorder(Stack stack) {
+    return Eval(stack, new [] { reorderInstructions, instructions });
+  }
+
+  public bool IsReorderPostDone(Stack stack) {
+    var code = (Stack) stack.Pop();
+    var data = stack;
+    bool done = ! data.Any();
+    stack.Push(code);
+    return done;
+  }
+
+  public Stack RunReorder(Stack stack) {
+    return Run(stack, IsHalted, Reorder);
+  }
+
+  public Stack RunReorderPost(Stack stack) {
+    return Run(stack, IsReorderPostDone, ReorderPost);
+  }
+
+  public Stack ReorderPost(Stack stack) {
+    var code = (Stack) stack.Pop();
+    var data = stack;
+    if (data.Any()) {
+      object o = data.Pop();
+      if (o is Reorder r) {
+        // Recurse.
+        var s = new Stack(r.stack); // This reverses the stack.
+        s.Push(new Stack());
+        s = RunReorderPost(s);
+        var newCode = (Stack) s.Pop();
+        code = Append(newCode, code);
+      } else {
+        code = Cons(o, code);
+      }
     }
-    s.Push(code);
-    return (s, reordered);
-    // var q = new Stack();
-    // q.Push(reordered);
-    // q.Push(s);
-    // return q;
+    return Cons(code, data);
   }
 
   public Stack Eval(Stack stack, IEnumerable<Dictionary<string, Instruction>> instructionSets = null) {
@@ -407,12 +434,6 @@ public class Interpreter {
     }
   }
 
-  public string StackToString(Stack s) {
-    var sb = new StringBuilder();
-    ToStringHelper(s, sb);
-    return sb.ToString();
-  }
-
   public static bool IsHalted(Stack s) {
     if (! s.Any())
       return false;
@@ -436,7 +457,30 @@ public class Interpreter {
     return s;
   }
 
-  void ToStringHelper(Stack s, StringBuilder sb) {
+  public Stack Run(Stack s,
+                   Func<Stack, bool> isHalted,
+                   Func<Stack, Stack> eval,
+                   int maxSteps = -1) {
+    int steps = 0;
+    if (maxSteps < 0) {
+      while (! isHalted(s))
+        s = eval(s);
+    } else {
+      while (! isHalted(s) && steps++ < maxSteps)
+        s = eval(s);
+    }
+    return s;
+  }
+
+  public string StackToString(Stack s, IEnumerable<Dictionary<string, Instruction>> instructionSets = null) {
+    if (instructionSets == null)
+      instructionSets = new [] { instructions };
+    var sb = new StringBuilder();
+    ToStringHelper(s, sb, instructionSets);
+    return sb.ToString();
+  }
+
+  void ToStringHelper(Stack s, StringBuilder sb, IEnumerable<Dictionary<string, Instruction>> instructionSets) {
     sb.Append("[");
     var a = s.ToArray();
     Array.Reverse(a);
@@ -444,9 +488,15 @@ public class Interpreter {
     while (s.Any()) {
       object x = s.Pop();
       if (x is Stack substack)
-        ToStringHelper(substack, sb);
+        ToStringHelper(substack, sb, instructionSets);
       else if (x is Instruction i)
-        sb.Append(instructions.First(kv => kv.Value == i).Key);
+        foreach(var _instructions in instructionSets) {
+          var kv = _instructions.FirstOrDefault(_kv => _kv.Value == i);
+          if (kv.Value == i) {
+            sb.Append(kv.Key);
+            break;
+          }
+        }
       else
         sb.Append(x.ToString());
       if (s.Any())
@@ -481,6 +531,35 @@ public static class PushForthExtensions {
         else
           return (object) s;
       });
+  }
+
+  public static Stack ToStack(this string repr) {
+    return Interpreter.ParseString(repr);
+  }
+
+  public static string ToRepr(this Stack s) {
+    var sb = new StringBuilder();
+    ToReprHelper(s, sb);
+    return sb.ToString();
+  }
+
+  private static void ToReprHelper(Stack s, StringBuilder sb) {
+    sb.Append("[");
+    var a = s.ToArray();
+    Array.Reverse(a);
+    s = new Stack(a);
+    while (s.Any()) {
+      object x = s.Pop();
+      if (x is Stack substack)
+        ToReprHelper(substack, sb);
+      // else if (x is Instruction i)
+      //   sb.Append(instructions.First(kv => kv.Value == i).Key);
+      else
+        sb.Append(x.ToString());
+      if (s.Any())
+        sb.Append(" ");
+    }
+    sb.Append("]");
   }
 
   // public static Parser<Cell> ToCell(this Parser<string> parser) {
