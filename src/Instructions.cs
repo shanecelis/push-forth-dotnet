@@ -153,6 +153,41 @@ public class BinaryInstruction<X, Y> : Instruction {
   }
 }
 
+public class TypeCheckInstruction : Instruction {
+  public IEnumerable<Type> consumes;
+  public IEnumerable<Type> produces;
+  public readonly string name;
+
+  public TypeCheckInstruction(string name,
+                              IEnumerable<Type> consumes,
+                              IEnumerable<Type> produces) {
+    this.name = name;
+    this.consumes = consumes;
+    this.produces = produces;
+  }
+
+  public Stack Apply(Stack stack) {
+    var passedTypes = new List<object>();
+    foreach(Type consume in consumes) {
+      object o = stack.Pop();
+      if (o is Type t && t == consume) {
+        passedTypes.Add(o);
+      } else {
+        throw new Exception($"Type check instruction {name} expected type {consume} but got {o}");
+      }
+    }
+    foreach(var produced in produces) {
+      stack.Push(produced);
+    }
+    return stack;
+  }
+
+  public override string ToString() {
+    return "(" + string.Join(",", consumes) + ") -> "
+      + "(" + string.Join(",", produces) + ")";
+  }
+}
+
 public class ReorderInstruction : Instruction {
   public IEnumerable<Type> consumes;
   public IEnumerable<Type> produces;
