@@ -63,6 +63,15 @@ public class Interpreter {
         if (isStrict || stack.Any())
           stack.Pop();
       });
+
+    reorderInstructions["pop"] = new InstructionFunc(stack => {
+          var o = stack.Pop();
+          var t = stack.Any() ? stack.Peek().GetType() : null;
+          var s = new Stack();
+          s.Push(new Symbol("pop"));
+          s.Push(o);
+          stack.Push(new Reorder(s, t));
+      });
     instructions["dup"] = new InstructionFunc(stack => {
         if (isStrict || stack.Any())
           stack.Push(Duplicate(stack.Peek()));
@@ -357,7 +366,7 @@ public class Interpreter {
   }
 
   public Stack ReorderPre(Stack stack) {
-    return Eval(stack, new [] { reorderInstructions, instructions });
+    return Eval(stack, new [] { reorderInstructions });
   }
 
   public bool IsReorderPostDone(Stack stack) {

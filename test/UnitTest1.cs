@@ -555,6 +555,20 @@ public class UnitTest1
   }
 
   [Fact]
+  public void testMoreReordering4() {
+    var strict = new Interpreter(true);
+    // The non-strict interpreter moves around arguments such that they will continue to work.
+    Assert.Equal("[[] d c b a 3]", Run("[[2 a negate 3 pop b c 5 + d + +]]"));
+    Assert.Equal("[[2 negate 5 + a 3 pop b c d]]", interpreter.Reorder("[[2 a negate 3 pop b c 5 + d + +]]".ToStack()).ToRepr());
+    // The same output is produced.
+    Assert.Equal("[[] d c b a 3]", strict.Run("[[2 negate 5 + a 3 pop b c d]]".ToStack()).ToRepr());
+    // Can't run the original with the strict interpreter.
+    Assert.Throws<InvalidCastException>(() => strict.Run("[[2 a negate 3 pop b c 5 + d + +]]".ToStack()));
+    Assert.Throws<InvalidOperationException>(() => strict.Run("[[2 +]]".ToStack()));
+    Assert.Throws<InvalidOperationException>(() => strict.Run("[[+]]".ToStack()));
+  }
+
+  [Fact]
   public void testMoreReordering3() {
     var e = EvalStream("[[2 a ! a]]").GetEnumerator();
     e.MoveNext();
@@ -617,5 +631,70 @@ public class UnitTest1
     Assert.Equal(s, StackParser.ParsePivot("[+ 1 1 •]"));
   }
 
+  [Fact]
+  public void TestTypeCheck() {
+    var s = "[[1 1 +]]".ToStack();
+    var typedS = s.Map(o => o.GetType());
+    Assert.Equal("[[int int Symbol]]", typedS.ToRepr());
+    var typedS2 = s.Map(o => {
+        if (o is Symbol)
+          return o;
+        else
+          return o.GetType();
+      });
+    Assert.Equal("[[int int +]]", typedS2.ToRepr());
+    interpreter.reorderInstructions["+"] = new ReorderInstruction("+",
+                                                             new [] { typeof(int), typeof(int) },
+                                                             new [] { typeof(int) });
+    var e2 = interpreter
+      .EvalStream(typedS2,
+                  Interpreter.IsHalted,
+                  interpreter.ReorderPre)
+      .Select(x => x.ToPivot())
+      .GetEnumerator();
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[+ int • int]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[+ • int int]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[• int]", e2.Current);
+    Assert.False(e2.MoveNext());
+  }
+
+  [Fact]
+  public void TestTypeCheckRequiringReorder() {
+    var s = "[[1 1 a +]]".ToStack();
+    var typedS = s.Map(o => o.GetType());
+    Assert.Equal("[[int int Symbol Symbol]]", typedS.ToRepr());
+    var typedS2 = s.Map(o => {
+        if (o is Symbol)
+          return o;
+        else
+          return o.GetType();
+      });
+    Assert.Equal("[[int int a +]]", typedS2.ToRepr());
+    interpreter.reorderInstructions["+"] = new ReorderInstruction("+",
+                                                             new [] { typeof(int), typeof(int) },
+                                                             new [] { typeof(int) });
+    var e2 = interpreter
+      .EvalStream(typedS2,
+                  Interpreter.IsHalted,
+                  interpreter.ReorderPre)
+      .Select(x => x.ToPivot())
+      .GetEnumerator();
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[+ a int • int]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[+ a • int int]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[+ • a int int]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[a + • int int]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[a • int]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[• a int]", e2.Current);
+    Assert.False(e2.MoveNext());
+  }
 }
 }

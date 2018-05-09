@@ -153,6 +153,50 @@ public class BinaryInstruction<X, Y> : Instruction {
   }
 }
 
+public class ReorderInstruction : Instruction {
+  public IEnumerable<Type> consumes;
+  public IEnumerable<Type> produces;
+  public readonly string name;
+
+  public ReorderInstruction(string name,
+                            IEnumerable<Type> consumes,
+                            IEnumerable<Type> produces) {
+    this.name = name;
+    this.consumes = consumes;
+    this.produces = produces;
+  }
+
+  public Stack Apply(Stack stack) {
+    var passedTypes = new List<object>();
+    foreach(Type consume in consumes) {
+      object o = stack.Pop();
+      if (o is Type t && t == consume) {
+        passedTypes.Add(o);
+      } else {
+        // Put the good arguments back.
+        foreach(var passed in passedTypes)
+          stack.Push(passed);
+        var code = new Stack();
+        code.Push(o);
+        code.Push(new Symbol(name));
+        stack.Push(new Continuation(code));
+        return stack;
+      }
+    }
+
+    foreach(var produced in produces) {
+      stack.Push(produced);
+    }
+
+    return stack;
+  }
+
+  public override string ToString() {
+    return "(" + string.Join(",", consumes) + ") -> "
+      + "(" + string.Join(",", produces) + ")";
+  }
+}
+
 public class Reorder : Tuple<Stack, Type> {
   public Reorder(Stack s) : base(s, null) { }
   public Reorder(Stack s, Type t) : base(s, t) { }

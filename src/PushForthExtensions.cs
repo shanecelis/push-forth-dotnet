@@ -47,6 +47,8 @@ public static class PushForthExtensions {
         ToReprHelper(substack, sb);
       // else if (x is Instruction i)
       //   sb.Append(instructions.First(kv => kv.Value == i).Key);
+      else if (x is Type t)
+        sb.Append(t.PrettyName());
       else
         sb.Append(x.ToString());
       if (s.Any())
@@ -68,6 +70,8 @@ public static class PushForthExtensions {
         ToReprHelper(substack, sb);
       // else if (x is Instruction i)
       //   sb.Append(instructions.First(kv => kv.Value == i).Key);
+      else if (x is Type t)
+        sb.Append(t.PrettyName());
       else
         sb.Append(x.ToString());
       sb.Append(" ");
@@ -83,6 +87,8 @@ public static class PushForthExtensions {
         ToReprHelper(substack, sb);
       // else if (x is Instruction i)
       //   sb.Append(instructions.First(kv => kv.Value == i).Key);
+      else if (x is Type t)
+        sb.Append(t.PrettyName());
       else
         sb.Append(x.ToString());
       if (s.Any())
@@ -92,6 +98,117 @@ public static class PushForthExtensions {
     return sb.ToString();
   }
 
+  public static Stack Map(this Stack s, Func<object, object> f) {
+    // Queue q = new Queue();
+    s = (Stack) s.Clone();
+    Stack q = new Stack();
+    while (s.Any()) {
+      object o = s.Pop();
+      if (o is Stack r) {
+        o = r.Map(f);
+      } else {
+        o = f(o);
+      }
+      // q.Enqueue(o);
+      q.Push(o);
+    }
+    return new Stack(q);
+  }
+
+  public static string PrettyName(this Type type) {
+    if (type.GetGenericArguments().Length == 0) {
+      if (type.IsNumericType()) {
+        return type.NumericTypeAsString();
+      } else {
+        return type.Name;
+      }
+    }
+    var genericArguments = type.GetGenericArguments();
+    var typeDef = type.Name;
+    if (typeDef.Contains("`")) {
+      var unmangledName = typeDef.Substring(0, typeDef.IndexOf("`"));
+      return unmangledName
+        + "<" + string.Join(",", genericArguments
+                                   .Select(t => t.PrettyName())
+                                   .ToArray())
+        + ">";
+    } else {
+      return typeDef;
+    }
+  }
+
+  // public static string PrettySignature(this MethodInfo mi,
+  //                                      bool includeClassName = false) {
+  //   var ps = mi.GetParameters()
+  //     .Select(p => String.Format("{0} {1}",
+  //                                p.ParameterType.PrettyName(),
+  //                                p.Name));
+
+  //   return String.Format("{4}{0} {3}{1}({2})", mi.ReturnType.PrettyName(),
+  //                        mi.Name,
+  //                        string.Join(", ", ps.ToArray()),
+  //                        includeClassName
+  //                          ? mi.DeclaringType.PrettyName() + "."
+  //                          : "",
+  //                        mi.IsStatic ? "static " : "");
+  // }
+
+  public static string NumericTypeAsString(this Type t) {
+    if (t.IsEnum)
+      return null;
+    switch (Type.GetTypeCode(t)) {
+      case TypeCode.Byte:
+        return "byte";
+      case TypeCode.SByte:
+        return "sbyte";
+      case TypeCode.UInt16:
+        return "ushort";
+      case TypeCode.UInt32:
+        return "uint";
+      case TypeCode.UInt64:
+        return "ulong";
+      case TypeCode.Int16:
+        return "short";
+      case TypeCode.Int32:
+        return "int";
+      case TypeCode.Int64:
+        return "long";
+      case TypeCode.Decimal:
+        return "decimal";
+      case TypeCode.Double:
+        return "double";
+      case TypeCode.Single:
+        return "float";
+      default:
+        return null;
+    }
+  }
+
+
+  // public static CompleterEntity ToEntity(this ICoercer coercer) {
+  //   return new CompleterEntity(coercer);
+  // }
+
+  public static bool IsNumericType(this Type t) {
+    if (t.IsEnum)
+      return false;
+    switch (Type.GetTypeCode(t)) {
+      case TypeCode.Byte:
+      case TypeCode.SByte:
+      case TypeCode.UInt16:
+      case TypeCode.UInt32:
+      case TypeCode.UInt64:
+      case TypeCode.Int16:
+      case TypeCode.Int32:
+      case TypeCode.Int64:
+      case TypeCode.Decimal:
+      case TypeCode.Double:
+      case TypeCode.Single:
+        return true;
+      default:
+        return false;
+    }
+  }
   // public static Parser<Cell> ToCell(this Parser<string> parser) {
   //   return parser.Select(t => (Cell) t);
   // }
