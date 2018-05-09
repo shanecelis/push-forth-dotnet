@@ -38,7 +38,7 @@ public class StrictTests
   [Fact]
   public void TestMissing()
   {
-    var d0 = Interpreter.ParseString("[[add] 1]");
+    var d0 = Interpreter.ParseString("[[+] 1]");
     Assert.Throws<InvalidOperationException>(() => interpreter.Eval(d0));
   }
 
@@ -47,18 +47,18 @@ public class StrictTests
   {
     var code = new Stack();
     code.Push(new Symbol("a"));
-    code.Push(new Symbol("+"));
-    Assert.Equal(Interpreter.ParseString("[+ a]"), code);
+    code.Push(new Symbol("add"));
+    Assert.Equal(Interpreter.ParseString("[add a]"), code);
 
-    var d0 = Interpreter.ParseString("[[2 1 a +]]");
+    var d0 = Interpreter.ParseString("[[2 1 a add]]");
     var d1 = interpreter.Eval(d0);
-    Assert.Equal(Interpreter.ParseString("[[1 a +] 2]"), d1);
+    Assert.Equal(Interpreter.ParseString("[[1 a add] 2]"), d1);
     var d2 = interpreter.Eval(d1);
-    Assert.Equal(Interpreter.ParseString("[[a +] 1 2]"), d2);
+    Assert.Equal(Interpreter.ParseString("[[a add] 1 2]"), d2);
     var d3 = interpreter.Eval(d2);
-    Assert.Equal(Interpreter.ParseString("[[+] a 1 2]"), d3);
+    Assert.Equal(Interpreter.ParseString("[[add] a 1 2]"), d3);
     var d4 = interpreter.Eval(d3);
-    Assert.Equal(Interpreter.ParseString("[[+ a] 1 2]"), d4);
+    Assert.Equal(Interpreter.ParseString("[[add a] 1 2]"), d4);
     var d5 = interpreter.Eval(d4);
     Assert.Equal(Interpreter.ParseString("[[a] 3]"), d5);
     var d6 = interpreter.Eval(d5);
@@ -80,16 +80,16 @@ public class StrictTests
   {
     var code = new Stack();
     code.Push(new Symbol("a"));
-    code.Push(new Symbol("add"));
-    Assert.Equal(Interpreter.ParseString("[add a]"), code);
+    code.Push(new Symbol("+"));
+    Assert.Equal(Interpreter.ParseString("[+ a]"), code);
 
-    var d0 = Interpreter.ParseString("[[2 1 a add]]");
+    var d0 = Interpreter.ParseString("[[2 1 a +]]");
     var d1 = interpreter.Eval(d0);
-    Assert.Equal(Interpreter.ParseString("[[1 a add] 2]"), d1);
+    Assert.Equal(Interpreter.ParseString("[[1 a +] 2]"), d1);
     var d2 = interpreter.Eval(d1);
-    Assert.Equal(Interpreter.ParseString("[[a add] 1 2]"), d2);
+    Assert.Equal(Interpreter.ParseString("[[a +] 1 2]"), d2);
     var d3 = interpreter.Eval(d2);
-    Assert.Equal(Interpreter.ParseString("[[add] a 1 2]"), d3);
+    Assert.Equal(Interpreter.ParseString("[[+] a 1 2]"), d3);
     Assert.Throws<InvalidCastException>(() => interpreter.Eval(d3));
     // Assert.Equal(interpreter.ParseWithResolution("[[add a] 1 2]"), d4);
     // var d5 = interpreter.Eval(d4);
@@ -101,15 +101,15 @@ public class StrictTests
   [Fact]
   public void TestSkippingSecondArg()
   {
-    var d0 = Interpreter.ParseString("[[2 a 1 +]]");
+    var d0 = Interpreter.ParseString("[[2 a 1 add]]");
     var d1 = interpreter.Eval(d0);
-    Assert.Equal(Interpreter.ParseString("[[a 1 +] 2]"), d1);
+    Assert.Equal(Interpreter.ParseString("[[a 1 add] 2]"), d1);
     var d2 = interpreter.Eval(d1);
-    Assert.Equal(Interpreter.ParseString("[[1 +] a 2]"), d2);
+    Assert.Equal(Interpreter.ParseString("[[1 add] a 2]"), d2);
     var d3 = interpreter.Eval(d2);
-    Assert.Equal(Interpreter.ParseString("[[+] 1 a 2]"), d3);
+    Assert.Equal(Interpreter.ParseString("[[add] 1 a 2]"), d3);
     var d4 = interpreter.Eval(d3);
-    Assert.Equal(Interpreter.ParseString("[[+ a ] 1 2]"), d4);
+    Assert.Equal(Interpreter.ParseString("[[add a ] 1 2]"), d4);
     var d5 = interpreter.Eval(d4);
     Assert.Equal(Interpreter.ParseString("[[a] 3]"), d5);
     var d6 = interpreter.Eval(d5);
@@ -119,13 +119,13 @@ public class StrictTests
   [Fact]
   public void TestSkippingSecondArgWithResolution()
   {
-    var d0 = Interpreter.ParseString("[[2 a 1 add]]");
+    var d0 = Interpreter.ParseString("[[2 a 1 +]]");
     var d1 = interpreter.Eval(d0);
-    Assert.Equal(Interpreter.ParseString("[[a 1 add] 2]"), d1);
+    Assert.Equal(Interpreter.ParseString("[[a 1 +] 2]"), d1);
     var d2 = interpreter.Eval(d1);
-    Assert.Equal(Interpreter.ParseString("[[1 add] a 2]"), d2);
+    Assert.Equal(Interpreter.ParseString("[[1 +] a 2]"), d2);
     var d3 = interpreter.Eval(d2);
-    Assert.Equal(Interpreter.ParseString("[[add] 1 a 2]"), d3);
+    Assert.Equal(Interpreter.ParseString("[[+] 1 a 2]"), d3);
     Assert.Throws<InvalidCastException>(() => interpreter.Eval(d3));
     // Assert.Equal(interpreter.ParseWithResolution("[[add a ] 1 2]"), d4);
     // var d5 = interpreter.Eval(d4);

@@ -28,6 +28,9 @@ public class Interpreter {
 
   public Dictionary<string, Instruction> instructions
     = new Dictionary<string, Instruction>();
+
+  public Dictionary<string, Instruction> reorderInstructions
+    = new Dictionary<string, Instruction>();
   public readonly bool isStrict;
 
   public Interpreter(bool isStrict = false) {
@@ -39,14 +42,13 @@ public class Interpreter {
         if (isStrict || s.Any())
           stack.Push(s.Pop());
       });
-    // AddInstruction("car", (Stack stack) => {
-    //     if (stack.Any())
-    //       return stack.Pop();
-    //     else
-    //       throw new NoResultException();
-    //   });
     AddInstruction("eval", (Stack stack) => {
         return Eval(stack);
+      });
+    AddInstruction("reorder", (Stack stack, Stack program, Stack reordered) => {
+        var (s, r) = Reorder(program, reordered);
+        stack.Push(r);
+        stack.Push(s);
       });
     AddInstruction("cdr",(Stack stack) => {
         if (isStrict || stack.Any())
@@ -61,42 +63,24 @@ public class Interpreter {
         if (isStrict || stack.Any())
           stack.Push(Duplicate(stack.Peek()));
       });
-    instructions["swap"] = new InstructionFunc(stack =>
-        {
-          if (isStrict || stack.Count >= 2) {
-            var a = stack.Pop();
-            var b = stack.Pop();
-            stack.Push(a);
-            stack.Push(b);
-          }
-        });
+    instructions["swap"] = new InstructionFunc(stack => {
+        if (isStrict || stack.Count >= 2) {
+          var a = stack.Pop();
+          var b = stack.Pop();
+          stack.Push(a);
+          stack.Push(b);
+        }
+      });
     AddInstruction("cons", (object a, Stack b) => Cons(a, b));
-    AddInstruction("cat", (object a, object b) =>
-        {
-          var s = new Stack();
-          s.Push(b);
-          s.Push(a);
-          return s;
-        });
-    // instructions["split"] = new InstructionFunc(stack =>
-    //     {
-    //       if (stack.Any()) {
-    //         object o = stack.Pop();
-    //         if (o is Stack s) {
-    //           return Append(s, stack);
-    //         } else {
-    //           var code = new Stack();
-    //           code.Push(o);
-    //           code.Push(instructions["split"]);
-    //           stack.Push(new Continuation(code));
-    //         }
-    //       }
-    //       return stack;
-    //     });
-    AddInstruction("split", (Stack stack, Stack s) =>
-        {
-          stack = Append(s, stack);
-        });
+    AddInstruction("cat", (object a, object b) => {
+        var s = new Stack();
+        s.Push(b);
+        s.Push(a);
+        return s;
+      });
+    AddInstruction("split", (Stack stack, Stack s) => {
+        stack = Append(s, stack);
+      });
     AddInstruction("unit", (object a) => {
         var s = new Stack();
         s.Push(a);
@@ -105,9 +89,9 @@ public class Interpreter {
 
     // instructions["minus"] = new BinaryInstruction<int, int, int>((a, b) => a - b);
     AddInstruction("minus", (int a, int b) => a - b);
-    AddInstruction("add", (int a, int b) => a + b);
+    AddInstruction("+", (int a, int b) => a + b);
     // With InstructionFunc you have to do all your own error handling.
-    instructions["+"] = new InstructionFunc(stack => {
+    instructions["add"] = new InstructionFunc(stack => {
         if (stack.Count < 2)
           return stack;
         object a, b;
@@ -115,7 +99,7 @@ public class Interpreter {
         if (! (a is int)) {
           var code = new Stack();
           code.Push(a);
-          code.Push(new Symbol("+"));
+          code.Push(new Symbol("add"));
           stack.Push(new Continuation(code));
           return stack;
         }
@@ -123,7 +107,7 @@ public class Interpreter {
         if (! (b is int)) {
           var code = new Stack();
           code.Push(b);
-          code.Push(new Symbol("+"));
+          code.Push(new Symbol("add"));
           stack.Push(a);
           stack.Push(new Continuation(code));
           return stack;
@@ -308,6 +292,8 @@ public class Interpreter {
       instructions[name] = BinaryInstruction<X,Y>.WithResult(func);
     else
       instructions[name] = StrictBinaryInstruction<X,Y>.WithResult(func);
+
+    reorderInstructions[name] = BinaryInstruction<X,Y>.Reorder<Z>(name);
   }
 
   public void AddInstruction<X,Y>(string name, Action<Stack,X,Y> func) {
@@ -330,6 +316,7 @@ public class Interpreter {
     else
       instructions[name] = new StrictTrinaryInstruction<X,Y,Z>(func);
   }
+
   public static Stack Cons(object o, Stack stack) {
     stack.Push(o);
     return stack;
@@ -343,6 +330,7 @@ public class Interpreter {
 
   public static Stack ShallowCopy(Stack a) {
     return Append(a, new Stack());
+    // How's this versus a.Clone()?
   }
 
   public static Stack ParseString(string s) {
@@ -353,7 +341,25 @@ public class Interpreter {
     return StackParser.ParseWithResolution(s, instructions);
   }
 
-  public Stack Eval(Stack stack) {
+  public (Stack, Stack) Reorder(Stack stack, Stack reordered) {
+    Stack s = Eval(stack, new [] { reorderInstructions, instructions });
+    object code = s.Pop();
+    object o = s.Peek();
+    if (o is Reorder r) {
+      s.Pop();
+      reordered = Append(r.stack, reordered);
+    }
+    s.Push(code);
+    return (s, reordered);
+    // var q = new Stack();
+    // q.Push(reordered);
+    // q.Push(s);
+    // return q;
+  }
+
+  public Stack Eval(Stack stack, IEnumerable<Dictionary<string, Instruction>> instructionSets = null) {
+    if (instructionSets == null)
+      instructionSets = new [] { instructions };
     if (! stack.Any()) {
       // We add an empty stack which causes it to halt.
       stack.Push(new Stack());
@@ -369,9 +375,12 @@ public class Interpreter {
       object obj = code.Pop();
       Instruction ins;
       if (obj is Symbol s) {
-        if (instructions.TryGetValue(s.Item1, out ins)) {
-          // Console.WriteLine("Got an instruction!");
-          obj = ins;
+        foreach(var _instructions in instructionSets) {
+          if (_instructions.TryGetValue(s.Item1, out ins)) {
+            // Console.WriteLine("Got an instruction!");
+            obj = ins;
+            break;
+          }
         }
       }
       if (obj is Instruction i) {

@@ -76,6 +76,7 @@ public class ILStack {
       ilgen.Emit(OpCodes.Stelem_I4);
     }
     ilgen.Emit(OpCodes.Ldloc_0);
+    count = 0;
   }
 }
 
@@ -89,6 +90,12 @@ public class BinaryInstructionCompiler : InstructionCompiler {
   public BinaryInstructionCompiler(Action<Stack, ILStack> action) {
     this.action = action;
   }
+
+  public BinaryInstructionCompiler(MethodInfo methodInfo)
+    : this((stack, ilStack) => {
+        ilStack.ilgen.Emit(OpCodes.Call, methodInfo);
+        ilStack.count--;
+      }) { }
 
   public override Stack Apply(Stack stack) {
     object a, b;

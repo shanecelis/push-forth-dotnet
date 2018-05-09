@@ -82,7 +82,7 @@ public class UnitTest1
     var d3 = interpreter.Eval(d2);
     Assert.Equal(Interpreter.ParseString("[[+] a 1 2]"), d3);
     var d4 = interpreter.Eval(d3);
-    Assert.Equal(Interpreter.ParseString("[[+ a] 1 2]"), d4);
+    Assert.Equal(interpreter.ParseWithResolution("[[+ a] 1 2]"), d4);
     var d5 = interpreter.Eval(d4);
     Assert.Equal(Interpreter.ParseString("[[a] 3]"), d5);
     var d6 = interpreter.Eval(d5);
@@ -116,7 +116,7 @@ public class UnitTest1
     var d3 = interpreter.Eval(d2);
     Assert.Equal(Interpreter.ParseString("[[add] a 1 2]"), d3);
     var d4 = interpreter.Eval(d3);
-    Assert.Equal(interpreter.ParseWithResolution("[[add a] 1 2]"), d4);
+    Assert.Equal(Interpreter.ParseString("[[add a] 1 2]"), d4);
     var d5 = interpreter.Eval(d4);
     Assert.Equal(Interpreter.ParseString("[[a] 3]"), d5);
     var d6 = interpreter.Eval(d5);
@@ -135,7 +135,7 @@ public class UnitTest1
     var d3 = interpreter.Eval(d2);
     Assert.Equal(Interpreter.ParseString("[[+] 1 a 2]"), d3);
     var d4 = interpreter.Eval(d3);
-    Assert.Equal(Interpreter.ParseString("[[+ a ] 1 2]"), d4);
+    Assert.Equal(interpreter.ParseWithResolution("[[+ a ] 1 2]"), d4);
     var d5 = interpreter.Eval(d4);
     Assert.Equal(Interpreter.ParseString("[[a] 3]"), d5);
     var d6 = interpreter.Eval(d5);
@@ -154,7 +154,7 @@ public class UnitTest1
     var d3 = interpreter.Eval(d2);
     Assert.Equal(Interpreter.ParseString("[[add] 1 a 2]"), d3);
     var d4 = interpreter.Eval(d3);
-    Assert.Equal(interpreter.ParseWithResolution("[[add a ] 1 2]"), d4);
+    Assert.Equal(Interpreter.ParseString("[[add a ] 1 2]"), d4);
     var d5 = interpreter.Eval(d4);
     Assert.Equal(Interpreter.ParseString("[[a] 3]"), d5);
     var d6 = interpreter.Eval(d5);
@@ -445,6 +445,29 @@ public class UnitTest1
     Assert.True(IsHalted("[[] 1 2 3]"));
     Assert.False(IsHalted("[]"));
     Assert.True(IsHalted("[[]]"));
+  }
+
+  [Fact]
+  public void TestReorder() {
+    var interpreter = new Interpreter();
+    var d0 = Interpreter.ParseString("[[2 a 1 +]]");
+    var d1 = interpreter.Eval(d0);
+    Assert.Equal(Interpreter.ParseString("[[a 1 +] 2]"), d1);
+    var d2 = interpreter.Eval(d1);
+    Assert.Equal(Interpreter.ParseString("[[1 +] a 2]"), d2);
+    var d3 = interpreter.Eval(d2);
+    Assert.Equal(Interpreter.ParseString("[[+] 1 a 2]"), d3);
+    var d4 = interpreter.Eval(d3);
+    Assert.Equal(interpreter.ParseWithResolution("[[+ a ] 1 2]"), d4);
+    // var d4b = Interpreter.ParseString("[[' reorder run] [[+ a ] 1 2] []]");
+    // var d4b = Interpreter.ParseString("[[reorder] [[+ a ] 1 2] []]");
+    // var d5 = interpreter.Eval(d4b);
+    Assert.Equal("[[] [[a] Dummy(System.Int32)] [2 1 +]]",
+                 Eval("[[reorder] [[+ a ] 1 2] []]"));
+    Assert.Equal("[[reorder] [[+ a ] 1 2] []]",
+                 Eval("[[reorder] [[a] Dummy(System.Int32)] [2 1 +]]"));
+    // var d6 = interpreter.Eval(d5);
+    // Assert.Equal(Interpreter.ParseString("[[2 1 +] [[] a]]"), d6);
   }
 }
 }

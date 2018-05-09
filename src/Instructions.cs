@@ -74,6 +74,8 @@ public class UnaryInstruction<X> : Instruction {
 
 public class BinaryInstruction<X, Y> : Instruction {
   Action<Stack, X, Y> func;
+  Func<object, bool> predicateX = x => x is X;
+  Func<object, bool> predicateY = y => y is Y;
   public BinaryInstruction(Action<Stack, X, Y> func) {
     this.func = func;
   }
@@ -83,7 +85,7 @@ public class BinaryInstruction<X, Y> : Instruction {
       return stack;
     object a, b;
     a = stack.Pop();
-    if (! (a is X)) {
+    if (! predicateX(a)) {
       var code = new Stack();
       code.Push(a);
       code.Push(this);
@@ -91,7 +93,7 @@ public class BinaryInstruction<X, Y> : Instruction {
       return stack;
     }
     b = stack.Pop();
-    if (! (b is Y)) {
+    if (! predicateY(b)) {
       var code = new Stack();
       code.Push(b);
       code.Push(this);
@@ -107,6 +109,36 @@ public class BinaryInstruction<X, Y> : Instruction {
     return new BinaryInstruction<X,Y>((stack, a, b) => {
           stack.Push(func(a, b));
       });
+  }
+
+  public static BinaryInstruction<X,Y> Reorder<Z>(string name) {
+    var ins = new BinaryInstruction<X,Y>((stack, a, b) => {
+        var s = new Stack();
+        s.Push(new Symbol(name));
+        s.Push(a);
+        s.Push(b);
+        stack.Push(new Dummy(typeof(Z)));
+        stack.Push(new Reorder(s));
+      });
+    ins.predicateX = a => a is X || (a is Dummy d && d.type is X);
+    ins.predicateY = a => a is Y || (a is Dummy d && d.type is Y);
+    return ins;
+  }
+}
+
+public class Reorder : Tuple<Stack> {
+  public Reorder(Stack s) : base(s) { }
+  public Stack stack => Item1;
+  public Type type;
+}
+
+public class Dummy {
+  public Dummy(Type type) {
+    this.type = type;
+  }
+  public Type type;
+  public override string ToString() {
+    return $"Dummy({type})";
   }
 }
 
