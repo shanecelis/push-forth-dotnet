@@ -54,7 +54,7 @@ public class Interpreter {
     AddInstruction("!", (Stack stack, Symbol s, object x) => {
         AddInstruction(s.name, () => x);
       });
-
+    // Needed this to track down a bug.
     AddInstruction("!int", (Stack stack, Symbol s, int x) => {
         AddInstruction(s.name, () => x);
       });
@@ -67,6 +67,7 @@ public class Interpreter {
         if (isStrict || stack.Any())
           stack.Pop();
       });
+    // Damn, the reorder is more complicated than the thing in itself.
     reorderInstructions["pop"] = new InstructionFunc(stack => {
           var o = stack.Pop();
           var t = stack.Any() ? stack.Peek().GetType() : null;
@@ -451,9 +452,11 @@ public class Interpreter {
     }
   }
 
-  public Stack Eval(Stack stack, IEnumerable<Dictionary<string, Instruction>> instructionSets = null) {
-    if (instructionSets == null)
-      instructionSets = new [] { instructions };
+  public Stack Eval(Stack stack) {
+    return Eval(stack, new [] { instructions });
+  }
+
+  public static Stack Eval(Stack stack, IEnumerable<Dictionary<string, Instruction>> instructionSets) {
     if (! stack.Any()) {
       // We add an empty stack which causes it to halt.
       stack.Push(new Stack());

@@ -7,119 +7,6 @@ using System.Reflection;
 using System.Reflection.Emit;
 
 namespace SeawispHunter.PushForth {
-
-public class ILStackIndex : Tuple<int> {
-  public ILStackIndex(int i) : base(i) { }
-}
-
-public static class CompilerFunctions {
-  public static object Car(Stack s) => s.Peek();
-  public static Stack Cdr(Stack s) {
-    s = (Stack) s.Clone();
-    s.Pop();
-    return s;
-  }
-}
-
-public class ILStack {
-  public readonly ILGenerator ilgen;
-  public int count => types.Count;
-  public Stack<Type> types = new Stack<Type>();
-
-  public ILStack(ILGenerator ilgen) {
-    this.ilgen = ilgen;
-  }
-  public void Push(object o) {
-    if (o is int i) {
-      ilgen.Emit(OpCodes.Ldc_I4, i);
-      types.Push(typeof(int));
-    } else if (o is float f) {
-      ilgen.Emit(OpCodes.Ldc_R4, f);
-      types.Push(typeof(float));
-    } else if (o is double d) {
-      ilgen.Emit(OpCodes.Ldc_R8, d);
-      types.Push(typeof(double));
-    } else if (o is string s) {
-      ilgen.Emit(OpCodes.Ldstr, s);
-      types.Push(typeof(string));
-    } else if (o is Symbol sym) {
-      ilgen.Emit(OpCodes.Ldstr, sym.name);
-      ilgen.Emit(OpCodes.Newobj,
-                 typeof(Symbol).GetConstructor(new [] { typeof(string) }));
-      types.Push(typeof(Symbol));
-    } else if (o is Stack stack) {
-      int c = stack.Count;
-      foreach(var x in stack) {
-        Push(x);
-      }
-      MakeReturnStack(c);
-    } else {
-      throw new Exception("NYI");
-    }
-  }
-
-  public object Pop() {
-    types.Pop();
-    ilgen.Emit(OpCodes.Pop);
-    return Peek();
-  }
-
-  public object Peek() {
-    return new ILStackIndex(count - 1);
-  }
-
-  // Make a return stack.
-  // Should return a local variable reference or something.
-  public void MakeReturnStack(int _count) {
-    if (_count > count)
-      throw new Exception($"Trying to make a stack of {_count} items when {count} are available.");
-    // ilgen.BeginScope();
-    var localStack = ilgen.DeclareLocal(typeof(Stack));
-    var localTemp = ilgen.DeclareLocal(typeof(int));
-    ilgen.Emit(OpCodes.Newobj,
-               typeof(Stack).GetConstructor(Type.EmptyTypes));
-    ilgen.Emit(OpCodes.Stloc_0);
-    var pushMethod = typeof(Stack).GetMethod("Push");
-    for(int i = 0; i < _count; i++) {
-      ilgen.Emit(OpCodes.Stloc_1);
-      ilgen.Emit(OpCodes.Ldloc_0);
-      ilgen.Emit(OpCodes.Ldloc_1);
-      if (types.Peek().IsValueType)
-        ilgen.Emit(OpCodes.Box, types.Peek());
-      ilgen.Emit(OpCodes.Callvirt, pushMethod);
-      types.Pop();
-    }
-    ilgen.Emit(OpCodes.Ldloc_0);
-    // ilgen.EndScope();
-    types.Push(typeof(Stack));
-  }
-
-  // Make a return stack.
-  // Should return a local variable reference or something.
-  public void MakeReturnArray() {
-    var localStack = ilgen.DeclareLocal(typeof(int[]));
-    var localTemp = ilgen.DeclareLocal(typeof(int));
-    ilgen.Emit(OpCodes.Ldc_I4, count);
-    ilgen.Emit(OpCodes.Newarr, typeof(int));
-    ilgen.Emit(OpCodes.Stloc_0);
-    for(int i = 0; i < count; i++) {
-      // Store what's on the top of the stack.
-      ilgen.Emit(OpCodes.Stloc_1);
-      // Load the array.
-      ilgen.Emit(OpCodes.Ldloc_0);
-      // Set the last available index.
-      // ilgen.Emit(OpCodes.Ldc_I4, count - 1 - i);
-      ilgen.Emit(OpCodes.Ldc_I4, i);
-      // Load the what was on the top of the stack.
-      ilgen.Emit(OpCodes.Ldloc_1);
-      // Store it to the array.
-      ilgen.Emit(OpCodes.Stelem_I4);
-    }
-    ilgen.Emit(OpCodes.Ldloc_0);
-    types.Clear();
-  }
-}
-
 // public abstract class InstructionCompiler : Instruction {
 //   public ILStack ilStack;
 //   public abstract Stack Apply(Stack stack);
@@ -139,13 +26,13 @@ public class InstructionCompiler : Instruction {
            (stack) => {
              stack.Push(new ILStackIndex(0)); // fake.
              return ilStack => {
-             ilStack.ilgen.Emit(OpCodes.Call, methodInfo);
+             ilStack.il.Emit(OpCodes.Call, methodInfo);
              for(int i = 0; i < methodInfo.GetParameters().Length; i++)
                ilStack.types.Pop();
 
              if (methodInfo.ReturnType != typeof(void)) {
                if (methodInfo.ReturnType.IsValueType)
-                 ilStack.ilgen.Emit(OpCodes.Unbox_Any, methodInfo.ReturnType);
+                 ilStack.il.Emit(OpCodes.Unbox_Any, methodInfo.ReturnType);
                ilStack.types.Push(methodInfo.ReturnType);
              }
              };
@@ -177,7 +64,7 @@ public class AddInstructionCompiler : InstructionCompiler {
   public AddInstructionCompiler() : base(2, (stack) => {
       stack.Push(new ILStackIndex(0)); // XXX Fake index.
       return ilStack => {
-        ilStack.ilgen.Emit(OpCodes.Add);
+        ilStack.il.Emit(OpCodes.Add);
         ilStack.types.Pop();
       };
     }) { }
@@ -190,16 +77,16 @@ public class MathOpCompiler : InstructionCompiler {
       return ilStack => {
       switch (op) {
         case '+':
-        ilStack.ilgen.Emit(OpCodes.Add);
+        ilStack.il.Emit(OpCodes.Add);
         break;
         case '-':
-        ilStack.ilgen.Emit(OpCodes.Sub);
+        ilStack.il.Emit(OpCodes.Sub);
         break;
         case '*':
-        ilStack.ilgen.Emit(OpCodes.Mul);
+        ilStack.il.Emit(OpCodes.Mul);
         break;
         case '/':
-        ilStack.ilgen.Emit(OpCodes.Div);
+        ilStack.il.Emit(OpCodes.Div);
         break;
         default:
         throw new Exception("No math operation for " + op);

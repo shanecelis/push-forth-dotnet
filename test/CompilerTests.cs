@@ -6,11 +6,13 @@ using System.Linq.Expressions;
 using System.Linq;
 using System.Reflection.Emit;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace test
 {
 public class CompilerTests
 {
+  Compiler compiler = new Compiler();
   [Fact]
   public void TestCompiling() {
     Expression<Func<int, int, int>> f = (a, b) => a + b;
@@ -408,6 +410,99 @@ public class CompilerTests
 
     // That's better.
     Assert.Equal(-1, f());
+    Assert.NotEqual(1, f());
+  }
+
+  [Fact]
+  public void TestRegex() {
+    string s;
+    s = "[2]";
+    Assert.Equal("2", Regex.Replace(s, @"[\[\] ]+", ""));
+    s = "[3 [2 1 +] 2]";
+    Assert.Equal("3212", Regex.Replace(s, @"[^0-9]+", ""));
+  }
+
+  [Fact]
+  public void TestCompilerString() {
+    Func<string> g;
+    g = compiler.CompileStack<string>(@"[""hi"" ""what""]".ToStack());
+    Assert.Equal("hi", g());
+  }
+
+  [Fact]
+  public void TestCompilerInt() {
+    Func<int> h;
+    // h = compiler.Compile<int>("[[2 1 +]]".ToStack());
+    // Assert.Equal(42, h());
+    // Assert.NotEqual(0, h());
+    h = compiler.CompileStack<int>("[2]".ToStack());
+    Assert.Equal(2, h());
+    Assert.NotEqual(0, h());
+
+    // Assert.True(false);
+    h = compiler.CompileStack<int>("[3 2]".ToStack());
+    int s = h();
+    Assert.Equal(3, s);
+    Assert.NotEqual(4, s);
+  }
+
+  [Fact]
+  public void TestCompileInt() {
+    Func<int> h;
+    // h = compiler.Compile<int>("[[2 1 +]]".ToStack());
+    // Assert.Equal(42, h());
+    // Assert.NotEqual(0, h());
+    h = compiler.CompileInt("[2]".ToStack());
+    Assert.Equal(43, h());
+    Assert.NotEqual(0, h());
+
+    // Assert.True(false);
+    h = compiler.CompileInt("[3 2]".ToStack());
+    int s = h();
+    Assert.Equal(43, s);
+    Assert.NotEqual(4, s);
+  }
+
+  [Fact]
+  public void TestCompiler() {
+    Func<Stack> f;
+    f = compiler.CompileStack("[1]".ToStack());
+    // Assert.True(false);
+    // Stack s = new Stack(); //f();
+    Stack s = f();
+    // Running this messes up everything!
+    // Assert.True(false);
+    // Assert.Equal(null, s.Pop());
+    Assert.True(1 == s.Count);
+    Assert.Equal(1, s.Peek());
+    // Assert.Equal(0, s.Count);
+    // Assert.True(false);
+    Assert.NotEqual("blah [[]]", s.ToRepr());
+    Assert.Equal("[1]", s.ToRepr());
+
+    f = compiler.CompileStack(@"[1 2]".ToStack());
+    s = f();
+    Assert.Equal(@"[1 2]", s.ToRepr());
+    f = compiler.CompileStack(@"[1 2 ""hi""]".ToStack());
+    s = f();
+    Assert.Equal(@"[1 2 ""hi""]", s.ToRepr());
+    // f = compiler.Compile("[[] 1]".ToStack());
+    // Assert.Equal("[[] 1]", f().ToRepr());
+    // Assert.Equal("[[] 1]", f().ToRepr());
+
+    // f = compiler.Compile("[[5 2 1 +]]".ToStack());
+    // Assert.Equal("[[] 3 5]", f().ToRepr());
+
+    // f = compiler.Compile("[[2 1 +]]".ToStack());
+    // Assert.Equal("[[] 3]", f().ToRepr());
+
+    // h = compiler.Compile<int>("[[2 1 +]]".ToStack());
+    // Assert.Equal(3, h());
+
+    // h = compiler.Compile<int>("[[5 2 1 +]]".ToStack());
+    // Assert.Equal(3, h());
+
+    Assert.Throws<Exception>(() => compiler.Compile<char>("[[5 2 1 +]]".ToStack()));
   }
 }
 }

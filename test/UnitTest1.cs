@@ -49,6 +49,8 @@ public class UnitTest1
   [Fact]
   public void TestStackQueueBehavior() {
     var s = new Stack(new [] {1, 2, 3});
+    Assert.True(s.Contains(2));
+    Assert.False(s.Contains(4));
     Assert.Equal("[3 2 1]", s.ToRepr());
     Assert.Equal(new object[] {3, 2, 1}, s.ToArray());
     Assert.Equal(new object[] {3, 2, 1}, s.GetEnumerator().ToEnumerable().Cast<object>().ToArray());
