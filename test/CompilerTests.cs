@@ -49,9 +49,9 @@ public class CompilerTests
     // emitted.
     ILGenerator il = hello.GetILGenerator(256);
     // Load the first argument, which is a string, onto the stack.
-    il.Emit(OpCodes.Ldarg_0);
+    // il.Emit(OpCodes.Ldarg_0);
     // Call the overload of Console.WriteLine that prints a string.
-    il.EmitCall(OpCodes.Call, writeString, null);
+    // il.EmitCall(OpCodes.Call, writeString, null);
     // The Hello method returns the value of the second argument;
     // to do this, load the onto the stack and return.
     il.Emit(OpCodes.Ldarg_1);
@@ -143,10 +143,58 @@ public class CompilerTests
     s.Push(5);
     var r = bi.Apply(s);
     var t = bi.Apply(r);
-    // Load the first arVgument, which is a string, onto the stack.
+    // Load the first argument, which is a string, onto the stack.
     il.Emit(OpCodes.Ret);
     var f = (Func<Stack, int>) dynMeth.CreateDelegate(typeof(Func<Stack, int>));
     Assert.Equal(10, f(s));
+  }
+
+  [Fact]
+  public void TestAddStackFloat() {
+    DynamicMethod dynMeth = new DynamicMethod("Run",
+                                              typeof(float),
+                                              new [] {typeof(Stack)},
+                                              typeof(CompilerTests).Module);
+
+    ILGenerator il = dynMeth.GetILGenerator(256);
+    var ils = new ILStack();
+    ils.ilgen = il;
+    var bi = new AddInstructionCompiler();
+    bi.ilStack = ils;
+    var s = new Stack();
+    s.Push(1.5f);
+    s.Push(4f);
+    s.Push(5f);
+    var r = bi.Apply(s);
+    var t = bi.Apply(r);
+    // Load the first argument, which is a string, onto the stack.
+    il.Emit(OpCodes.Ret);
+    var f = (Func<Stack, float>) dynMeth.CreateDelegate(typeof(Func<Stack, float>));
+    Assert.Equal(10.5f, f(s));
+  }
+
+  [Fact]
+  public void TestAddStackDouble() {
+    DynamicMethod dynMeth = new DynamicMethod("Run",
+                                              typeof(double),
+                                              new [] {typeof(Stack)},
+                                              typeof(CompilerTests).Module);
+
+    ILGenerator il = dynMeth.GetILGenerator(256);
+    var ils = new ILStack();
+    ils.ilgen = il;
+    var bi = new AddInstructionCompiler();
+    bi.ilStack = ils;
+    var s = new Stack();
+    s.Push(1.5);
+    s.Push(4.5);
+    s.Push(5.5);
+    var r = bi.Apply(s);
+    var t = bi.Apply(r);
+    // Load the first argument, which is a string, onto the stack.
+    il.Emit(OpCodes.Ret);
+    var f = (Func<Stack, double>) dynMeth.CreateDelegate(typeof(Func<Stack, double>));
+    Assert.Equal(11.5, f(s));
   }
 
   [Fact]
@@ -162,7 +210,7 @@ public class CompilerTests
     ils.Push(1);
     ils.Push(4);
     ils.Push(5);
-    ils.MakeReturnStack();
+    ils.MakeReturnStack(3);
     il.Emit(OpCodes.Ret);
     var f = (Func<Stack>) dynMeth.CreateDelegate(typeof(Func<Stack>));
 
@@ -194,5 +242,118 @@ public class CompilerTests
     Assert.Equal(new [] {5, 4, 1}, f());
   }
 
+  [Fact]
+  public void TestReturnString() {
+    DynamicMethod dynMeth = new DynamicMethod("Run",
+                                              typeof(string),
+                                              new Type[] {},
+                                              typeof(CompilerTests).Module);
+    ILGenerator il = dynMeth.GetILGenerator(256);
+    var ils = new ILStack();
+    ils.ilgen = il;
+    ils.Push("hi");
+    il.Emit(OpCodes.Ret);
+    var f = (Func<string>) dynMeth.CreateDelegate(typeof(Func<string>));
+
+    // That's better.
+    Assert.Equal("hi", f());
+  }
+
+  [Fact]
+  public void TestReturnSymbol() {
+    DynamicMethod dynMeth = new DynamicMethod("Run",
+                                              typeof(Symbol),
+                                              new Type[] {},
+                                              typeof(CompilerTests).Module);
+    ILGenerator il = dynMeth.GetILGenerator(256);
+    var ils = new ILStack();
+    ils.ilgen = il;
+    ils.Push(new Symbol("hi"));
+    il.Emit(OpCodes.Ret);
+    var f = (Func<Symbol>) dynMeth.CreateDelegate(typeof(Func<Symbol>));
+
+    // That's better.
+    Assert.Equal(new Symbol("hi"), f());
+  }
+
+  [Fact]
+  public void TestReturnStack2() {
+    DynamicMethod dynMeth = new DynamicMethod("Run",
+                                              typeof(Stack),
+                                              new Type[] {},
+                                              typeof(CompilerTests).Module);
+    ILGenerator il = dynMeth.GetILGenerator(256);
+    var ils = new ILStack();
+    ils.ilgen = il;
+    ils.Push("[1 2 3]".ToStack());
+    il.Emit(OpCodes.Ret);
+    var f = (Func<Stack>) dynMeth.CreateDelegate(typeof(Func<Stack>));
+
+    // That's better.
+    Assert.Equal("[1 2 3]".ToStack(), f());
+  }
+
+  [Fact]
+  public void TestCarObject() {
+    DynamicMethod dynMeth = new DynamicMethod("Run",
+                                              typeof(object),
+                                              new Type[] {},
+                                              typeof(CompilerTests).Module);
+    ILGenerator il = dynMeth.GetILGenerator(256);
+    var ils = new ILStack();
+    ils.ilgen = il;
+    var i = new InstructionCompiler(typeof(CompilerFunctions).GetMethod("Car"));
+    var s = "[[1 2 3]]".ToStack();
+    i.ilStack = ils;
+    i.Apply(s);
+    il.Emit(OpCodes.Ret);
+    var f = (Func<object>) dynMeth.CreateDelegate(typeof(Func<object>));
+
+    // That's better.
+    Assert.Equal(1, f());
+    Assert.Equal((object)1, f());
+  }
+
+  [Fact]
+  public void TestCar() {
+    DynamicMethod dynMeth = new DynamicMethod("Run",
+                                              typeof(int),
+                                              new Type[] {},
+                                              typeof(CompilerTests).Module);
+    ILGenerator il = dynMeth.GetILGenerator(256);
+    var ils = new ILStack();
+    ils.ilgen = il;
+    var i = new InstructionCompiler(typeof(CompilerFunctions).GetMethod("Car"));
+    var s = "[[1 2 3]]".ToStack();
+    i.ilStack = ils;
+    i.Apply(s);
+    il.Emit(OpCodes.Unbox_Any, typeof(int));
+    // il.Emit(OpCodes.Conv_I4);
+    il.Emit(OpCodes.Ret);
+    var f = (Func<int>) dynMeth.CreateDelegate(typeof(Func<int>));
+
+    // That's better.
+    Assert.Equal(1, f());
+  }
+
+  [Fact]
+  public void TestCdr() {
+    DynamicMethod dynMeth = new DynamicMethod("Run",
+                                              typeof(Stack),
+                                              new Type[] {},
+                                              typeof(CompilerTests).Module);
+    ILGenerator il = dynMeth.GetILGenerator(256);
+    var ils = new ILStack();
+    ils.ilgen = il;
+    var i = new InstructionCompiler(typeof(CompilerFunctions).GetMethod("Cdr"));
+    var s = "[[1 2 3]]".ToStack();
+    i.ilStack = ils;
+    i.Apply(s);
+    il.Emit(OpCodes.Ret);
+    var f = (Func<Stack>) dynMeth.CreateDelegate(typeof(Func<Stack>));
+
+    // That's better.
+    Assert.Equal("[2 3]".ToStack(), f());
+  }
 }
 }
