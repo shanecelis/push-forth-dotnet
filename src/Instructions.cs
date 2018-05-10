@@ -153,38 +153,16 @@ public class BinaryInstruction<X, Y> : Instruction {
   }
 }
 
-public class TypeCheckInstruction : Instruction {
-  public IEnumerable<Type> consumes;
-  public IEnumerable<Type> produces;
-  public readonly string name;
+public class TypeCheckInstruction : ReorderInstruction {
 
   public TypeCheckInstruction(string name,
                               IEnumerable<Type> consumes,
-                              IEnumerable<Type> produces) {
-    this.name = name;
-    this.consumes = consumes;
-    this.produces = produces;
-  }
+                              IEnumerable<Type> produces)
+    : base(name, consumes, produces)
+  { }
 
-  public Stack Apply(Stack stack) {
-    var passedTypes = new List<object>();
-    foreach(Type consume in consumes) {
-      object o = stack.Pop();
-      if (o is Type t && t == consume) {
-        passedTypes.Add(o);
-      } else {
-        throw new Exception($"Type check instruction {name} expected type {consume} but got {o}");
-      }
-    }
-    foreach(var produced in produces) {
-      stack.Push(produced);
-    }
-    return stack;
-  }
-
-  public override string ToString() {
-    return "(" + string.Join(",", consumes) + ") -> "
-      + "(" + string.Join(",", produces) + ")";
+  public override Stack TypeMismatch(Stack stack, ICollection passedTypes, object o, Type consume) {
+    throw new Exception($"Type check instruction {name} expected type {consume} but got {o}");
   }
 }
 
@@ -192,6 +170,9 @@ public class ReorderInstruction : Instruction {
   public IEnumerable<Type> consumes;
   public IEnumerable<Type> produces;
   public readonly string name;
+  public Func<object, Type> getType = o => o is ReprType d ? d.type : o.GetType();
+  public Func<Type, object> putType = o => new Dummy(o);
+  public bool leaveReorderItems = true;
 
   public ReorderInstruction(string name,
                             IEnumerable<Type> consumes,
@@ -201,57 +182,87 @@ public class ReorderInstruction : Instruction {
     this.produces = produces;
   }
 
+  public virtual Stack TypeMismatch(Stack stack, ICollection passedTypes, object o, Type consume) {
+    // Put the good arguments back.
+    stack = Interpreter.Append(passedTypes, stack);
+    // foreach(var passed in passedTypes)
+    //   stack.Push(passed);
+    var code = new Stack();
+    code.Push(o);
+    code.Push(new Symbol(name));
+    stack.Push(new Continuation(code));
+    return stack;
+  }
+
+  public virtual Stack NotEnoughElements(Stack stack, Queue passedTypes) {
+    foreach(object p in passedTypes)
+      stack.Push(p);
+    return stack;
+  }
+
   public Stack Apply(Stack stack) {
-    var passedTypes = new List<object>();
+    var passedTypes = new Queue();
     foreach(Type consume in consumes) {
+      if (! stack.Any()) {
+        // Not enough elements.
+        return NotEnoughElements(stack, passedTypes);
+      }
+
       object o = stack.Pop();
-      if (o is Type t && t == consume) {
-        passedTypes.Add(o);
+      var t = getType(o);
+      // if (t == consume) {
+      if (consume.IsAssignableFrom(t)) {
+        passedTypes.Enqueue(o);
       } else {
-        // Put the good arguments back.
-        foreach(var passed in passedTypes)
-          stack.Push(passed);
-        var code = new Stack();
-        code.Push(o);
-        code.Push(new Symbol(name));
-        stack.Push(new Continuation(code));
-        return stack;
+        return TypeMismatch(stack, passedTypes, o, consume);
       }
     }
 
-    foreach(var produced in produces) {
-      stack.Push(produced);
+    if (leaveReorderItems) {
+      var code = new Stack();
+      code.Push(new Symbol(name));
+      foreach(var t in passedTypes)
+        code.Push(t);
+      stack.Push(new Reorder(code, produces.FirstOrDefault()));
+    }
+    // Everything checks out. Add the types we produced.
+    foreach(var produced in (leaveReorderItems ? produces.Skip(1) : produces)) {
+      stack.Push(putType(produced));
     }
 
     return stack;
   }
 
   public override string ToString() {
-    return "(" + string.Join(",", consumes) + ") -> "
-      + "(" + string.Join(",", produces) + ")";
+    return "(" + string.Join(",", consumes.Select(t => t.PrettyName())) + ") -> "
+      + "(" + string.Join(",", produces.Select(t => t.PrettyName())) + ")";
   }
 }
 
-public class Reorder : Tuple<Stack, Type> {
+public class Reorder : Tuple<Stack, Type>, ReprType {
   public Reorder(Stack s) : base(s, null) { }
   public Reorder(Stack s, Type t) : base(s, t) { }
   public Stack stack => Item1;
   public Type type => Item2;
   public override string ToString() {
     if (type != null)
-      return $"R<{type}>{stack.ToRepr()}";
+      return $"R<{type.PrettyName()}>{stack.ToRepr()}";
     else
       return $"R{stack.ToRepr()}";
   }
 }
 
-public class Dummy {
+public interface ReprType {
+  Type type { get; }
+}
+
+public class Dummy : ReprType {
   public Dummy(Type type) {
     this.type = type;
   }
-  public Type type;
+  public Type type { get; set; }
   public override string ToString() {
-    return $"Dummy({type})";
+    return $"D({type.PrettyName()})";
   }
 }
 

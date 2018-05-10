@@ -54,6 +54,10 @@ public class Interpreter {
     AddInstruction("!", (Stack stack, Symbol s, object x) => {
         AddInstruction(s.name, () => x);
       });
+
+    AddInstruction("!int", (Stack stack, Symbol s, int x) => {
+        AddInstruction(s.name, () => x);
+      });
     AddInstruction("cdr",(Stack stack) => {
         if (isStrict || stack.Any())
           stack.Pop();
@@ -63,7 +67,6 @@ public class Interpreter {
         if (isStrict || stack.Any())
           stack.Pop();
       });
-
     reorderInstructions["pop"] = new InstructionFunc(stack => {
           var o = stack.Pop();
           var t = stack.Any() ? stack.Peek().GetType() : null;
@@ -286,7 +289,11 @@ public class Interpreter {
       instructions[name] = NullaryInstruction.WithResult(func);
     else
       instructions[name] = StrictNullaryInstruction.WithResult(func);
-    reorderInstructions[name] = NullaryInstruction.Reorder<X>(name);
+    // reorderInstructions[name] = NullaryInstruction.Reorder<X>(name);
+
+    reorderInstructions[name] = new ReorderInstruction(name,
+                                                       new Type[] { },
+                                                       new [] { typeof(X) });
   }
 
   public void AddInstruction<X>(string name, Action<Stack,X> func) {
@@ -301,7 +308,9 @@ public class Interpreter {
       instructions[name] = UnaryInstruction<X>.WithResult(func);
     else
       instructions[name] = StrictUnaryInstruction<X>.WithResult(func);
-    reorderInstructions[name] = UnaryInstruction<X>.Reorder<Y>(name);
+    reorderInstructions[name] = new ReorderInstruction(name,
+                                                       new [] { typeof(X) },
+                                                       new [] { typeof(Y) });
   }
 
   public void AddInstruction<X,Y,Z>(string name, Func<X,Y,Z> func) {
@@ -310,7 +319,10 @@ public class Interpreter {
     else
       instructions[name] = StrictBinaryInstruction<X,Y>.WithResult(func);
 
-    reorderInstructions[name] = BinaryInstruction<X,Y>.Reorder(name, typeof(Z));
+    reorderInstructions[name] = new ReorderInstruction(name,
+                                                       new [] { typeof(X), typeof(Y) },
+                                                       new [] { typeof(Z) });
+    // reorderInstructions[name] = BinaryInstruction<X,Y>.Reorder(name, typeof(Z));
   }
 
   public void AddInstruction<X,Y>(string name, Action<Stack,X,Y> func) {
@@ -318,7 +330,11 @@ public class Interpreter {
       instructions[name] = new BinaryInstruction<X,Y>(func);
     else
       instructions[name] = new StrictBinaryInstruction<X,Y>(func);
-    reorderInstructions[name] = BinaryInstruction<X,Y>.Reorder(name, null);
+
+    reorderInstructions[name] = new ReorderInstruction(name,
+                                                       new [] { typeof(X), typeof(Y) },
+                                                       new Type[] { });
+    // reorderInstructions[name] = BinaryInstruction<X,Y>.Reorder(name, null);
   }
 
   public void AddInstruction<X,Y,Z,W>(string name, Func<X,Y,Z,W> func) {
@@ -327,7 +343,9 @@ public class Interpreter {
     else
       instructions[name] = StrictTrinaryInstruction<X,Y,Z>.WithResult(func);
 
-    reorderInstructions[name] = TrinaryInstruction<X,Y,Z>.Reorder<W>(name);
+    reorderInstructions[name] = new ReorderInstruction(name,
+                                                       new [] { typeof(X), typeof(Y), typeof(Z) },
+                                                       new [] { typeof(W) });
   }
 
   public void AddInstruction<X,Y,Z>(string name, Action<Stack,X,Y,Z> func) {
@@ -335,6 +353,10 @@ public class Interpreter {
       instructions[name] = new TrinaryInstruction<X,Y,Z>(func);
     else
       instructions[name] = new StrictTrinaryInstruction<X,Y,Z>(func);
+
+    reorderInstructions[name] = new ReorderInstruction(name,
+                                                       new [] { typeof(X), typeof(Y), typeof(Z) },
+                                                       new Type[] { });
   }
 
   public static Stack Cons(object o, Stack stack) {
@@ -345,6 +367,15 @@ public class Interpreter {
   public static Stack Append(Stack a, Stack b) {
     foreach(var x in a.ToArray().Reverse())
       b.Push(x);
+    return b;
+  }
+
+  public static Stack Append(ICollection a, Stack b) {
+    var e = a.GetEnumerator();
+    while (e.MoveNext())
+      b.Push(e.Current);
+    // foreach(var x in a.GetEnumerator().ToEnumerable().Cast<object>().Reverse())
+    //   b.Push(x);
     return b;
   }
 
@@ -397,6 +428,8 @@ public class Interpreter {
         s = RunReorderPost(s);
         var newCode = (Stack) s.Pop();
         code = Append(newCode, code);
+      } else if (o is Dummy d) {
+        // We just drop it.
       } else {
         code = Cons(o, code);
       }
@@ -523,6 +556,8 @@ public class Interpreter {
       object x = s.Pop();
       if (x is Stack substack)
         ToStringHelper(substack, sb, instructionSets);
+      else if (x is Type t)
+        sb.Append(t.PrettyName());
       else if (x is Instruction i)
         foreach(var _instructions in instructionSets) {
           var kv = _instructions.FirstOrDefault(_kv => _kv.Value == i);

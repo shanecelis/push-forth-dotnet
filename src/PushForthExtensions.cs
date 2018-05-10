@@ -209,6 +209,7 @@ public static class PushForthExtensions {
         return false;
     }
   }
+
   // public static Parser<Cell> ToCell(this Parser<string> parser) {
   //   return parser.Select(t => (Cell) t);
   // }
@@ -220,5 +221,16 @@ public static class PushForthExtensions {
   // public static Parser<Cell> ToCell(this Parser<Symbol> parser) {
   //   return parser.Select(t => (Cell) t);
   // }
+
+  // https://stackoverflow.com/questions/3537657/c-sharp-how-to-create-an-array-from-an-enumerator
+  public static IEnumerable<T> ToEnumerable<T>(this IEnumerator<T> enumerator) {
+    while(enumerator.MoveNext())
+      yield return enumerator.Current;
+  }
+
+  public static IEnumerable ToEnumerable(this IEnumerator enumerator) {
+    while(enumerator.MoveNext())
+      yield return enumerator.Current;
+  }
 }
 }
