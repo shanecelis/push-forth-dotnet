@@ -166,6 +166,29 @@ public class AddInstructionCompiler : InstructionCompiler {
     }) { }
 }
 
+public class MathOpCompiler : InstructionCompiler {
+  public MathOpCompiler(char op) : base(2, (stack, ilStack) => {
+      switch (op) {
+        case '+':
+        ilStack.ilgen.Emit(OpCodes.Add);
+        break;
+        case '-':
+        ilStack.ilgen.Emit(OpCodes.Sub);
+        break;
+        case '*':
+        ilStack.ilgen.Emit(OpCodes.Mul);
+        break;
+        case '/':
+        ilStack.ilgen.Emit(OpCodes.Div);
+        break;
+        default:
+        throw new Exception("No math operation for " + op);
+      }
+      ilStack.types.Pop();
+      stack.Push(ilStack.Peek());
+    }) { }
+}
+
 // public class Compiled: Tuple<Expression> {
 //   public Compiled(Expression s) : base(s) { }
 

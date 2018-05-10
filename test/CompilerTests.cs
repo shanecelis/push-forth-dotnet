@@ -355,5 +355,25 @@ public class CompilerTests
     // That's better.
     Assert.Equal("[2 3]".ToStack(), f());
   }
+
+  [Fact]
+  public void TestSubtract() {
+    DynamicMethod dynMeth = new DynamicMethod("Run",
+                                              typeof(int),
+                                              new Type[] {},
+                                              typeof(CompilerTests).Module);
+    ILGenerator il = dynMeth.GetILGenerator(256);
+    var ils = new ILStack();
+    ils.ilgen = il;
+    var i = new MathOpCompiler('-');
+    var s = "[1 2]".ToStack();
+    i.ilStack = ils;
+    i.Apply(s);
+    il.Emit(OpCodes.Ret);
+    var f = (Func<int>) dynMeth.CreateDelegate(typeof(Func<int>));
+
+    // That's better.
+    Assert.Equal(-1, f());
+  }
 }
 }
