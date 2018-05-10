@@ -55,7 +55,7 @@ public class ILStack {
       }
       MakeReturnStack(c);
     } else {
-      throw new Exception("NYI");
+      throw new Exception("NYI " + o);
     }
   }
 
@@ -88,22 +88,24 @@ public class ILStack {
       throw new Exception($"Trying to make a stack of {_count} items when {count} are available.");
     // ilgen.BeginScope();
     var localStack = il.DeclareLocal(typeof(Stack));
-    var localTemp = il.DeclareLocal(typeof(int));
+    var tempTypes = types.Distinct();
+    var tempVars = new Dictionary<Type, LocalBuilder>();
+    foreach(var tempType in tempTypes)
+      tempVars[tempType] = il.DeclareLocal(tempType);
     il.Emit(OpCodes.Newobj,
             typeof(Stack).GetConstructor(Type.EmptyTypes));
     il.Emit(OpCodes.Stloc, localStack.LocalIndex);
     var pushMethod = typeof(Stack).GetMethod("Push");
     for(int i = 0; i < _count; i++) {
-
-      il.Emit(OpCodes.Stloc, localTemp.LocalIndex);
+      il.Emit(OpCodes.Stloc, tempVars[types.Peek()].LocalIndex);
       il.Emit(OpCodes.Ldloc, localStack.LocalIndex);
-      il.Emit(OpCodes.Ldloc, localTemp.LocalIndex);
+      il.Emit(OpCodes.Ldloc, tempVars[types.Peek()].LocalIndex);
       if (types.Peek().IsValueType)
         il.Emit(OpCodes.Box, types.Peek());
       il.Emit(OpCodes.Callvirt, pushMethod);
       types.Pop();
     }
-    il.Emit(OpCodes.Ldloc_0);
+    il.Emit(OpCodes.Ldloc, localStack.LocalIndex);
     // ilgen.EndScope();
     types.Push(typeof(Stack));
   }

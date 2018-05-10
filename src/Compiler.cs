@@ -14,6 +14,13 @@ public class Compiler {
 
   public Dictionary<string, Instruction> instructions = new Dictionary<string, Instruction>();
 
+  public Compiler() {
+    instructions["+"] = new MathOpCompiler('+');
+    instructions["-"] = new MathOpCompiler('-');
+    instructions["*"] = new MathOpCompiler('*');
+    instructions["/"] = new MathOpCompiler('/');
+  }
+
   // public Assembly CompileAssembly(Stack program, string assemblyName, string className) {
 
   //       var asmName = new AssemblyName(assemblyName);
@@ -58,23 +65,26 @@ public class Compiler {
                                     typeof(Compiler).Module);
     ILGenerator il = dynMeth.GetILGenerator(256);
     var ils = new ILStack(il);
-    // while (! Interpreter.IsHalted(program)) {
-    //   program = Interpreter.Eval(program, new [] { instructions });
-    //   var code = program.Pop();
-    //   var data = program;
-    //   object o = data.Peek();
-    //   if (o is Action<ILStack> a) {
-    //     Console.WriteLine("add some instructions.");
-    //     a(ils);
-    //     data.Pop();
-    //   }
-    //   data.Push(code);
-    //   program = data;
-    // }
+    // Stick an empty program on optimistically.
+    ils.Push(new Stack());
+    while (! Interpreter.IsHalted(program)) {
+      program = Interpreter.Eval(program, new [] { instructions });
+      var code = program.Pop();
+      var data = program;
+      object o = data.Peek();
+      if (o is Action<ILStack> a) {
+        Console.WriteLine("add some instructions.");
+        a(ils);
+        data.Pop();
+      }
+      data.Push(code);
+      program = data;
+    }
+    program.Pop();
     ils.PushStackContents(program);
+    // ils.PushStackContents(program);
     ils.MakeReturnStack(ils.count);
     il.Emit(OpCodes.Ret);
-    // Console.WriteLine("il " + il);
     return (Func<Stack>) dynMeth.CreateDelegate(typeof(Func<Stack>));
   }
 
@@ -187,19 +197,19 @@ public class Compiler {
                                     typeof(Compiler).Module);
     ILGenerator il = dynMeth.GetILGenerator(256);
     var ils = new ILStack(il);
-    // while (! Interpreter.IsHalted(program)) {
-    //   program = Interpreter.Eval(program, new [] { instructions });
-    //   var code = program.Pop();
-    //   var data = program;
-    //   object o = data.Peek();
-    //   if (o is Action<ILStack> a) {
-    //     a(ils);
-    //     data.Pop();
-    //   }
-    //   data.Push(code);
-    //   program = data;
-    // }
-    ils.PushStackContents(program);
+    while (! Interpreter.IsHalted(program)) {
+      program = Interpreter.Eval(program, new [] { instructions });
+      var code = program.Pop();
+      var data = program;
+      object o = data.Peek();
+      if (o is Action<ILStack> a) {
+        a(ils);
+        data.Pop();
+      }
+      data.Push(code);
+      program = data;
+    }
+    // ils.PushStackContents(program);
     if (! ils.types.Contains(typeof(T)))
       throw new Exception("No such type on stack.");
     while (ils.types.Any()) {

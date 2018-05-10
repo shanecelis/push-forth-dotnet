@@ -430,6 +430,31 @@ public class CompilerTests
   }
 
   [Fact]
+  public void TestCompilerPlus() {
+    Func<int> h;
+    h = compiler.Compile<int>("[[2 1 +]]".ToStack());
+    Assert.Equal(3, h());
+    Assert.NotEqual(0, h());
+
+    h = compiler.Compile<int>("[[2 1 + 5 +]]".ToStack());
+    Assert.Equal(8, h());
+    Assert.NotEqual(0, h());
+  }
+
+  [Fact]
+  public void TestCompilerStacks() {
+    Func<Stack> h;
+    h = compiler.Compile("[[2 1 +]]".ToStack());
+    Assert.Equal("[[] 3]", h().ToRepr());
+
+    h = compiler.Compile("[[2 1 + 5 +]]".ToStack());
+    Assert.Equal("[[] 8]", h().ToRepr());
+
+    h = compiler.Compile("[[2 1 + 5 + 3]]".ToStack());
+    Assert.Equal("[[] 3 8]", h().ToRepr());
+  }
+
+  [Fact]
   public void TestCompilerInt() {
     Func<int> h;
     // h = compiler.Compile<int>("[[2 1 +]]".ToStack());
@@ -464,7 +489,22 @@ public class CompilerTests
   }
 
   [Fact]
-  public void TestCompiler() {
+  public void TestCompileStackOfStacks() {
+    Func<Stack> f;
+    Stack s;
+    f = compiler.CompileStack("[1 [1]]".ToStack());
+    s = f();
+    Assert.Equal(2, s.Count);
+    Assert.Equal("[1 [1]]", s.ToRepr());
+
+    f = compiler.CompileStack("[1 [1]]".ToStack());
+    s = f();
+    Assert.Equal(2, s.Count);
+    Assert.Equal("[1 [1]]", s.ToRepr());
+  }
+
+  [Fact]
+  public void TestCompileStacks() {
     Func<Stack> f;
     f = compiler.CompileStack("[1]".ToStack());
     // Assert.True(false);
@@ -485,7 +525,23 @@ public class CompilerTests
     Assert.Equal(@"[1 2]", s.ToRepr());
     f = compiler.CompileStack(@"[1 2 ""hi""]".ToStack());
     s = f();
-    Assert.Equal(@"[1 2 ""hi""]", s.ToRepr());
+    Assert.Equal(@"[1 2 hi]", s.ToRepr());
+
+    f = compiler.CompileStack(@"[1 2 3f ""hi""]".ToStack());
+    s = f();
+    Assert.Equal(@"[1 2 3 hi]", s.ToRepr());
+
+    f = compiler.CompileStack(@"[1 2 3.2f ""hi""]".ToStack());
+    s = f();
+    Assert.Equal(@"[1 2 3.2 hi]", s.ToRepr());
+
+    f = compiler.CompileStack(@"[1 2 3.1 ""hi""]".ToStack());
+    s = f();
+    Assert.Equal(@"[1 2 3.1 hi]", s.ToRepr());
+
+    f = compiler.CompileStack(@"[]".ToStack());
+    s = f();
+    Assert.Equal(@"[]", s.ToRepr());
     // f = compiler.Compile("[[] 1]".ToStack());
     // Assert.Equal("[[] 1]", f().ToRepr());
     // Assert.Equal("[[] 1]", f().ToRepr());
