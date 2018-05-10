@@ -22,9 +22,13 @@ public static class CompilerFunctions {
 }
 
 public class ILStack {
-  public ILGenerator ilgen = null;
+  public readonly ILGenerator ilgen;
   public int count => types.Count;
   public Stack<Type> types = new Stack<Type>();
+
+  public ILStack(ILGenerator ilgen) {
+    this.ilgen = ilgen;
+  }
   public void Push(object o) {
     if (o is int i) {
       ilgen.Emit(OpCodes.Ldc_I4, i);
@@ -123,17 +127,18 @@ public class ILStack {
 
 public class InstructionCompiler : Instruction {
 
-  public ILStack ilStack;
-  Action<Stack, ILStack> action;
+  Func<Stack, Action<ILStack>> action;
   int argCount;
-  public InstructionCompiler(int argCount, Action<Stack, ILStack> action) {
+  public InstructionCompiler(int argCount, Func<Stack, Action<ILStack>> action) {
     this.argCount = argCount;
     this.action = action;
   }
 
   public InstructionCompiler(MethodInfo methodInfo)
     : this(methodInfo.GetParameters().Length,
-           (stack, ilStack) => {
+           (stack) => {
+             stack.Push(new ILStackIndex(0)); // fake.
+             return ilStack => {
              ilStack.ilgen.Emit(OpCodes.Call, methodInfo);
              for(int i = 0; i < methodInfo.GetParameters().Length; i++)
                ilStack.types.Pop();
@@ -142,32 +147,47 @@ public class InstructionCompiler : Instruction {
                if (methodInfo.ReturnType.IsValueType)
                  ilStack.ilgen.Emit(OpCodes.Unbox_Any, methodInfo.ReturnType);
                ilStack.types.Push(methodInfo.ReturnType);
-               stack.Push(ilStack.Peek());
              }
+             };
            }) { }
 
   public Stack Apply(Stack stack) {
+    var args = new Queue();
     for(int i = 0; i < argCount; i++) {
       object a;
       a = stack.Pop();
       if (!(a is ILStackIndex))
-        ilStack.Push(a);
+        args.Enqueue(a);
+        // ilStack.Push(a);
     }
-    action(stack, ilStack);
+    var postAction = action(stack);
+    Action<ILStack> b = (ILStack ilStack) => {
+      // Add arguments.
+      foreach(object o in args)
+        ilStack.Push(o);
+      postAction(ilStack);
+    };
+    stack.Push(b);
+    // action(stack, ilStack);
     return stack;
   }
 }
 
 public class AddInstructionCompiler : InstructionCompiler {
-  public AddInstructionCompiler() : base(2, (stack, ilStack) => {
-      ilStack.ilgen.Emit(OpCodes.Add);
-      ilStack.types.Pop();
-      stack.Push(ilStack.Peek());
+  public AddInstructionCompiler() : base(2, (stack) => {
+      stack.Push(new ILStackIndex(0)); // XXX Fake index.
+      return ilStack => {
+        ilStack.ilgen.Emit(OpCodes.Add);
+        ilStack.types.Pop();
+      };
     }) { }
 }
 
 public class MathOpCompiler : InstructionCompiler {
-  public MathOpCompiler(char op) : base(2, (stack, ilStack) => {
+  public MathOpCompiler(char op) : base(2, (stack) => {
+      // stack.Push(ilStack.Peek());
+      stack.Push(new ILStackIndex(0)); // XXX Fake
+      return ilStack => {
       switch (op) {
         case '+':
         ilStack.ilgen.Emit(OpCodes.Add);
@@ -185,7 +205,7 @@ public class MathOpCompiler : InstructionCompiler {
         throw new Exception("No math operation for " + op);
       }
       ilStack.types.Pop();
-      stack.Push(ilStack.Peek());
+      };
     }) { }
 }
 

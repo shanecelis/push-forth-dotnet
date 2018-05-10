@@ -1,6 +1,10 @@
 * TODO
   - [ ] Predicates
   - [ ] Compiler
+  - [ ] Compiler->Stack
+* Features
+  - Stack Interpolation "[3 8 {null}]"?
+  - 
 * Compiler Notes
 ** Compilation Modes
 *** Program + Data

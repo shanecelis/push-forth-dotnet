@@ -111,14 +111,17 @@ public class CompilerTests
                                               typeof(CompilerTests).Module);
 
     ILGenerator il = dynMeth.GetILGenerator(256);
-    var ils = new ILStack();
-    ils.ilgen = il;
+    var ils = new ILStack(il);
     var bi = new AddInstructionCompiler();
-    bi.ilStack = ils;
     var s = new Stack();
     s.Push(1);
     s.Push(4);
     var r = bi.Apply(s);
+    var o = r.Peek();
+    if (o is Action<ILStack> a) {
+      a(ils);
+      r.Pop();
+    }
     // Load the first arVgument, which is a string, onto the stack.
     il.Emit(OpCodes.Ret);
     var f = (Func<Stack, int>) dynMeth.CreateDelegate(typeof(Func<Stack, int>));
@@ -133,16 +136,24 @@ public class CompilerTests
                                               typeof(CompilerTests).Module);
 
     ILGenerator il = dynMeth.GetILGenerator(256);
-    var ils = new ILStack();
-    ils.ilgen = il;
+    var ils = new ILStack(il);
     var bi = new AddInstructionCompiler();
-    bi.ilStack = ils;
     var s = new Stack();
     s.Push(1);
     s.Push(4);
     s.Push(5);
     var r = bi.Apply(s);
-    var t = bi.Apply(r);
+    var o = r.Peek();
+    if (o is Action<ILStack> a) {
+      a(ils);
+      r.Pop();
+    }
+    r = bi.Apply(r);
+    o = r.Peek();
+    if (o is Action<ILStack> b) {
+      b(ils);
+      r.Pop();
+    }
     // Load the first argument, which is a string, onto the stack.
     il.Emit(OpCodes.Ret);
     var f = (Func<Stack, int>) dynMeth.CreateDelegate(typeof(Func<Stack, int>));
@@ -157,16 +168,24 @@ public class CompilerTests
                                               typeof(CompilerTests).Module);
 
     ILGenerator il = dynMeth.GetILGenerator(256);
-    var ils = new ILStack();
-    ils.ilgen = il;
+    var ils = new ILStack(il);
     var bi = new AddInstructionCompiler();
-    bi.ilStack = ils;
     var s = new Stack();
     s.Push(1.5f);
     s.Push(4f);
     s.Push(5f);
     var r = bi.Apply(s);
-    var t = bi.Apply(r);
+    var o = r.Peek();
+    if (o is Action<ILStack> a) {
+      a(ils);
+      r.Pop();
+    }
+    r = bi.Apply(r);
+    o = r.Peek();
+    if (o is Action<ILStack> b) {
+      b(ils);
+      r.Pop();
+    }
     // Load the first argument, which is a string, onto the stack.
     il.Emit(OpCodes.Ret);
     var f = (Func<Stack, float>) dynMeth.CreateDelegate(typeof(Func<Stack, float>));
@@ -181,16 +200,24 @@ public class CompilerTests
                                               typeof(CompilerTests).Module);
 
     ILGenerator il = dynMeth.GetILGenerator(256);
-    var ils = new ILStack();
-    ils.ilgen = il;
+    var ils = new ILStack(il);
     var bi = new AddInstructionCompiler();
-    bi.ilStack = ils;
     var s = new Stack();
     s.Push(1.5);
     s.Push(4.5);
     s.Push(5.5);
     var r = bi.Apply(s);
-    var t = bi.Apply(r);
+    var o = r.Peek();
+    if (o is Action<ILStack> a) {
+      a(ils);
+      r.Pop();
+    }
+    r = bi.Apply(r);
+    o = r.Peek();
+    if (o is Action<ILStack> b) {
+      b(ils);
+      r.Pop();
+    }
     // Load the first argument, which is a string, onto the stack.
     il.Emit(OpCodes.Ret);
     var f = (Func<Stack, double>) dynMeth.CreateDelegate(typeof(Func<Stack, double>));
@@ -205,8 +232,7 @@ public class CompilerTests
                                               typeof(CompilerTests).Module);
 
     ILGenerator il = dynMeth.GetILGenerator(256);
-    var ils = new ILStack();
-    ils.ilgen = il;
+    var ils = new ILStack(il);
     ils.Push(1);
     ils.Push(4);
     ils.Push(5);
@@ -229,8 +255,7 @@ public class CompilerTests
                                               new Type[] {},
                                               typeof(CompilerTests).Module);
     ILGenerator il = dynMeth.GetILGenerator(256);
-    var ils = new ILStack();
-    ils.ilgen = il;
+    var ils = new ILStack(il);
     ils.Push(1);
     ils.Push(4);
     ils.Push(5);
@@ -249,8 +274,7 @@ public class CompilerTests
                                               new Type[] {},
                                               typeof(CompilerTests).Module);
     ILGenerator il = dynMeth.GetILGenerator(256);
-    var ils = new ILStack();
-    ils.ilgen = il;
+    var ils = new ILStack(il);
     ils.Push("hi");
     il.Emit(OpCodes.Ret);
     var f = (Func<string>) dynMeth.CreateDelegate(typeof(Func<string>));
@@ -266,8 +290,7 @@ public class CompilerTests
                                               new Type[] {},
                                               typeof(CompilerTests).Module);
     ILGenerator il = dynMeth.GetILGenerator(256);
-    var ils = new ILStack();
-    ils.ilgen = il;
+    var ils = new ILStack(il);
     ils.Push(new Symbol("hi"));
     il.Emit(OpCodes.Ret);
     var f = (Func<Symbol>) dynMeth.CreateDelegate(typeof(Func<Symbol>));
@@ -283,8 +306,7 @@ public class CompilerTests
                                               new Type[] {},
                                               typeof(CompilerTests).Module);
     ILGenerator il = dynMeth.GetILGenerator(256);
-    var ils = new ILStack();
-    ils.ilgen = il;
+    var ils = new ILStack(il);
     ils.Push("[1 2 3]".ToStack());
     il.Emit(OpCodes.Ret);
     var f = (Func<Stack>) dynMeth.CreateDelegate(typeof(Func<Stack>));
@@ -300,12 +322,15 @@ public class CompilerTests
                                               new Type[] {},
                                               typeof(CompilerTests).Module);
     ILGenerator il = dynMeth.GetILGenerator(256);
-    var ils = new ILStack();
-    ils.ilgen = il;
+    var ils = new ILStack(il);
     var i = new InstructionCompiler(typeof(CompilerFunctions).GetMethod("Car"));
     var s = "[[1 2 3]]".ToStack();
-    i.ilStack = ils;
-    i.Apply(s);
+    var r = i.Apply(s);
+    var o = r.Peek();
+    if (o is Action<ILStack> a) {
+      a(ils);
+      r.Pop();
+    }
     il.Emit(OpCodes.Ret);
     var f = (Func<object>) dynMeth.CreateDelegate(typeof(Func<object>));
 
@@ -321,12 +346,15 @@ public class CompilerTests
                                               new Type[] {},
                                               typeof(CompilerTests).Module);
     ILGenerator il = dynMeth.GetILGenerator(256);
-    var ils = new ILStack();
-    ils.ilgen = il;
+    var ils = new ILStack(il);
     var i = new InstructionCompiler(typeof(CompilerFunctions).GetMethod("Car"));
     var s = "[[1 2 3]]".ToStack();
-    i.ilStack = ils;
-    i.Apply(s);
+    var r = i.Apply(s);
+    var o = r.Peek();
+    if (o is Action<ILStack> a) {
+      a(ils);
+      r.Pop();
+    }
     il.Emit(OpCodes.Unbox_Any, typeof(int));
     // il.Emit(OpCodes.Conv_I4);
     il.Emit(OpCodes.Ret);
@@ -343,12 +371,15 @@ public class CompilerTests
                                               new Type[] {},
                                               typeof(CompilerTests).Module);
     ILGenerator il = dynMeth.GetILGenerator(256);
-    var ils = new ILStack();
-    ils.ilgen = il;
+    var ils = new ILStack(il);
     var i = new InstructionCompiler(typeof(CompilerFunctions).GetMethod("Cdr"));
     var s = "[[1 2 3]]".ToStack();
-    i.ilStack = ils;
-    i.Apply(s);
+    var r = i.Apply(s);
+    var o = r.Peek();
+    if (o is Action<ILStack> a) {
+      a(ils);
+      r.Pop();
+    }
     il.Emit(OpCodes.Ret);
     var f = (Func<Stack>) dynMeth.CreateDelegate(typeof(Func<Stack>));
 
@@ -363,12 +394,15 @@ public class CompilerTests
                                               new Type[] {},
                                               typeof(CompilerTests).Module);
     ILGenerator il = dynMeth.GetILGenerator(256);
-    var ils = new ILStack();
-    ils.ilgen = il;
+    var ils = new ILStack(il);
     var i = new MathOpCompiler('-');
     var s = "[1 2]".ToStack();
-    i.ilStack = ils;
-    i.Apply(s);
+    var r = i.Apply(s);
+    var o = r.Peek();
+    if (o is Action<ILStack> a) {
+      a(ils);
+      r.Pop();
+    }
     il.Emit(OpCodes.Ret);
     var f = (Func<int>) dynMeth.CreateDelegate(typeof(Func<int>));
 
