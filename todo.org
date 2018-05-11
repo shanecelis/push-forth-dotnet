@@ -4,8 +4,25 @@
   - [ ] Compiler->Stack
 * Features
   - Stack Interpolation "[3 8 {null}]"?
+  - Accept arguments
   - 
 * Compiler Notes
+** Argument Handling
+*** Pass all data stack items onto CIL stack immediately
+    This is what I'm currently doing.  It has a couple problems though.
+    
+    - Hard to put an instance object above the arguments
+    - What if boxing or unboxing is required?
+*** Don't push data stack items onto CIL stack until required
+    I started doing this, then I stopped.  Some issues were this:
+
+    - Had to populate data stack with fake entries.
+    
+**** Features
+     - Easy to add instance object
+     - Can order arguments as I see fit
+     - Can box or unbox arguments
+
 ** Compilation Modes
 *** Program + Data
     Why bother with a stack if I can consume the stack in the compilation phase?

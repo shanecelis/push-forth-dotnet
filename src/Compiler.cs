@@ -22,6 +22,22 @@ public class Compiler {
     instructions["pop"] = new InstructionCompiler(1, ilStack => {
         ilStack.Pop();
       });
+    instructions["dup"] = new InstructionCompiler(1, ilStack => {
+        ilStack.il.Emit(OpCodes.Dup);
+        ilStack.types.Push(ilStack.types.Peek());
+      });
+    foreach(var method in typeof(CompilerFunctions).GetMethods())
+      instructions[method.Name.ToLower()] = new InstructionCompiler(method);
+    // instructions["car"] = new InstructionCompiler(typeof(CompilerFunctions).GetMethod("Car"));
+    // instructions["cdr"] = new InstructionCompiler(typeof(CompilerFunctions).GetMethod("Cdr"));
+    // instructions["cdr"] = new InstructionCompiler(1, ilStack => {
+    //     ilStack.il.Emit(OpCodes.Dup);
+    //     ilStack.types.Push(ilStack.types.Peek());
+    //   });
+    // instructions["swap"] = new InstructionCompiler(1, ilStack => {
+    //     ilStack.il.Emit(OpCodes.Dup);
+    //     ilStack.types.Push(ilStack.types.Peek());
+    //   });
   }
 
   // public Assembly CompileAssembly(Stack program, string assemblyName, string className) {

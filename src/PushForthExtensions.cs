@@ -232,5 +232,24 @@ public static class PushForthExtensions {
     while(enumerator.MoveNext())
       yield return enumerator.Current;
   }
+
+  public static Stack Conj(this Stack s, object o) {
+    s.Push(o);
+    return s;
+  }
+
+  public static Queue Conj(this Queue s, object o) {
+    s.Enqueue(o);
+    return s;
+  }
+
+  public static object Sepr(this Stack s) {
+    return s.Pop();
+  }
+
+  public static object Sepr(this Queue s) {
+    return s.Dequeue();
+  }
+
 }
 }
