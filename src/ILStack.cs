@@ -16,6 +16,7 @@ public class ILStack {
   public readonly ILGenerator il;
   public int count => types.Count;
   public Stack<Type> types = new Stack<Type>();
+  public Stack<Stack<Type>> stackTypes = new Stack<Stack<Type>>();
   Dictionary<Type, LocalBuilder> tempVars
     = new Dictionary<Type, LocalBuilder>();
 
@@ -69,7 +70,8 @@ public class ILStack {
   }
 
   public object Pop() {
-    types.Pop();
+    if (typeof(Stack) == types.Pop())
+      stackTypes.Pop();
     il.Emit(OpCodes.Pop);
     return Peek();
   }
@@ -79,6 +81,59 @@ public class ILStack {
     for (int i = 0; i < c; i++)
       Pop();
   }
+
+  public void UnrollStack() {
+    /*
+      If this weren't in IL. It'd be:
+
+      // foreach(var x in stack) {
+      while(stack.Any()) {
+      object o = stack.Pop();
+      ilStack.Push((int|float|double) o);
+      }
+    */
+    if (types.Pop() != typeof(Stack))
+      throw new Exception("Must have stack to unroll.");
+    var _stackTypes = stackTypes.Pop();
+    var popMethod = typeof(Stack).GetMethod("Pop");
+    var stackValue = GetTemp(typeof(Stack));
+    il.Emit(OpCodes.Stloc, stackValue.LocalIndex);
+    while (_stackTypes.Any()) {
+      il.Emit(OpCodes.Ldloc, stackValue.LocalIndex);
+      il.Emit(OpCodes.Call, popMethod);
+      if (_stackTypes.Peek().IsValueType)
+        il.Emit(OpCodes.Unbox_Any, _stackTypes.Peek());
+      types.Push(_stackTypes.Peek());
+      _stackTypes.Pop();
+    }
+  }
+
+  // public void UnrollStack() {
+  //   /*
+  //     If this weren't in IL. It'd be:
+
+  //     // foreach(var x in stack) {
+  //     while(stack.Any()) {
+  //       object o = stack.Pop();
+  //       ilStack.Push((int|float|double) o);
+  //     }
+  //    */
+  //   // https://www.codeproject.com/Articles/362076/Understanding-Common-Intermediate-Language-CIL
+  //   var popMethod = typeof(Stack).GetMethod("Pop");
+  //   var anyMethod = typeof(PushForthExtensions).GetMethod("Any");
+  //   var isValueTypeMethod = typeof(ILStack).GetMethod("IsValueType");
+  //   var testLabel = il.DefineLabel();
+  //   var bodyLabel = il.DefineLabel();
+  //   var dontUnboxLabel = il.DefineLabel();
+  //   il.Emit(OpCodes.Jmp, testLabel);
+  //   il.MarkLabel(bodyLabel);
+  //   // Do body
+  //   il.Emit(OpCodes.Dup);
+  //   il.Emit(OpCodes.Call, popMethod);
+  //   il.Emit(OpCodes.Dup);
+  //   il.Emit(OpCodes.Call, isValueTypeMethod);
+  //   il.Emit(OpCodes.Brfalse, dontUnboxLabel);
+  // }
 
   public object Peek() {
     return new ILStackIndex(count - 1);
@@ -100,19 +155,23 @@ public class ILStack {
             typeof(Stack).GetConstructor(Type.EmptyTypes));
     il.Emit(OpCodes.Stloc, localStack.LocalIndex);
     var pushMethod = typeof(Stack).GetMethod("Push");
+    var _stackTypes = new Stack<Type>();
     for(int i = 0; i < stackCount; i++) {
+      _stackTypes.Push(types.Peek());
       var temp = GetTemp(types.Peek());
       il.Emit(OpCodes.Stloc, temp.LocalIndex);
       il.Emit(OpCodes.Ldloc, localStack.LocalIndex);
       il.Emit(OpCodes.Ldloc, temp.LocalIndex);
       if (types.Peek().IsValueType)
         il.Emit(OpCodes.Box, types.Peek());
-      il.Emit(OpCodes.Callvirt, pushMethod);
+      il.Emit(OpCodes.Call, pushMethod);
       types.Pop();
     }
     il.Emit(OpCodes.Ldloc, localStack.LocalIndex);
     // ilgen.EndScope();
+    stackTypes.Push(_stackTypes);
     types.Push(typeof(Stack));
+    // return stackTypes;
   }
 
   public void ReverseStack() {
@@ -121,6 +180,8 @@ public class ILStack {
 
     il.Emit(OpCodes.Newobj,
             typeof(Stack).GetConstructor(new [] { typeof(ICollection) }));
+    var s = stackTypes.Pop();
+    stackTypes.Push(new Stack<Type>(s));
   }
 
   // Make a return stack.

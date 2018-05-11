@@ -21,7 +21,8 @@ public static class CompilerFunctions {
     return s;
   }
 
-  public static Stack Cons(object o, Stack s) {
+  // The order of the arguments is backwards here.
+  public static Stack Cons(Stack s, object o) {
     s.Push(o);
     return s;
   }

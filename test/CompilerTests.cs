@@ -400,7 +400,7 @@ public class CompilerTests
                                               typeof(CompilerTests).Module);
     ILGenerator il = dynMeth.GetILGenerator(256);
     var ils = new ILStack(il);
-    var i = new MathOpCompiler('-');
+    var i = new MathOpCompiler("-");
     var s = "[1 2]".ToStack();
     ils.PushStackContents(s);
     var r = i.Apply(s);
@@ -453,6 +453,21 @@ public class CompilerTests
   }
 
   [Fact]
+  public void TestGreaterThan() {
+    Func<Stack> h;
+    h = compiler.Compile("[[>] 1 2 3]]".ToStack());
+    Assert.Equal("[[] True 3]", h().ToRepr());
+
+    // http://galileo.phys.virginia.edu/classes/551.jvn.fall01/primer.htm#stacks
+    // All right. This is how Forths do it.
+    h = compiler.Compile("[[2 3 >]]]".ToStack());
+    Assert.Equal("[[] False]", h().ToRepr());
+
+    h = compiler.Compile("[[2 3 <]]]".ToStack());
+    Assert.Equal("[[] True]", h().ToRepr());
+  }
+
+  [Fact]
   public void TestDup() {
     Func<Stack> h;
     h = compiler.Compile("[[dup] 1 2 3]]".ToStack());
@@ -481,6 +496,31 @@ public class CompilerTests
     Func<Stack> h;
     h = compiler.Compile("[[swap] 1 2 3]]".ToStack());
     Assert.Equal("[[] 2 1 3]", h().ToRepr());
+  }
+
+  [Fact]
+  public void TestCat() {
+    Func<Stack> h;
+    h = compiler.Compile("[[cat] 1 2]]".ToStack());
+    Assert.Equal("[[] [1 2]]", h().ToRepr());
+  }
+
+  [Fact]
+  public void TestSplit() {
+    Func<Stack> h;
+    h = compiler.Compile("[[split] [1 2]]]".ToStack());
+    Assert.Equal("[[] 1 2]", h().ToRepr());
+  }
+
+  [Fact]
+  public void TestCons() {
+    Func<Stack> h;
+
+    // h = compiler.Compile("[[cons] [1 2] 0]]".ToStack());
+    // Assert.Equal("[[] [0 1 2]]", h().ToRepr());
+
+    h = compiler.Compile("[[cons] 0 [1 2]]]".ToStack());
+    Assert.Equal("[[] [0 1 2]]", h().ToRepr());
   }
 
   [Fact]

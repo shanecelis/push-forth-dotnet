@@ -91,23 +91,49 @@ public class AddInstructionCompiler : InstructionCompiler {
 }
 
 public class MathOpCompiler : InstructionCompiler {
-  public MathOpCompiler(char op) : base(2,
+  public MathOpCompiler(string op) : base(2,
     ilStack => {
       switch (op) {
-        case '+':
+        case "+":
         ilStack.il.Emit(OpCodes.Add);
         break;
-        case '-':
+        case "-":
         ilStack.il.Emit(OpCodes.Sub);
         break;
-        case '*':
+        case "*":
         ilStack.il.Emit(OpCodes.Mul);
         break;
-        case '/':
+        case "/":
         ilStack.il.Emit(OpCodes.Div);
         break;
         default:
-        throw new Exception("No math operation for " + op);
+        switch (op) {
+          case ">":
+            ilStack.il.Emit(OpCodes.Cgt);
+            break;
+          case "<":
+            ilStack.il.Emit(OpCodes.Clt);
+            break;
+          case ">=":
+            ilStack.il.Emit(OpCodes.Clt);
+            ilStack.il.Emit(OpCodes.Ldc_I4_0);
+            ilStack.il.Emit(OpCodes.Ceq);
+            break;
+          case "<=":
+            ilStack.il.Emit(OpCodes.Cgt);
+            ilStack.il.Emit(OpCodes.Ldc_I4_0);
+            ilStack.il.Emit(OpCodes.Ceq);
+            break;
+          case "==":
+            ilStack.il.Emit(OpCodes.Ceq);
+            break;
+          default:
+            throw new Exception("No math operation for " + op);
+        }
+        ilStack.types.Pop();
+        ilStack.types.Pop();
+        ilStack.types.Push(typeof(bool));
+        return;
       }
       ilStack.types.Pop();
     }) { }

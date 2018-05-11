@@ -15,15 +15,16 @@ public class Compiler {
   public Dictionary<string, Instruction> instructions = new Dictionary<string, Instruction>();
 
   public Compiler() {
-    instructions["+"] = new MathOpCompiler('+');
-    instructions["-"] = new MathOpCompiler('-');
-    instructions["*"] = new MathOpCompiler('*');
-    instructions["/"] = new MathOpCompiler('/');
+    foreach (var op in new [] { "+", "-", "*", "/", ">", "<", ">=", "<=", "==" })
+      instructions[op] = new MathOpCompiler(op);
     instructions["pop"] = new InstructionCompiler(1, ilStack => {
         ilStack.Pop();
       });
     instructions["dup"] = new InstructionCompiler(1, ilStack => {
+        // XXX This probably doesn't work well with stacks.
         ilStack.il.Emit(OpCodes.Dup);
+        if (ilStack.types.Peek() == typeof(Stack))
+            ilStack.stackTypes.Push(ilStack.stackTypes.Peek());
         ilStack.types.Push(ilStack.types.Peek());
       });
     foreach(var method in typeof(CompilerFunctions).GetMethods())
@@ -49,6 +50,14 @@ public class Compiler {
         ilStack.types.Push(t1.LocalType);
         ilStack.il.Emit(OpCodes.Ldloc, t2.LocalIndex);
         ilStack.types.Push(t2.LocalType);
+      });
+    instructions["split"] = new InstructionCompiler(1, ilStack => {
+        ilStack.ReverseStack();
+        ilStack.UnrollStack();
+      });
+    instructions["cat"] = new InstructionCompiler(2, ilStack => {
+        ilStack.MakeReturnStack(2);
+        ilStack.ReverseStack();
       });
   }
 
