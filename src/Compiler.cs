@@ -34,10 +34,22 @@ public class Compiler {
     //     ilStack.il.Emit(OpCodes.Dup);
     //     ilStack.types.Push(ilStack.types.Peek());
     //   });
-    // instructions["swap"] = new InstructionCompiler(1, ilStack => {
-    //     ilStack.il.Emit(OpCodes.Dup);
-    //     ilStack.types.Push(ilStack.types.Peek());
-    //   });
+    instructions["swap"] = new InstructionCompiler(2, ilStack => {
+        var t1 = ilStack.GetTemp(ilStack.types.Peek());
+        ilStack.il.Emit(OpCodes.Stloc, t1.LocalIndex);
+        ilStack.types.Pop();
+        LocalBuilder t2;
+        if (t1.LocalType == ilStack.types.Peek())
+          t2 = ilStack.il.DeclareLocal(ilStack.types.Peek());
+        else
+          t2 = ilStack.GetTemp(ilStack.types.Peek());
+        ilStack.il.Emit(OpCodes.Stloc, t2.LocalIndex);
+        ilStack.types.Pop();
+        ilStack.il.Emit(OpCodes.Ldloc, t1.LocalIndex);
+        ilStack.types.Push(t1.LocalType);
+        ilStack.il.Emit(OpCodes.Ldloc, t2.LocalIndex);
+        ilStack.types.Push(t2.LocalType);
+      });
   }
 
   // public Assembly CompileAssembly(Stack program, string assemblyName, string className) {

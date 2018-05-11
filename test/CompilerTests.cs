@@ -343,7 +343,7 @@ public class CompilerTests
   }
 
   [Fact]
-  public void TestCar() {
+  public void TestCarish() {
     DynamicMethod dynMeth = new DynamicMethod("Run",
                                               typeof(int),
                                               new Type[] {},
@@ -463,7 +463,7 @@ public class CompilerTests
   }
 
   [Fact]
-  public void TestCar2() {
+  public void TestCar() {
     Func<Stack> h;
     h = compiler.Compile("[[car] [1 2 3]]]".ToStack());
     Assert.Equal("[[] 1]", h().ToRepr());
@@ -474,6 +474,13 @@ public class CompilerTests
     Func<Stack> h;
     h = compiler.Compile("[[cdr] [1 2 3]]]".ToStack());
     Assert.Equal("[[] [2 3]]", h().ToRepr());
+  }
+
+  [Fact]
+  public void TestSwap() {
+    Func<Stack> h;
+    h = compiler.Compile("[[swap] 1 2 3]]".ToStack());
+    Assert.Equal("[[] 2 1 3]", h().ToRepr());
   }
 
   [Fact]
