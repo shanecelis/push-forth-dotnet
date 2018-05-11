@@ -65,24 +65,41 @@ public class Compiler {
                                     typeof(Compiler).Module);
     ILGenerator il = dynMeth.GetILGenerator(256);
     var ils = new ILStack(il);
-    // Stick an empty program on optimistically.
-    while (! Interpreter.IsHalted(program)) {
-      program = Interpreter.Eval(program, new [] { instructions });
-      var code = program.Pop();
-      var data = program;
-      object o = data.Peek();
-      if (o is Action<ILStack> a) {
-        Console.WriteLine("add some instructions.");
-        a(ils);
-        data.Pop();
-      }
+    object code;
+    Stack data;
+    if (program.Any()) {
+      code = program.Pop();
+      data = program;
+      ils.PushStackContents(new Stack(data));
+      data.Clear();
       data.Push(code);
       program = data;
     }
-    ils.PushStackContents(new Stack(program));
+    // Stick an empty program on optimistically.
+    while (! Interpreter.IsHalted(program)) {
+      program = Interpreter.Eval(program, new [] { instructions });
+      code = program.Pop();
+      data = program;
+      object o = data.Peek();
+      if (o is Action<ILStack> a) {
+        a(ils);
+        data.Pop();
+      }
+      ils.PushStackContents(new Stack(data));
+      data.Clear();
+      data.Push(code);
+      program = data;
+      // data.Push(code);
+      // program = data;
+    }
+    // ils.PushStackContents(new Stack(program));
     // ils.PushStackContents(program);
     ils.MakeReturnStack(ils.count);
-    //ils.ReverseStack();
+    ils.ReverseStack();
+    il.Emit(OpCodes.Dup);
+    ils.Push(program.Peek());
+    il.Emit(OpCodes.Call, typeof(Stack).GetMethod("Push"));
+    ils.types.Pop();
     il.Emit(OpCodes.Ret);
     return (Func<Stack>) dynMeth.CreateDelegate(typeof(Func<Stack>));
   }
@@ -101,7 +118,6 @@ public class Compiler {
     //   var data = program;
     //   object o = data.Peek();
     //   if (o is Action<ILStack> a) {
-    //     Console.WriteLine("add some instructions.");
     //     a(ils);
     //     data.Pop();
     //   }
@@ -205,8 +221,12 @@ public class Compiler {
         a(ils);
         data.Pop();
       }
+      ils.PushStackContents(data);
+      data.Clear();
       data.Push(code);
       program = data;
+      // data.Push(code);
+      // program = data;
     }
     // ils.PushStackContents(program);
     if (! ils.types.Contains(typeof(T)))

@@ -49,6 +49,14 @@ public class UnitTest1
   [Fact]
   public void TestStackQueueBehavior() {
     var s = new Stack(new [] {1, 2, 3});
+    var q = new Stack(new [] {1, 2, 3});
+    var w = new Stack(new [] {1, 2, 4});
+    Assert.Equal(s, q);
+    Assert.NotEqual(s, w);
+    Assert.False(s == q);
+    Assert.True(s.Equals(q));
+    Assert.False(s.Equals(w));
+    Assert.True(s != w);
     Assert.True(s.Contains(2));
     Assert.False(s.Contains(4));
     Assert.Equal("[3 2 1]", s.ToRepr());

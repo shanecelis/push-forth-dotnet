@@ -40,18 +40,18 @@ public class InstructionCompiler : Instruction {
 
   public Stack Apply(Stack stack) {
     var args = new Queue();
-    for(int i = 0; i < argCount; i++) {
-      object a;
-      a = stack.Pop();
-      if (!(a is ILStackIndex))
-        args.Enqueue(a);
-        // ilStack.Push(a);
-    }
+    // for(int i = 0; i < argCount; i++) {
+    //   object a;
+    //   a = stack.Pop();
+    //   if (!(a is ILStackIndex))
+    //     args.Enqueue(a);
+    //     // ilStack.Push(a);
+    // }
     var postAction = action(stack);
     Action<ILStack> b = (ILStack ilStack) => {
       // Add arguments.
-      foreach(object o in args)
-        ilStack.Push(o);
+      // foreach(object o in args)
+      //   ilStack.Push(o);
       postAction(ilStack);
     };
     stack.Push(b);
@@ -62,7 +62,7 @@ public class InstructionCompiler : Instruction {
 
 public class AddInstructionCompiler : InstructionCompiler {
   public AddInstructionCompiler() : base(2, (stack) => {
-      stack.Push(new ILStackIndex(0)); // XXX Fake index.
+      // stack.Push(new ILStackIndex(0)); // XXX Fake index.
       return ilStack => {
         ilStack.il.Emit(OpCodes.Add);
         ilStack.types.Pop();

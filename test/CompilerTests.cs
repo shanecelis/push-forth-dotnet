@@ -116,8 +116,8 @@ public class CompilerTests
     var ils = new ILStack(il);
     var bi = new AddInstructionCompiler();
     var s = new Stack();
-    s.Push(1);
-    s.Push(4);
+    ils.Push(1);
+    ils.Push(4);
     var r = bi.Apply(s);
     var o = r.Peek();
     if (o is Action<ILStack> a) {
@@ -141,9 +141,9 @@ public class CompilerTests
     var ils = new ILStack(il);
     var bi = new AddInstructionCompiler();
     var s = new Stack();
-    s.Push(1);
-    s.Push(4);
-    s.Push(5);
+    ils.Push(1);
+    ils.Push(4);
+    ils.Push(5);
     var r = bi.Apply(s);
     var o = r.Peek();
     if (o is Action<ILStack> a) {
@@ -173,9 +173,9 @@ public class CompilerTests
     var ils = new ILStack(il);
     var bi = new AddInstructionCompiler();
     var s = new Stack();
-    s.Push(1.5f);
-    s.Push(4f);
-    s.Push(5f);
+    ils.Push(1.5f);
+    ils.Push(4f);
+    ils.Push(5f);
     var r = bi.Apply(s);
     var o = r.Peek();
     if (o is Action<ILStack> a) {
@@ -205,9 +205,9 @@ public class CompilerTests
     var ils = new ILStack(il);
     var bi = new AddInstructionCompiler();
     var s = new Stack();
-    s.Push(1.5);
-    s.Push(4.5);
-    s.Push(5.5);
+    ils.Push(1.5);
+    ils.Push(4.5);
+    ils.Push(5.5);
     var r = bi.Apply(s);
     var o = r.Peek();
     if (o is Action<ILStack> a) {
@@ -327,6 +327,7 @@ public class CompilerTests
     var ils = new ILStack(il);
     var i = new InstructionCompiler(typeof(CompilerFunctions).GetMethod("Car"));
     var s = "[[1 2 3]]".ToStack();
+    ils.PushStackContents(s);
     var r = i.Apply(s);
     var o = r.Peek();
     if (o is Action<ILStack> a) {
@@ -351,6 +352,7 @@ public class CompilerTests
     var ils = new ILStack(il);
     var i = new InstructionCompiler(typeof(CompilerFunctions).GetMethod("Car"));
     var s = "[[1 2 3]]".ToStack();
+    ils.PushStackContents(s);
     var r = i.Apply(s);
     var o = r.Peek();
     if (o is Action<ILStack> a) {
@@ -376,6 +378,7 @@ public class CompilerTests
     var ils = new ILStack(il);
     var i = new InstructionCompiler(typeof(CompilerFunctions).GetMethod("Cdr"));
     var s = "[[1 2 3]]".ToStack();
+    ils.PushStackContents(s);
     var r = i.Apply(s);
     var o = r.Peek();
     if (o is Action<ILStack> a) {
@@ -399,6 +402,7 @@ public class CompilerTests
     var ils = new ILStack(il);
     var i = new MathOpCompiler('-');
     var s = "[1 2]".ToStack();
+    ils.PushStackContents(s);
     var r = i.Apply(s);
     var o = r.Peek();
     if (o is Action<ILStack> a) {
@@ -444,6 +448,9 @@ public class CompilerTests
   [Fact]
   public void TestCompilerStacks() {
     Func<Stack> h;
+    h = compiler.Compile("[[] 1 2 3]]".ToStack());
+    Assert.Equal("[[] 1 2 3]", h().ToRepr());
+
     h = compiler.Compile("[[1 1 1 + 3]]".ToStack());
     Assert.Equal("[[] 3 2 1]", h().ToRepr());
 
@@ -459,6 +466,19 @@ public class CompilerTests
     h = compiler.Compile("[[2 1 + 5 + 3 2 1]]".ToStack());
     Assert.Equal("[[] 1 2 3 8]", h().ToRepr());
 
+    h = compiler.Compile("[[1 1 1 + 3]]".ToStack());
+    Assert.Equal("[[] 3 2 1]", h().ToRepr());
+
+    h = compiler.Compile("[[] 3 2 1]".ToStack());
+    Assert.Equal("[[] 3 2 1]", h().ToRepr());
+
+    h = compiler.Compile("[[-] 5 1]".ToStack());
+    // Assert.Equal("[[] 4]", h().ToRepr());
+    // I guess I am doing it Push3's way.
+    Assert.Equal("[[] -4]", h().ToRepr());
+
+    h = compiler.Compile("[1 [1 1 1 + 3] 2 3]".ToStack());
+    Assert.Equal("[[] 1 [1 1 1 + 3] 2 3]", h().ToRepr());
   }
 
   [Fact]
@@ -565,6 +585,7 @@ public class CompilerTests
     // h = compiler.Compile<int>("[[5 2 1 +]]".ToStack());
     // Assert.Equal(3, h());
 
+    // Assert.Throws<Exception>(() => compiler.Compile<char>("[[5 2 1 +]]".ToStack()));
     Assert.Throws<Exception>(() => compiler.Compile<char>("[[5 2 1 +]]".ToStack()));
   }
 }
