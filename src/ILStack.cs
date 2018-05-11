@@ -12,22 +12,23 @@ public class ILStackIndex : Tuple<int> {
   public ILStackIndex(int i) : base(i) { }
 }
 
-public static class CompilerFunctions {
-  public static object Car(Stack s) => s.Peek();
-  public static Stack Cdr(Stack s) {
-    s = (Stack) s.Clone();
-    s.Pop();
-    return s;
-  }
-}
-
 public class ILStack {
   public readonly ILGenerator il;
   public int count => types.Count;
   public Stack<Type> types = new Stack<Type>();
+  Dictionary<Type, LocalBuilder> tempVars
+    = new Dictionary<Type, LocalBuilder>();
 
   public ILStack(ILGenerator il) {
     this.il = il;
+  }
+
+  public LocalBuilder GetTemp(Type t) {
+    LocalBuilder lb;
+    if (! tempVars.TryGetValue(t, out lb)) {
+      lb = tempVars[t] = il.DeclareLocal(t);
+    }
+    return lb;
   }
 
   public void Push(object o) {
@@ -46,7 +47,7 @@ public class ILStack {
     } else if (o is Symbol sym) {
       il.Emit(OpCodes.Ldstr, sym.name);
       il.Emit(OpCodes.Newobj,
-                 typeof(Symbol).GetConstructor(new [] { typeof(string) }));
+              typeof(Symbol).GetConstructor(new [] { typeof(string) }));
       types.Push(typeof(Symbol));
     } else if (o is Stack stack) {
       int c = stack.Count;
@@ -85,23 +86,25 @@ public class ILStack {
 
   // Make a return stack.
   // Should return a local variable reference or something.
-  public void MakeReturnStack(int _count) {
-    if (_count > count)
-      throw new Exception($"Trying to make a stack of {_count} items when {count} are available.");
+  public void MakeReturnStack(int stackCount) {
+    if (stackCount > count)
+      throw new Exception($"Trying to make a stack of {stackCount} items when only {count} are available.");
     // ilgen.BeginScope();
-    var localStack = il.DeclareLocal(typeof(Stack));
-    var tempTypes = types.Distinct();
-    var tempVars = new Dictionary<Type, LocalBuilder>();
+    var localStack = GetTemp(typeof(Stack));
+
+    var tempTypes = types.Take(stackCount).Distinct();
+    // var tempVars = new Dictionary<Type, LocalBuilder>();
     foreach(var tempType in tempTypes)
       tempVars[tempType] = il.DeclareLocal(tempType);
     il.Emit(OpCodes.Newobj,
             typeof(Stack).GetConstructor(Type.EmptyTypes));
     il.Emit(OpCodes.Stloc, localStack.LocalIndex);
     var pushMethod = typeof(Stack).GetMethod("Push");
-    for(int i = 0; i < _count; i++) {
-      il.Emit(OpCodes.Stloc, tempVars[types.Peek()].LocalIndex);
+    for(int i = 0; i < stackCount; i++) {
+      var temp = GetTemp(types.Peek());
+      il.Emit(OpCodes.Stloc, temp.LocalIndex);
       il.Emit(OpCodes.Ldloc, localStack.LocalIndex);
-      il.Emit(OpCodes.Ldloc, tempVars[types.Peek()].LocalIndex);
+      il.Emit(OpCodes.Ldloc, temp.LocalIndex);
       if (types.Peek().IsValueType)
         il.Emit(OpCodes.Box, types.Peek());
       il.Emit(OpCodes.Callvirt, pushMethod);

@@ -24,9 +24,33 @@ public class InstructionCompiler : Instruction {
   public InstructionCompiler(MethodInfo methodInfo)
     : this(methodInfo.GetParameters().Length,
              ilStack => {
-             ilStack.il.Emit(OpCodes.Call, methodInfo);
-             for(int i = 0; i < methodInfo.GetParameters().Length; i++)
+             var parameters = methodInfo.GetParameters();
+             if (! methodInfo.IsStatic) {
+               if (parameters.Length != 0) {
+                 throw new Exception("NYI. Instance required on stack.");
+               }
+               if (ilStack.types.Peek() != methodInfo.DeclaringType) {
+                 throw new Exception($"Instance method requires type {methodInfo.DeclaringType.PrettyName()} but on the top of the stack is {ilStack.types.Peek()}.");
+               }
+               ilStack.il.Emit(OpCodes.Dup);
+             }
+
+             List<Type> typeList = ilStack.types.ToList();
+             for(int i = 0; i < parameters.Length; i++) {
+               var p = parameters[parameters.Length - 1 - i];
+               if (!p.ParameterType.IsValueType
+                   && typeList[i].IsValueType) {
+                 if (i == 0) {
+                   // Fix it.
+                   ilStack.il.Emit(OpCodes.Box, ilStack.types.Peek());
+                 } else {
+                   // Punt.
+                   throw new Exception($"NYI. Parameter {i}, type {p.ParameterType.PrettyName()} requires some boxing of {typeList[i].PrettyName()} probably.");
+                 }
+               }
                ilStack.types.Pop();
+             }
+             ilStack.il.Emit(OpCodes.Call, methodInfo);
 
              if (methodInfo.ReturnType != typeof(void)) {
                if (methodInfo.ReturnType.IsValueType)
@@ -46,7 +70,7 @@ public class InstructionCompiler : Instruction {
     // }
     Action<ILStack> b = (ILStack ilStack) => {
       if (ilStack.count < argCount)
-        throw new Exception($"Need ${argCount} arguments but only ${ilStack.count} items on CLR stack.");
+        throw new Exception($"Need ${argCount} arguments but only ${ilStack.count} items on CIL stack.");
       // Add arguments.
       // foreach(object o in args)
       //   ilStack.Push(o);
@@ -88,49 +112,5 @@ public class MathOpCompiler : InstructionCompiler {
       ilStack.types.Pop();
     }) { }
 }
-
-// public class Compiled: Tuple<Expression> {
-//   public Compiled(Expression s) : base(s) { }
-
-//   public Expression expression => Item1;
-// }
-
-// public class BinaryInstructionCompiler<X, Y> : Instruction {
-//   Action<Stack, X, Y> func;
-//   public BinaryInstructionCompiler(Action<Stack, X, Y> func) {
-//     this.func = func;
-//   }
-
-//   public Stack Apply(Stack stack) {
-//     object a, b;
-//     a = stack.Pop();
-//     b = stack.Pop();
-//     func(stack, (X) a, (Y) b);
-//     // Expression.Invoke(func, Compile(stack), Compile(a), Compile(b));
-//     return stack;
-//   }
-
-//   public static Expression Compile(object x) {
-//     if (x is Expression e)
-//       return e;
-//     else
-//       return Expression.Constant(x);
-//   }
-
-//   public static Instruction WithResult<Z>(Func <X,Y,Z> func) {
-//     return new InstructionFunc(stack =>
-//         {
-//           Expression<Func<Stack, Stack>> f = (_stack) => {
-//             object a, b;
-//             a = _stack.Pop();
-//             b = _stack.Pop();
-//             _stack.Push(func((X) a, (Y) b));
-//             return _stack;
-//           };
-//           stack.Push(f);
-//           return stack;
-//         });
-//   }
-// }
 
 }

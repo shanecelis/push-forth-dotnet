@@ -369,7 +369,7 @@ public class CompilerTests
   }
 
   [Fact]
-  public void TestCdr() {
+  public void TestCdrish() {
     DynamicMethod dynMeth = new DynamicMethod("Run",
                                               typeof(Stack),
                                               new Type[] {},
@@ -450,6 +450,40 @@ public class CompilerTests
     Func<Stack> h;
     h = compiler.Compile("[[pop] 1 2 3]]".ToStack());
     Assert.Equal("[[] 2 3]", h().ToRepr());
+  }
+
+  [Fact]
+  public void TestDup() {
+    Func<Stack> h;
+    h = compiler.Compile("[[dup] 1 2 3]]".ToStack());
+    Assert.Equal("[[] 1 1 2 3]", h().ToRepr());
+
+    h = compiler.Compile("[[dup] [1] 2 3]]".ToStack());
+    Assert.Equal("[[] [1] [1] 2 3]", h().ToRepr());
+  }
+
+  [Fact]
+  public void TestCar2() {
+    Func<Stack> h;
+    h = compiler.Compile("[[car] [1 2 3]]]".ToStack());
+    Assert.Equal("[[] 1]", h().ToRepr());
+  }
+
+  [Fact]
+  public void TestCdr() {
+    Func<Stack> h;
+    h = compiler.Compile("[[cdr] [1 2 3]]]".ToStack());
+    Assert.Equal("[[] [2 3]]", h().ToRepr());
+  }
+
+  [Fact]
+  public void TestUnit() {
+    Func<Stack> h;
+    h = compiler.Compile("[[unit] [] 2 3]]".ToStack());
+    Assert.Equal("[[] [[]] 2 3]", h().ToRepr());
+
+    h = compiler.Compile("[[unit] 1 2 3]]".ToStack());
+    Assert.Equal("[[] [1] 2 3]", h().ToRepr());
   }
 
   [Fact]
