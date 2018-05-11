@@ -14,18 +14,16 @@ namespace SeawispHunter.PushForth {
 
 public class InstructionCompiler : Instruction {
 
-  Func<Stack, Action<ILStack>> action;
+  Action<ILStack> action;
   int argCount;
-  public InstructionCompiler(int argCount, Func<Stack, Action<ILStack>> action) {
+  public InstructionCompiler(int argCount, Action<ILStack> action) {
     this.argCount = argCount;
     this.action = action;
   }
 
   public InstructionCompiler(MethodInfo methodInfo)
     : this(methodInfo.GetParameters().Length,
-           (stack) => {
-             stack.Push(new ILStackIndex(0)); // fake.
-             return ilStack => {
+             ilStack => {
              ilStack.il.Emit(OpCodes.Call, methodInfo);
              for(int i = 0; i < methodInfo.GetParameters().Length; i++)
                ilStack.types.Pop();
@@ -35,7 +33,6 @@ public class InstructionCompiler : Instruction {
                  ilStack.il.Emit(OpCodes.Unbox_Any, methodInfo.ReturnType);
                ilStack.types.Push(methodInfo.ReturnType);
              }
-             };
            }) { }
 
   public Stack Apply(Stack stack) {
@@ -47,12 +44,13 @@ public class InstructionCompiler : Instruction {
     //     args.Enqueue(a);
     //     // ilStack.Push(a);
     // }
-    var postAction = action(stack);
     Action<ILStack> b = (ILStack ilStack) => {
+      if (ilStack.count < argCount)
+        throw new Exception($"Need ${argCount} arguments but only ${ilStack.count} items on CLR stack.");
       // Add arguments.
       // foreach(object o in args)
       //   ilStack.Push(o);
-      postAction(ilStack);
+      action(ilStack);
     };
     stack.Push(b);
     // action(stack, ilStack);
@@ -61,20 +59,16 @@ public class InstructionCompiler : Instruction {
 }
 
 public class AddInstructionCompiler : InstructionCompiler {
-  public AddInstructionCompiler() : base(2, (stack) => {
-      // stack.Push(new ILStackIndex(0)); // XXX Fake index.
-      return ilStack => {
+  public AddInstructionCompiler() : base(2,
+      ilStack => {
         ilStack.il.Emit(OpCodes.Add);
         ilStack.types.Pop();
-      };
-    }) { }
+      }) { }
 }
 
 public class MathOpCompiler : InstructionCompiler {
-  public MathOpCompiler(char op) : base(2, (stack) => {
-      // stack.Push(ilStack.Peek());
-      stack.Push(new ILStackIndex(0)); // XXX Fake
-      return ilStack => {
+  public MathOpCompiler(char op) : base(2,
+    ilStack => {
       switch (op) {
         case '+':
         ilStack.il.Emit(OpCodes.Add);
@@ -92,7 +86,6 @@ public class MathOpCompiler : InstructionCompiler {
         throw new Exception("No math operation for " + op);
       }
       ilStack.types.Pop();
-      };
     }) { }
 }
 

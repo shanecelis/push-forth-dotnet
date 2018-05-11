@@ -19,6 +19,9 @@ public class Compiler {
     instructions["-"] = new MathOpCompiler('-');
     instructions["*"] = new MathOpCompiler('*');
     instructions["/"] = new MathOpCompiler('/');
+    instructions["pop"] = new InstructionCompiler(1, ilStack => {
+        ilStack.Pop();
+      });
   }
 
   // public Assembly CompileAssembly(Stack program, string assemblyName, string className) {

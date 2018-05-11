@@ -446,6 +446,13 @@ public class CompilerTests
   }
 
   [Fact]
+  public void TestPop() {
+    Func<Stack> h;
+    h = compiler.Compile("[[pop] 1 2 3]]".ToStack());
+    Assert.Equal("[[] 2 3]", h().ToRepr());
+  }
+
+  [Fact]
   public void TestCompilerStacks() {
     Func<Stack> h;
     h = compiler.Compile("[[] 1 2 3]]".ToStack());

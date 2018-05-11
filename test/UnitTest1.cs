@@ -54,7 +54,7 @@ public class UnitTest1
     Assert.Equal(s, q);
     Assert.NotEqual(s, w);
     Assert.False(s == q);
-    Assert.True(s.Equals(q));
+    Assert.False(s.Equals(q));
     Assert.False(s.Equals(w));
     Assert.True(s != w);
     Assert.True(s.Contains(2));
