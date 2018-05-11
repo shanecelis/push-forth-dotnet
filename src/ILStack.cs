@@ -54,8 +54,10 @@ public class ILStack {
         Push(x);
       }
       MakeReturnStack(c);
+    } else if (o is ILStackIndex) {
+      // Skip it.
     } else {
-      throw new Exception("NYI " + o);
+      throw new Exception($"Don't know how to push object {o} of type {o.GetType()}.");
     }
   }
 
@@ -108,6 +110,14 @@ public class ILStack {
     il.Emit(OpCodes.Ldloc, localStack.LocalIndex);
     // ilgen.EndScope();
     types.Push(typeof(Stack));
+  }
+
+  public void ReverseStack() {
+    if (types.Peek() != typeof(Stack))
+      throw new Exception("A Stack type must be on top to reverse.");
+
+    il.Emit(OpCodes.Newobj,
+            typeof(Stack).GetConstructor(new [] { typeof(ICollection) }));
   }
 
   // Make a return stack.

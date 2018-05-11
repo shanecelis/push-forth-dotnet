@@ -444,6 +444,9 @@ public class CompilerTests
   [Fact]
   public void TestCompilerStacks() {
     Func<Stack> h;
+    h = compiler.Compile("[[1 1 1 + 3]]".ToStack());
+    Assert.Equal("[[] 3 2 1]", h().ToRepr());
+
     h = compiler.Compile("[[2 1 +]]".ToStack());
     Assert.Equal("[[] 3]", h().ToRepr());
 
@@ -452,6 +455,10 @@ public class CompilerTests
 
     h = compiler.Compile("[[2 1 + 5 + 3]]".ToStack());
     Assert.Equal("[[] 3 8]", h().ToRepr());
+
+    h = compiler.Compile("[[2 1 + 5 + 3 2 1]]".ToStack());
+    Assert.Equal("[[] 1 2 3 8]", h().ToRepr());
+
   }
 
   [Fact]

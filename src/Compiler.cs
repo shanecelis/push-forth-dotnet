@@ -66,7 +66,6 @@ public class Compiler {
     ILGenerator il = dynMeth.GetILGenerator(256);
     var ils = new ILStack(il);
     // Stick an empty program on optimistically.
-    ils.Push(new Stack());
     while (! Interpreter.IsHalted(program)) {
       program = Interpreter.Eval(program, new [] { instructions });
       var code = program.Pop();
@@ -80,10 +79,10 @@ public class Compiler {
       data.Push(code);
       program = data;
     }
-    program.Pop();
-    ils.PushStackContents(program);
+    ils.PushStackContents(new Stack(program));
     // ils.PushStackContents(program);
     ils.MakeReturnStack(ils.count);
+    //ils.ReverseStack();
     il.Emit(OpCodes.Ret);
     return (Func<Stack>) dynMeth.CreateDelegate(typeof(Func<Stack>));
   }
