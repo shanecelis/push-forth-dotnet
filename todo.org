@@ -1,7 +1,7 @@
 * TODO
   - [ ] Predicates
   - [ ] Compiler
-  - [ ] Compiler->Stack
+  - [X] Compiler->Stack
 * Features
   - Stack Interpolation "[3 8 {null}]"?
   - Accept arguments

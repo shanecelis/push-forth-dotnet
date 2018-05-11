@@ -676,5 +676,14 @@ public class CompilerTests
     // Assert.Throws<Exception>(() => compiler.Compile<char>("[[5 2 1 +]]".ToStack()));
     Assert.Throws<Exception>(() => compiler.Compile<char>("[[5 2 1 +]]".ToStack()));
   }
+
+  [Fact]
+  public void TestCompileArgs() {
+    Func<int, Stack> h;
+    h = compiler.Compile<int>("[[x x *] ]".ToStack(), "x");
+    Assert.Equal("[[] 1]", h(1).ToRepr());
+    Assert.Equal("[[] 4]", h(2).ToRepr());
+  }
+
 }
 }

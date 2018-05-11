@@ -13,6 +13,7 @@ namespace SeawispHunter.PushForth {
 public class Compiler {
 
   public Dictionary<string, Instruction> instructions = new Dictionary<string, Instruction>();
+  Dictionary<string, Func<Stack>> memoizedPrograms = new Dictionary<string, Func<Stack>>();
 
   public Compiler() {
     foreach (var op in new [] { "+", "-", "*", "/", ">", "<", ">=", "<=", "==" })
@@ -94,7 +95,14 @@ public class Compiler {
   //       Type t = typeBuilder.CreateType();
   //       // asmBuilder.Save(moduleName + ".dll");
   //       return asmBuilder;
+  // }
 
+  // public Func<Stack> Compile(Stack program) {
+  //   var s = program.ToRepr();
+  //   Func<Stack> f;
+  //   if (! memoizedPrograms.TryGetValue(s, out f))
+  //     f = memoizedPrograms[s] = _Compile(program);
+  //   return f;
   // }
 
   public Func<Stack> Compile(Stack program) {
@@ -134,14 +142,70 @@ public class Compiler {
     }
     // ils.PushStackContents(new Stack(program));
     // ils.PushStackContents(program);
+    // Turn the IL stack into a Stack.
     ils.MakeReturnStack(ils.count);
     ils.ReverseStack();
+    // Tack on the rest of the program.
     il.Emit(OpCodes.Dup);
     ils.Push(program.Peek());
     il.Emit(OpCodes.Call, typeof(Stack).GetMethod("Push"));
     ils.types.Pop();
     il.Emit(OpCodes.Ret);
     return (Func<Stack>) dynMeth.CreateDelegate(typeof(Func<Stack>));
+  }
+
+  public Func<X, Stack> Compile<X>(Stack program, string argxName) {
+    var s = program.ToRepr();
+    var dynMeth = new DynamicMethod("Program" + Regex.Replace(s, @"[^0-9]+", ""),
+                                    typeof(Stack),
+                                    new Type[] {typeof(X)},
+                                    typeof(Compiler).Module);
+    ILGenerator il = dynMeth.GetILGenerator(256);
+    var ils = new ILStack(il);
+    object code;
+    Stack data;
+    if (program.Any()) {
+      code = program.Pop();
+      data = program;
+      ils.PushStackContents(new Stack(data));
+      data.Clear();
+      data.Push(code);
+      program = data;
+    }
+    var arguments = new Dictionary<string, Instruction>();
+    arguments[argxName] = new InstructionCompiler(0, _ilStack => {
+        _ilStack.il.Emit(OpCodes.Ldarg_0);
+        _ilStack.types.Push(typeof(X));
+      });
+    // Stick an empty program on optimistically.
+    while (! Interpreter.IsHalted(program)) {
+      program = Interpreter.Eval(program, new [] { arguments, instructions });
+      code = program.Pop();
+      data = program;
+      object o = data.Peek();
+      if (o is Action<ILStack> a) {
+        a(ils);
+        data.Pop();
+      }
+      ils.PushStackContents(new Stack(data));
+      data.Clear();
+      data.Push(code);
+      program = data;
+      // data.Push(code);
+      // program = data;
+    }
+    // ils.PushStackContents(new Stack(program));
+    // ils.PushStackContents(program);
+    // Turn the IL stack into a Stack.
+    ils.MakeReturnStack(ils.count);
+    ils.ReverseStack();
+    // Tack on the rest of the program.
+    il.Emit(OpCodes.Dup);
+    ils.Push(program.Peek());
+    il.Emit(OpCodes.Call, typeof(Stack).GetMethod("Push"));
+    ils.types.Pop();
+    il.Emit(OpCodes.Ret);
+    return (Func<X,Stack>) dynMeth.CreateDelegate(typeof(Func<X,Stack>));
   }
 
   public Func<Stack> CompileStack(Stack program) {
