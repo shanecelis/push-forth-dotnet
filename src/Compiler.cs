@@ -105,13 +105,9 @@ public class Compiler {
   //   return f;
   // }
 
-  public Func<Stack> Compile(Stack program) {
-    var s = program.ToRepr();
-    var dynMeth = new DynamicMethod("Program" + Regex.Replace(s, @"[^0-9]+", ""),
-                                    typeof(Stack),
-                                    new Type[] {},
-                                    typeof(Compiler).Module);
-    ILGenerator il = dynMeth.GetILGenerator(256);
+  internal static ILStack Compile(Stack program,
+                           ILGenerator il,
+                           IEnumerable<Dictionary<string, Instruction>> instructionSets) {
     var ils = new ILStack(il);
     object code;
     Stack data;
@@ -125,7 +121,7 @@ public class Compiler {
     }
     // Stick an empty program on optimistically.
     while (! Interpreter.IsHalted(program)) {
-      program = Interpreter.Eval(program, new [] { instructions });
+      program = Interpreter.Eval(program, instructionSets);
       code = program.Pop();
       data = program;
       object o = data.Peek();
@@ -140,6 +136,17 @@ public class Compiler {
       // data.Push(code);
       // program = data;
     }
+    return ils;
+  }
+
+  public Func<Stack> Compile(Stack program) {
+    // var s = program.ToRepr();
+    var dynMeth = new DynamicMethod("Program", // + Regex.Replace(s, @"[^0-9]+", ""),
+                                    typeof(Stack),
+                                    new Type[] {},
+                                    typeof(Compiler).Module);
+    ILGenerator il = dynMeth.GetILGenerator(256);
+    var ils = Compile(program, il, new [] { instructions });
     // ils.PushStackContents(new Stack(program));
     // ils.PushStackContents(program);
     // Turn the IL stack into a Stack.
@@ -154,6 +161,10 @@ public class Compiler {
     return (Func<Stack>) dynMeth.CreateDelegate(typeof(Func<Stack>));
   }
 
+  internal void PushProgram(Stack program) {
+
+  }
+
   public Func<X, Stack> Compile<X>(Stack program, string argxName) {
     var s = program.ToRepr();
     var dynMeth = new DynamicMethod("Program" + Regex.Replace(s, @"[^0-9]+", ""),
@@ -161,39 +172,12 @@ public class Compiler {
                                     new Type[] {typeof(X)},
                                     typeof(Compiler).Module);
     ILGenerator il = dynMeth.GetILGenerator(256);
-    var ils = new ILStack(il);
-    object code;
-    Stack data;
-    if (program.Any()) {
-      code = program.Pop();
-      data = program;
-      ils.PushStackContents(new Stack(data));
-      data.Clear();
-      data.Push(code);
-      program = data;
-    }
     var arguments = new Dictionary<string, Instruction>();
     arguments[argxName] = new InstructionCompiler(0, _ilStack => {
         _ilStack.il.Emit(OpCodes.Ldarg_0);
         _ilStack.types.Push(typeof(X));
       });
-    // Stick an empty program on optimistically.
-    while (! Interpreter.IsHalted(program)) {
-      program = Interpreter.Eval(program, new [] { arguments, instructions });
-      code = program.Pop();
-      data = program;
-      object o = data.Peek();
-      if (o is Action<ILStack> a) {
-        a(ils);
-        data.Pop();
-      }
-      ils.PushStackContents(new Stack(data));
-      data.Clear();
-      data.Push(code);
-      program = data;
-      // data.Push(code);
-      // program = data;
-    }
+    var ils = Compile(program, il, new [] { arguments, instructions });
     // ils.PushStackContents(new Stack(program));
     // ils.PushStackContents(program);
     // Turn the IL stack into a Stack.

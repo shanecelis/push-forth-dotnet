@@ -171,7 +171,6 @@ public class ILStack {
     // ilgen.EndScope();
     stackTypes.Push(_stackTypes);
     types.Push(typeof(Stack));
-    // return stackTypes;
   }
 
   public void ReverseStack() {
