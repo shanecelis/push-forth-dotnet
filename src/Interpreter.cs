@@ -54,6 +54,12 @@ public class Interpreter {
     AddInstruction("!", (Stack stack, Symbol s, object x) => {
         AddInstruction(s.name, () => x);
       });
+    AddInstruction("if", (Stack stack, bool condition, Stack consequent, Stack otherwise)=> {
+        if (condition)
+          stack.Push(new Continuation(consequent));
+        else
+          stack.Push(new Continuation(otherwise));
+      });
     // Needed this to track down a bug.
     AddInstruction("!int", (Stack stack, Symbol s, int x) => {
         AddInstruction(s.name, () => x);

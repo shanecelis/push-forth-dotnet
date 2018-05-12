@@ -455,6 +455,12 @@ public class UnitTest1
   }
 
   [Fact]
+  public void TestIf() {
+    Assert.Equal("[[] 1]", Run("[[if] true [1] [0]]"));
+    Assert.Equal("[[] 0]", Run("[[if] false [1] [0]]"));
+  }
+
+  [Fact]
   public void TestWhile2False() {
     var interpreter = new Interpreter();
     var d0 = Interpreter.ParseString("[[while2] [1 + dup 5 >] false 0]");

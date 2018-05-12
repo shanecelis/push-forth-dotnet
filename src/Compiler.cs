@@ -55,6 +55,26 @@ public class Compiler {
         ilStack.MakeReturnStack(2);
         ilStack.ReverseStack();
       });
+    instructions["if"] = new InstructionCompiler(3, ilStack => {
+        if (ilStack.types.Peek() != typeof(bool))
+          throw new Exception($"Expected a bool not {ilStack.types.Peek().PrettyName()}");
+        ilStack.types.Pop();
+        if (ilStack.types.Peek() != typeof(Stack))
+          throw new Exception($"Expected a Stack for consequent not {ilStack.types.Peek().PrettyName()}");
+        ilStack.types.Pop();
+        if (ilStack.types.Peek() != typeof(Stack))
+          throw new Exception($"Expected a Stack for consequent not {ilStack.types.Peek().PrettyName()}");
+
+        var otherwise = ilStack.il.DefineLabel();
+        var end = ilStack.il.DefineLabel();
+        ilStack.il.Emit(OpCodes.Brfalse, otherwise);
+        // Compile if possible. Interpret otherwise.
+        //Compile()
+        ilStack.il.Emit(OpCodes.Br, end);
+        ilStack.il.MarkLabel(otherwise)
+        //Compile();
+        ilStack.il.MarkLabel(end);
+      });
   }
 
   // public Assembly CompileAssembly(Stack program, string assemblyName, string className) {

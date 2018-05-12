@@ -1,12 +1,25 @@
 * TODO
   - [ ] Predicates
-  - [ ] Compiler
+
+    Predicates are out. They can't be cleanly compiled. Let's just stick
+    with types which we can compile.
+  - [X] Compiler
   - [X] Compiler->Stack
 * Features
   - Stack Interpolation "[3 8 {null}]"?
-  - Accept arguments
+    
+    Nah. Let's just use symbols or nullary instructions I mean.
+
+  Func<object, Stack> f = Compile("[3 8 x]", "x");
+  f(null);
+  - [X] Accept arguments
   - 
 * Compiler Notes
+** If
+   `If` exposes a new issue in the argument handling. Namely that I need to have
+   access to some stack items at compile time so I can compile them. This argues
+   for pushing items onto the stack when required. It also means that any values
+   that can be handled at compile time should be.
 ** Argument Handling
 *** Pass all data stack items onto CIL stack immediately
     This is what I'm currently doing.  It has a couple problems though.
