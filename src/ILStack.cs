@@ -183,6 +183,21 @@ public class ILStack {
     stackTypes.Push(new Stack<Type>(s));
   }
 
+  /*
+    On the IL stack there is [(Stack s) ...]. This method will push o onto s.
+   */
+  public void PushPush(object o) {
+    if (types.Peek() != typeof(Stack))
+      throw new Exception("Must have a stack on top.");
+    il.Emit(OpCodes.Dup);
+    Push(o);
+    var pushMethod = typeof(Stack).GetMethod("Push");
+    if (types.Peek().IsValueType)
+      il.Emit(OpCodes.Box, types.Peek());
+    il.Emit(OpCodes.Call, pushMethod);
+    types.Pop();
+  }
+
   // Make a return stack.
   // Should return a local variable reference or something.
   public void MakeReturnArray() {

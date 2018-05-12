@@ -38,7 +38,9 @@ public class InstructionCompiler : Instruction {
              List<Type> typeList = ilStack.types.ToList();
              for(int i = 0; i < parameters.Length; i++) {
                var p = parameters[parameters.Length - 1 - i];
-               if (!p.ParameterType.IsValueType
+               if (! p.ParameterType.IsAssignableFrom(typeList[i]))
+                 throw new Exception($"Cannot assign parameter {p.ParameterType.PrettyName()} from argument type {typeList[i].PrettyName()}.");
+               if (! p.ParameterType.IsValueType
                    && typeList[i].IsValueType) {
                  if (i == 0) {
                    // Fix it.
@@ -70,7 +72,7 @@ public class InstructionCompiler : Instruction {
     // }
     Action<ILStack> b = (ILStack ilStack) => {
       if (ilStack.count < argCount)
-        throw new Exception($"Need ${argCount} arguments but only ${ilStack.count} items on CIL stack.");
+        throw new Exception($"Need {argCount} arguments but only {ilStack.count} items on CIL stack.");
       // Add arguments.
       // foreach(object o in args)
       //   ilStack.Push(o);
@@ -93,6 +95,13 @@ public class AddInstructionCompiler : InstructionCompiler {
 public class MathOpCompiler : InstructionCompiler {
   public MathOpCompiler(string op) : base(2,
     ilStack => {
+      var arg2 = ilStack.types.Pop();
+      var arg1 = ilStack.types.Peek();
+      ilStack.types.Push(arg2);
+      if (! arg2.IsNumericType())
+        throw new Exception($"Second argument type {arg2.PrettyName()} is non-numeric for ${op} operation.");
+      if (! arg1.IsNumericType())
+        throw new Exception($"Second argument type {arg1.PrettyName()} is non-numeric for ${op} operation.");
       switch (op) {
         case "+":
         ilStack.il.Emit(OpCodes.Add);

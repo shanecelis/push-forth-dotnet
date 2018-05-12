@@ -49,6 +49,8 @@ public static class PushForthExtensions {
       //   sb.Append(instructions.First(kv => kv.Value == i).Key);
       else if (x is Type t)
         sb.Append(t.PrettyName());
+      else if (x is string str)
+        sb.Append($"\"{str}\"");
       else
         sb.Append(x.ToString());
       if (s.Any())
@@ -72,6 +74,8 @@ public static class PushForthExtensions {
       //   sb.Append(instructions.First(kv => kv.Value == i).Key);
       else if (x is Type t)
         sb.Append(t.PrettyName());
+      else if (x is string str)
+        sb.Append($"\"{str}\"");
       else
         sb.Append(x.ToString());
       sb.Append(" ");
@@ -89,6 +93,8 @@ public static class PushForthExtensions {
       //   sb.Append(instructions.First(kv => kv.Value == i).Key);
       else if (x is Type t)
         sb.Append(t.PrettyName());
+      else if (x is string str)
+        sb.Append($"\"{str}\"");
       else
         sb.Append(x.ToString());
       if (s.Any())

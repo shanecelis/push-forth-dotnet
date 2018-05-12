@@ -443,6 +443,8 @@ public class CompilerTests
     h = compiler.Compile<int>("[[2 1 + 5 +]]".ToStack());
     Assert.Equal(8, h());
     Assert.NotEqual(0, h());
+
+    Assert.Throws<Exception>(() => compiler.Compile<int>("[[2 1 + 5 + +]]".ToStack()));
   }
 
   [Fact]
@@ -450,6 +452,8 @@ public class CompilerTests
     Func<Stack> h;
     h = compiler.Compile("[[pop] 1 2 3]]".ToStack());
     Assert.Equal("[[] 2 3]", h().ToRepr());
+
+    Assert.Throws<Exception>(() => compiler.Compile("[[pop]]]".ToStack()));
   }
 
   [Fact]
@@ -465,6 +469,10 @@ public class CompilerTests
 
     h = compiler.Compile("[[2 3 <]]]".ToStack());
     Assert.Equal("[[] True]", h().ToRepr());
+
+    Assert.Throws<Exception>(() => compiler.Compile("[[a 3 <]]]".ToStack()));
+    Assert.Throws<Exception>(() => compiler.Compile("[[3 <]]]".ToStack()));
+    Assert.Throws<Exception>(() => compiler.Compile("[[<]]]".ToStack()));
   }
 
   [Fact]
@@ -475,6 +483,13 @@ public class CompilerTests
 
     h = compiler.Compile("[[dup] [1] 2 3]]".ToStack());
     Assert.Equal("[[] [1] [1] 2 3]", h().ToRepr());
+
+    // This makes it look like it's a deep copy, is it?
+    h = compiler.Compile("[[dup cdr] [1] 2 3]]".ToStack());
+    Assert.Equal("[[] [] [1] 2 3]", h().ToRepr());
+
+
+    Assert.Throws<Exception>(() => compiler.Compile("[[dup]]]".ToStack()));
   }
 
   [Fact]
@@ -482,6 +497,9 @@ public class CompilerTests
     Func<Stack> h;
     h = compiler.Compile("[[car] [1 2 3]]]".ToStack());
     Assert.Equal("[[] 1]", h().ToRepr());
+
+    Assert.Throws<Exception>(() => compiler.Compile("[[car] a [1 2 3]]]".ToStack()));
+    Assert.Throws<Exception>(() => compiler.Compile("[[car]]]".ToStack()));
   }
 
   [Fact]
@@ -489,6 +507,9 @@ public class CompilerTests
     Func<Stack> h;
     h = compiler.Compile("[[cdr] [1 2 3]]]".ToStack());
     Assert.Equal("[[] [2 3]]", h().ToRepr());
+
+    Assert.Throws<Exception>(() => compiler.Compile("[[cdr] a [1 2 3]]]".ToStack()));
+    Assert.Throws<Exception>(() => compiler.Compile("[[cdr]]]".ToStack()));
   }
 
   [Fact]
@@ -496,6 +517,9 @@ public class CompilerTests
     Func<Stack> h;
     h = compiler.Compile("[[swap] 1 2 3]]".ToStack());
     Assert.Equal("[[] 2 1 3]", h().ToRepr());
+
+    Assert.Throws<Exception>(() => compiler.Compile("[[swap] 1]]".ToStack()));
+    Assert.Throws<Exception>(() => compiler.Compile("[[swap]]]".ToStack()));
   }
 
   [Fact]
@@ -503,6 +527,7 @@ public class CompilerTests
     Func<Stack> h;
     h = compiler.Compile("[[cat] 1 2]]".ToStack());
     Assert.Equal("[[] [1 2]]", h().ToRepr());
+    Assert.Throws<Exception>(() => compiler.Compile("[[cat] 1]]".ToStack()));
   }
 
   [Fact]
@@ -510,6 +535,8 @@ public class CompilerTests
     Func<Stack> h;
     h = compiler.Compile("[[split] [1 2]]]".ToStack());
     Assert.Equal("[[] 1 2]", h().ToRepr());
+
+    Assert.Throws<Exception>(() => compiler.Compile("[[split] a [1 2]]]".ToStack()));
   }
 
   [Fact]
@@ -521,6 +548,11 @@ public class CompilerTests
 
     h = compiler.Compile("[[cons] 0 [1 2]]]".ToStack());
     Assert.Equal("[[] [0 1 2]]", h().ToRepr());
+
+    h = compiler.Compile("[[cons] [0] [1 2]]]".ToStack());
+    Assert.Equal("[[] [[0] 1 2]]", h().ToRepr());
+
+    Assert.Throws<Exception>(() => compiler.Compile("[[cons] [0] a [1 2]]]".ToStack()));
   }
 
   [Fact]
@@ -531,6 +563,7 @@ public class CompilerTests
 
     h = compiler.Compile("[[unit] 1 2 3]]".ToStack());
     Assert.Equal("[[] [1] 2 3]", h().ToRepr());
+    Assert.Throws<Exception>(() => compiler.Compile("[[unit]]]".ToStack()));
   }
 
   [Fact]
@@ -580,7 +613,7 @@ public class CompilerTests
     Assert.NotEqual(0, h());
 
     // Assert.True(false);
-    h = compiler.CompileStack<int>("[3 2]".ToStack());
+    h = compiler.CompileStack<int>("[huh 3 2]".ToStack());
     int s = h();
     Assert.Equal(3, s);
     Assert.NotEqual(4, s);
@@ -592,15 +625,39 @@ public class CompilerTests
     // h = compiler.Compile<int>("[[2 1 +]]".ToStack());
     // Assert.Equal(42, h());
     // Assert.NotEqual(0, h());
-    h = compiler.CompileInt("[2]".ToStack());
+    h = CompileInt("[2]".ToStack());
     Assert.Equal(43, h());
     Assert.NotEqual(0, h());
 
     // Assert.True(false);
-    h = compiler.CompileInt("[3 2]".ToStack());
+    h = CompileInt("[3 2]".ToStack());
     int s = h();
     Assert.Equal(43, s);
     Assert.NotEqual(4, s);
+  }
+
+  public Func<int> CompileInt(Stack program) {
+    // var s = program.ToRepr();
+    var dynMeth = new DynamicMethod("Program", // + Regex.Replace(s, @"[^0-9]+", ""),
+                                    typeof(int),
+                                    new Type[] {},
+                                    typeof(Compiler).Module);
+    ILGenerator il = dynMeth.GetILGenerator(256);
+    var ils = new ILStack(il);
+    var result = il.DeclareLocal(typeof(int));
+    // ils.Push(2);
+    // ils.Push(1);
+    // il.Emit(OpCodes.Stloc, result.LocalIndex);
+    // ils.Pop();
+    // ils.Pop();
+    // il.Emit(OpCodes.Ldloc, result.LocalIndex);
+    il.Emit(OpCodes.Ldc_I4, 42);
+    il.Emit(OpCodes.Ldc_I4, 43);
+    il.Emit(OpCodes.Stloc, result.LocalIndex);
+    il.Emit(OpCodes.Pop);
+    il.Emit(OpCodes.Ldloc, result.LocalIndex);
+    il.Emit(OpCodes.Ret);
+    return (Func<int>) dynMeth.CreateDelegate(typeof(Func<int>));
   }
 
   [Fact]
@@ -640,19 +697,19 @@ public class CompilerTests
     Assert.Equal(@"[1 2]", s.ToRepr());
     f = compiler.CompileStack(@"[1 2 ""hi""]".ToStack());
     s = f();
-    Assert.Equal(@"[1 2 hi]", s.ToRepr());
+    Assert.Equal(@"[1 2 ""hi""]", s.ToRepr());
 
     f = compiler.CompileStack(@"[1 2 3f ""hi""]".ToStack());
     s = f();
-    Assert.Equal(@"[1 2 3 hi]", s.ToRepr());
+    Assert.Equal(@"[1 2 3 ""hi""]", s.ToRepr());
 
     f = compiler.CompileStack(@"[1 2 3.2f ""hi""]".ToStack());
     s = f();
-    Assert.Equal(@"[1 2 3.2 hi]", s.ToRepr());
+    Assert.Equal(@"[1 2 3.2 ""hi""]", s.ToRepr());
 
     f = compiler.CompileStack(@"[1 2 3.1 ""hi""]".ToStack());
     s = f();
-    Assert.Equal(@"[1 2 3.1 hi]", s.ToRepr());
+    Assert.Equal(@"[1 2 3.1 ""hi""]", s.ToRepr());
 
     f = compiler.CompileStack(@"[]".ToStack());
     s = f();
@@ -683,6 +740,13 @@ public class CompilerTests
     h = compiler.Compile<int>("[[x x *] ]".ToStack(), "x");
     Assert.Equal("[[] 1]", h(1).ToRepr());
     Assert.Equal("[[] 4]", h(2).ToRepr());
+  }
+
+  [Fact]
+  public void TestCompileBadArgs() {
+    Assert.Throws<Exception>(() => compiler.Compile<int>("[[x *] ]".ToStack(), "x"));
+    Assert.Throws<Exception>(() => compiler.Compile<char>("[[x *] ]".ToStack(), "x"));
+    Assert.Throws<Exception>(() => compiler.Compile<int>("[[*] ]".ToStack(), "x"));
   }
 
 }
