@@ -239,6 +239,14 @@ public static class PushForthExtensions {
       yield return enumerator.Current;
   }
 
+  public static Type GetReprType(this IReprType repr) {
+    return repr.type;
+  }
+
+  public static Type GetReprType(this object repr) {
+    return repr.GetType();
+  }
+
   public static Stack Conj(this Stack s, object o) {
     s.Push(o);
     return s;

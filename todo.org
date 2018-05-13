@@ -49,3 +49,47 @@
 ** Stateful/IO
    Operations that change external resources must be threaded/perserved.
    (Monad?)
+* Assembly Code
+
+  // public Assembly CompileAssembly(Stack program, string assemblyName, string className) {
+
+  //       var asmName = new AssemblyName(assemblyName);
+  //       // var asmBuilder = AssemblyBuilder.DefineDynamicAssembly(asmName, AssemblyBuilderAccess.Save);
+  //       var asmBuilder = AssemblyBuilder.DefineDynamicAssembly//(asmName, AssemblyBuilderAccess.Save);
+  //         (asmName, AssemblyBuilderAccess.Save);
+  //       // var moduleBuilder = asmBuilder.DefineDynamicModule(asmName.Name + ".mod", asmName.Name + ".dll", false);
+  //       // var moduleBuilder = asmBuilder.DefineDynamicModule(asmName.Name, asmName.Name + ".dll", true);
+  //       // var moduleName = "MyModule";
+  //       var moduleName = asmName.Name;
+  //       // var moduleBuilder = asmBuilder.DefineDynamicModule(moduleName, moduleName + ".dll", true);
+  //       var moduleBuilder = asmBuilder.DefineDynamicModule(moduleName, moduleName + ".dll");
+  //       // var moduleBuilder = asmBuilder.DefineDynamicModule(asmName.Name + ".mod", asmName.Name + ".dll", false);
+  //       // var moduleBuilder = asmBuilder.DefineDynamicModule(asmName.Name, asmName.Name + ".mod");
+
+  //       // var typeBuilder = moduleBuilder.DefineType(className, TypeAttributes.Public, typeof(object), new Type[] { typeof(ICompiledBrain) });
+  //       var typeBuilder = moduleBuilder.DefineType(className,
+  //                                                  TypeAttributes.Public |
+  //                                                  TypeAttributes.Class,
+  //                                                  typeof(object));
+  //       /*
+  //         public static class Foo {
+  //           public static Action<float[], float[]> GetBrain();
+  //           public static int stateCount = 10;
+  //         }
+  //        */
+  //       var methodBuilder = typeBuilder.DefineMethod("Run",
+  //                                                    MethodAttributes.Static | MethodAttributes.Public,
+  //                                                    typeof(Stack), new Type[] { });
+
+  //       Type t = typeBuilder.CreateType();
+  //       // asmBuilder.Save(moduleName + ".dll");
+  //       return asmBuilder;
+  // }
+
+  // public Func<Stack> Compile(Stack program) {
+  //   var s = program.ToRepr();
+  //   Func<Stack> f;
+  //   if (! memoizedPrograms.TryGetValue(s, out f))
+  //     f = memoizedPrograms[s] = _Compile(program);
+  //   return f;
+  // }

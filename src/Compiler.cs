@@ -19,8 +19,13 @@ public class Compiler {
   public Compiler() {
     foreach (var op in new [] { "+", "-", "*", "/", ">", "<", ">=", "<=", "==" })
       instructions[op] = new MathOpCompiler(op);
-    instructions["pop"] = new InstructionCompiler(1, ilStack => {
-        ilStack.Pop();
+    instructions["pop"] = new InstructionCompiler(1, stack => {
+        var argEmitter = SetupArguments(1, stack);
+        stack.Push(new CompilationUnit(ilStack => {
+              argEmitter(ilStack);
+              ilStack.Pop();
+            },
+            stack.Peek().GetReprType()));
       });
     instructions["dup"] = new InstructionCompiler(1, ilStack => {
         // XXX This probably doesn't work well with stacks.
@@ -77,78 +82,22 @@ public class Compiler {
       });
   }
 
-  // public Assembly CompileAssembly(Stack program, string assemblyName, string className) {
-
-  //       var asmName = new AssemblyName(assemblyName);
-  //       // var asmBuilder = AssemblyBuilder.DefineDynamicAssembly(asmName, AssemblyBuilderAccess.Save);
-  //       var asmBuilder = AssemblyBuilder.DefineDynamicAssembly//(asmName, AssemblyBuilderAccess.Save);
-  //         (asmName, AssemblyBuilderAccess.Save);
-  //       // var moduleBuilder = asmBuilder.DefineDynamicModule(asmName.Name + ".mod", asmName.Name + ".dll", false);
-  //       // var moduleBuilder = asmBuilder.DefineDynamicModule(asmName.Name, asmName.Name + ".dll", true);
-  //       // var moduleName = "MyModule";
-  //       var moduleName = asmName.Name;
-  //       // var moduleBuilder = asmBuilder.DefineDynamicModule(moduleName, moduleName + ".dll", true);
-  //       var moduleBuilder = asmBuilder.DefineDynamicModule(moduleName, moduleName + ".dll");
-  //       // var moduleBuilder = asmBuilder.DefineDynamicModule(asmName.Name + ".mod", asmName.Name + ".dll", false);
-  //       // var moduleBuilder = asmBuilder.DefineDynamicModule(asmName.Name, asmName.Name + ".mod");
-
-  //       // var typeBuilder = moduleBuilder.DefineType(className, TypeAttributes.Public, typeof(object), new Type[] { typeof(ICompiledBrain) });
-  //       var typeBuilder = moduleBuilder.DefineType(className,
-  //                                                  TypeAttributes.Public |
-  //                                                  TypeAttributes.Class,
-  //                                                  typeof(object));
-  //       /*
-  //         public static class Foo {
-  //           public static Action<float[], float[]> GetBrain();
-  //           public static int stateCount = 10;
-  //         }
-  //        */
-  //       var methodBuilder = typeBuilder.DefineMethod("Run",
-  //                                                    MethodAttributes.Static | MethodAttributes.Public,
-  //                                                    typeof(Stack), new Type[] { });
-
-  //       Type t = typeBuilder.CreateType();
-  //       // asmBuilder.Save(moduleName + ".dll");
-  //       return asmBuilder;
-  // }
-
-  // public Func<Stack> Compile(Stack program) {
-  //   var s = program.ToRepr();
-  //   Func<Stack> f;
-  //   if (! memoizedPrograms.TryGetValue(s, out f))
-  //     f = memoizedPrograms[s] = _Compile(program);
-  //   return f;
-  // }
-
-  internal static Stack Compile(Stack program,
-                                ILStack ils,
-                                IEnumerable<Dictionary<string, Instruction>> instructionSets) {
-    object code;
-    Stack data;
-    if (program.Any()) {
-      code = program.Pop();
-      data = program;
-      ils.PushStackContents(new Stack(data));
-      data.Clear();
-      data.Push(code);
-      program = data;
-    }
-    // Stick an empty program on optimistically.
+  internal static Stack
+    Compile(Stack program,
+            ILStack ils,
+            IEnumerable<Dictionary<string, Instruction>> instructionSets) {
     while (! Interpreter.IsHalted(program)) {
       program = Interpreter.Eval(program, instructionSets);
-      code = program.Pop();
-      data = program;
+      var code = program.Pop();
+      var data = program;
       object o = data.Peek();
-      if (o is Action<ILStack> a) {
-        a(ils);
-        data.Pop();
+      if (o is CompilationUnit cu) {
+        cu.emitter(ils);
+        if (ils.types.Any())
+          cu.type = ils.types.Peek();
       }
-      ils.PushStackContents(new Stack(data));
-      data.Clear();
       data.Push(code);
       program = data;
-      // data.Push(code);
-      // program = data;
     }
     return program;
   }

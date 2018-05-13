@@ -170,7 +170,7 @@ public class ReorderInstruction : Instruction {
   public IEnumerable<Type> consumes;
   public IEnumerable<Type> produces;
   public readonly string name;
-  public Func<object, Type> getType = o => o is ReprType d ? d.type : o.GetType();
+  public Func<object, Type> getType = o => o is IReprType d ? d.type : o.GetType();
   public Func<Type, object> putType = o => new Dummy(o);
   public bool leaveReorderItems = true;
 
@@ -239,7 +239,7 @@ public class ReorderInstruction : Instruction {
   }
 }
 
-public class Defer : Tuple<Stack, Type>, ReprType {
+public class Defer : Tuple<Stack, Type>, IReprType {
   public Defer(Stack s) : base(s, null) { }
   public Defer(Stack s, Type t) : base(s, t) { }
   public Stack stack => Item1;
@@ -252,11 +252,11 @@ public class Defer : Tuple<Stack, Type>, ReprType {
   }
 }
 
-public interface ReprType {
+public interface IReprType {
   Type type { get; }
 }
 
-public class Dummy : ReprType {
+public class Dummy : IReprType {
   public Dummy(Type type) {
     this.type = type;
   }
