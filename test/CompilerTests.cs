@@ -116,13 +116,13 @@ public class CompilerTests
     var ils = new ILStack(il);
     var bi = new AddInstructionCompiler();
     var s = new Stack();
-    ils.Push(1);
-    ils.Push(4);
+    s.Push(1);
+    s.Push(4);
     var r = bi.Apply(s);
     var o = r.Peek();
-    if (o is Action<ILStack> a) {
-      a(ils);
-      r.Pop();
+    if (o is CompilationUnit cu) {
+      cu.emitter(ils);
+      // r.Pop();
     }
     // Load the first arVgument, which is a string, onto the stack.
     il.Emit(OpCodes.Ret);
@@ -140,21 +140,22 @@ public class CompilerTests
     ILGenerator il = dynMeth.GetILGenerator(256);
     var ils = new ILStack(il);
     var bi = new AddInstructionCompiler();
+    // var s = "[5 4 1]".ToStack();
     var s = new Stack();
-    ils.Push(1);
-    ils.Push(4);
-    ils.Push(5);
+    s.Push(1);
+    s.Push(4);
+    s.Push(5);
     var r = bi.Apply(s);
-    var o = r.Peek();
-    if (o is Action<ILStack> a) {
-      a(ils);
-      r.Pop();
-    }
+    // var o = r.Peek();
+    // if (o is CompilationUnit cu) {
+    //   cu.emitter(ils);
+    //   // r.Pop();
+    // }
     r = bi.Apply(r);
-    o = r.Peek();
-    if (o is Action<ILStack> b) {
-      b(ils);
-      r.Pop();
+    var o = r.Peek();
+    if (o is CompilationUnit cub) {
+      cub.emitter(ils);
+      // r.Pop();
     }
     // Load the first argument, which is a string, onto the stack.
     il.Emit(OpCodes.Ret);
@@ -173,20 +174,20 @@ public class CompilerTests
     var ils = new ILStack(il);
     var bi = new AddInstructionCompiler();
     var s = new Stack();
-    ils.Push(1.5f);
-    ils.Push(4f);
-    ils.Push(5f);
+    s.Push(1.5f);
+    s.Push(4f);
+    s.Push(5f);
     var r = bi.Apply(s);
-    var o = r.Peek();
-    if (o is Action<ILStack> a) {
-      a(ils);
-      r.Pop();
-    }
+    // var o = r.Peek();
+    // if (o is CompilationUnit cu) {
+    //   cu.emitter(ils);
+    //   // r.Pop();
+    // }
     r = bi.Apply(r);
-    o = r.Peek();
-    if (o is Action<ILStack> b) {
-      b(ils);
-      r.Pop();
+    var o = r.Peek();
+    if (o is CompilationUnit cub) {
+      cub.emitter(ils);
+      // r.Pop();
     }
     // Load the first argument, which is a string, onto the stack.
     il.Emit(OpCodes.Ret);
@@ -205,20 +206,20 @@ public class CompilerTests
     var ils = new ILStack(il);
     var bi = new AddInstructionCompiler();
     var s = new Stack();
-    ils.Push(1.5);
-    ils.Push(4.5);
-    ils.Push(5.5);
+    s.Push(1.5);
+    s.Push(4.5);
+    s.Push(5.5);
     var r = bi.Apply(s);
-    var o = r.Peek();
-    if (o is Action<ILStack> a) {
-      a(ils);
-      r.Pop();
-    }
+    // var o = r.Peek();
+    // if (o is CompilationUnit cu) {
+    //   cu.emitter(ils);
+    //   // r.Pop();
+    // }
     r = bi.Apply(r);
-    o = r.Peek();
-    if (o is Action<ILStack> b) {
-      b(ils);
-      r.Pop();
+    var o = r.Peek();
+    if (o is CompilationUnit cub) {
+      cub.emitter(ils);
+      // r.Pop();
     }
     // Load the first argument, which is a string, onto the stack.
     il.Emit(OpCodes.Ret);
@@ -327,11 +328,11 @@ public class CompilerTests
     var ils = new ILStack(il);
     var i = new InstructionCompiler(typeof(CompilerFunctions).GetMethod("Car"));
     var s = "[[1 2 3]]".ToStack();
-    ils.PushStackContents(s);
+    // ils.PushStackContents(s);
     var r = i.Apply(s);
     var o = r.Peek();
-    if (o is Action<ILStack> a) {
-      a(ils);
+    if (o is CompilationUnit cu) {
+      cu.emitter(ils);
       r.Pop();
     }
     il.Emit(OpCodes.Ret);
@@ -352,11 +353,11 @@ public class CompilerTests
     var ils = new ILStack(il);
     var i = new InstructionCompiler(typeof(CompilerFunctions).GetMethod("Car"));
     var s = "[[1 2 3]]".ToStack();
-    ils.PushStackContents(s);
+    // ils.PushStackContents(s);
     var r = i.Apply(s);
     var o = r.Peek();
-    if (o is Action<ILStack> a) {
-      a(ils);
+    if (o is CompilationUnit cu) {
+      cu.emitter(ils);
       r.Pop();
     }
     il.Emit(OpCodes.Unbox_Any, typeof(int));
@@ -378,11 +379,11 @@ public class CompilerTests
     var ils = new ILStack(il);
     var i = new InstructionCompiler(typeof(CompilerFunctions).GetMethod("Cdr"));
     var s = "[[1 2 3]]".ToStack();
-    ils.PushStackContents(s);
+    // ils.PushStackContents(s);
     var r = i.Apply(s);
     var o = r.Peek();
-    if (o is Action<ILStack> a) {
-      a(ils);
+    if (o is CompilationUnit cu) {
+      cu.emitter(ils);
       r.Pop();
     }
     il.Emit(OpCodes.Ret);
@@ -402,19 +403,19 @@ public class CompilerTests
     var ils = new ILStack(il);
     var i = new MathOpCompiler("-");
     var s = "[1 2]".ToStack();
-    ils.PushStackContents(s);
+    // ils.PushStackContents(s);
     var r = i.Apply(s);
     var o = r.Peek();
-    if (o is Action<ILStack> a) {
-      a(ils);
+    if (o is CompilationUnit cu) {
+      cu.emitter(ils);
       r.Pop();
     }
     il.Emit(OpCodes.Ret);
     var f = (Func<int>) dynMeth.CreateDelegate(typeof(Func<int>));
 
     // That's better.
-    Assert.Equal(-1, f());
-    Assert.NotEqual(1, f());
+    Assert.Equal(1, f());
+    Assert.NotEqual(-1, f());
   }
 
   [Fact]

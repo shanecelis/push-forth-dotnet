@@ -19,21 +19,18 @@ public class Compiler {
   public Compiler() {
     foreach (var op in new [] { "+", "-", "*", "/", ">", "<", ">=", "<=", "==" })
       instructions[op] = new MathOpCompiler(op);
-    instructions["pop"] = new InstructionCompiler(1, stack => {
-        var argEmitter = SetupArguments(1, stack);
-        stack.Push(new CompilationUnit(ilStack => {
-              argEmitter(ilStack);
-              ilStack.Pop();
-            },
-            stack.Peek().GetReprType()));
-      });
+    instructions["pop"] = new InstructionCompiler(1, ilStack => {
+        ilStack.Pop();
+      },
+      stack => stack.Peek().GetReprType());
     instructions["dup"] = new InstructionCompiler(1, ilStack => {
         // XXX This probably doesn't work well with stacks.
         ilStack.il.Emit(OpCodes.Dup);
         if (ilStack.types.Peek() == typeof(Stack))
             ilStack.stackTypes.Push(ilStack.stackTypes.Peek());
         ilStack.types.Push(ilStack.types.Peek());
-      });
+      },
+      stack => stack.Peek().GetReprType());
     foreach(var method in typeof(CompilerFunctions).GetMethods())
       instructions[method.Name.ToLower()] = new InstructionCompiler(method);
     instructions["swap"] = new InstructionCompiler(2, ilStack => {
@@ -51,54 +48,72 @@ public class Compiler {
         ilStack.types.Push(t1.LocalType);
         ilStack.il.Emit(OpCodes.Ldloc, t2.LocalIndex);
         ilStack.types.Push(t2.LocalType);
+      },
+      stack => { var a = stack.Pop();
+        var b = stack.Peek();
+        stack.Push(a);
+        return b.GetReprType();
       });
     instructions["split"] = new InstructionCompiler(1, ilStack => {
         ilStack.ReverseStack();
         ilStack.UnrollStack();
-      });
+      },
+      stack => ((Stack) stack.Peek()).Peek().GetReprType());
     instructions["cat"] = new InstructionCompiler(2, ilStack => {
         ilStack.MakeReturnStack(2);
         ilStack.ReverseStack();
-      });
-    instructions["if"] = new InstructionCompiler(3, ilStack => {
-        if (ilStack.types.Peek() != typeof(bool))
-          throw new Exception($"Expected a bool not {ilStack.types.Peek().PrettyName()}");
-        ilStack.types.Pop();
-        if (ilStack.types.Peek() != typeof(Stack))
-          throw new Exception($"Expected a Stack for consequent not {ilStack.types.Peek().PrettyName()}");
-        ilStack.types.Pop();
-        if (ilStack.types.Peek() != typeof(Stack))
-          throw new Exception($"Expected a Stack for consequent not {ilStack.types.Peek().PrettyName()}");
+      },
+      typeof(Stack));
+    // instructions["if"] = new InstructionCompiler(3, ilStack => {
+    //     if (ilStack.types.Peek() != typeof(bool))
+    //       throw new Exception($"Expected a bool not {ilStack.types.Peek().PrettyName()}");
+    //     ilStack.types.Pop();
+    //     if (ilStack.types.Peek() != typeof(Stack))
+    //       throw new Exception($"Expected a Stack for consequent not {ilStack.types.Peek().PrettyName()}");
+    //     ilStack.types.Pop();
+    //     if (ilStack.types.Peek() != typeof(Stack))
+    //       throw new Exception($"Expected a Stack for consequent not {ilStack.types.Peek().PrettyName()}");
 
-        var otherwise = ilStack.il.DefineLabel();
-        var end = ilStack.il.DefineLabel();
-        ilStack.il.Emit(OpCodes.Brfalse, otherwise);
-        // Compile if possible. Interpret otherwise.
-        //Compile()
-        ilStack.il.Emit(OpCodes.Br, end);
-        ilStack.il.MarkLabel(otherwise);
-        //Compile();
-        ilStack.il.MarkLabel(end);
-      });
+    //     var otherwise = ilStack.il.DefineLabel();
+    //     var end = ilStack.il.DefineLabel();
+    //     ilStack.il.Emit(OpCodes.Brfalse, otherwise);
+    //     // Compile if possible. Interpret otherwise.
+    //     //Compile()
+    //     ilStack.il.Emit(OpCodes.Br, end);
+    //     ilStack.il.MarkLabel(otherwise);
+    //     //Compile();
+    //     ilStack.il.MarkLabel(end);
+    //   });
   }
 
   internal static Stack
     Compile(Stack program,
             ILStack ils,
             IEnumerable<Dictionary<string, Instruction>> instructionSets) {
+    object code;
+    Stack data;
     while (! Interpreter.IsHalted(program)) {
       program = Interpreter.Eval(program, instructionSets);
-      var code = program.Pop();
-      var data = program;
-      object o = data.Peek();
-      if (o is CompilationUnit cu) {
-        cu.emitter(ils);
-        if (ils.types.Any())
-          cu.type = ils.types.Peek();
-      }
-      data.Push(code);
-      program = data;
+      // code = program.Pop();
+      // data = program;
+      // object o = data.Peek();
+      // if (o is CompilationUnit cu)
+      //   cu.emitter(ils);
+      // data.Push(code);
+      // program = data;
     }
+    Console.WriteLine("Compiled Program " + program.ToRepr());
+    // Compile after it's all done.
+    code = program.Pop();
+    data = program;
+    var reversedData = new Stack(data);
+    foreach(object d in reversedData) {
+      if (d is CompilationUnit cu)
+        cu.emitter(ils);
+      else
+        ils.Push(d);
+    }
+    program.Push(code);
     return program;
   }
 
@@ -131,7 +146,8 @@ public class Compiler {
     arguments[argxName] = new InstructionCompiler(0, _ilStack => {
         _ilStack.il.Emit(OpCodes.Ldarg_0);
         _ilStack.types.Push(typeof(X));
-      });
+      },
+      typeof(X));
     var ils = new ILStack(il);
     Compile(program, ils, new [] { arguments, instructions });
     // Turn the IL stack into a Stack.
