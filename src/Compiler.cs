@@ -64,26 +64,37 @@ public class Compiler {
         ilStack.ReverseStack();
       },
       typeof(Stack));
-    // instructions["if"] = new InstructionCompiler(3, ilStack => {
-    //     if (ilStack.types.Peek() != typeof(bool))
-    //       throw new Exception($"Expected a bool not {ilStack.types.Peek().PrettyName()}");
-    //     ilStack.types.Pop();
-    //     if (ilStack.types.Peek() != typeof(Stack))
-    //       throw new Exception($"Expected a Stack for consequent not {ilStack.types.Peek().PrettyName()}");
-    //     ilStack.types.Pop();
-    //     if (ilStack.types.Peek() != typeof(Stack))
-    //       throw new Exception($"Expected a Stack for consequent not {ilStack.types.Peek().PrettyName()}");
+    instructions["if"] = new InstructionFunc(stack => {
+        var condition = (bool) stack.Pop();
+        var consequent = (Stack) stack.Pop();
+        var otherwise = (Stack) stack.Pop();
 
-    //     var otherwise = ilStack.il.DefineLabel();
-    //     var end = ilStack.il.DefineLabel();
-    //     ilStack.il.Emit(OpCodes.Brfalse, otherwise);
-    //     // Compile if possible. Interpret otherwise.
-    //     //Compile()
-    //     ilStack.il.Emit(OpCodes.Br, end);
-    //     ilStack.il.MarkLabel(otherwise);
-    //     //Compile();
-    //     ilStack.il.MarkLabel(end);
-    //   });
+        stack.Push(new CompilationUnit(ilStack => {
+              Compile(condition ? consequent : otherwise,
+                      ilStack,
+                      new [] { instructions });
+            },
+            typeof(int)));
+      });
+      //   if (ilStack.types.Peek() != typeof(bool))
+      //     throw new Exception($"Expected a bool not {ilStack.types.Peek().PrettyName()}");
+      //   ilStack.types.Pop();
+      //   if (ilStack.types.Peek() != typeof(Stack))
+      //     throw new Exception($"Expected a Stack for consequent not {ilStack.types.Peek().PrettyName()}");
+      //   ilStack.types.Pop();
+      //   if (ilStack.types.Peek() != typeof(Stack))
+      //     throw new Exception($"Expected a Stack for consequent not {ilStack.types.Peek().PrettyName()}");
+
+      //   var otherwise = ilStack.il.DefineLabel();
+      //   var end = ilStack.il.DefineLabel();
+      //   ilStack.il.Emit(OpCodes.Brfalse, otherwise);
+      //   // Compile if possible. Interpret otherwise.
+      //   //Compile()
+      //   ilStack.il.Emit(OpCodes.Br, end);
+      //   ilStack.il.MarkLabel(otherwise);
+      //   //Compile();
+      //   ilStack.il.MarkLabel(end);
+      // });
   }
 
   internal static Stack

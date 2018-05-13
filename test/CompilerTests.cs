@@ -743,6 +743,17 @@ public class CompilerTests
     Assert.Equal("[[] 4]", h(2).ToRepr());
   }
 
+  public string Run(string program) {
+    Func<Stack> h;
+    h = compiler.Compile(program.ToStack());
+    return h().ToRepr();
+  }
+
+  [Fact]
+  public void TestIf() {
+    Assert.Equal("[[] 1]", Run("[[if] true [1] [0]]"));
+    Assert.Equal("[[] 0]", Run("[[if] false [1] [0]]"));
+  }
   [Fact]
   public void TestCompileBadArgs() {
     Assert.Throws<Exception>(() => compiler.Compile<int>("[[x *] ]".ToStack(), "x"));
