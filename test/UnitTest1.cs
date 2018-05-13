@@ -541,14 +541,14 @@ public class UnitTest1
   public void testNestedReordering() {
     var s1 = "[[+] 1]".ToStack();
     var code = s1.Pop();
-    s1.Push(new Reorder("[2 3 +]".ToStack(), typeof(int)));
+    s1.Push(new Defer("[2 3 +]".ToStack(), typeof(int)));
     var i = interpreter.reorderInstructions["+"];
     s1 = i.Apply(s1);
     Assert.Equal("[R<int>[1 R<int>[2 3 +] +]]", s1.ToRepr());
 
     s1 = "[[+] 1]".ToStack();
     code = s1.Pop();
-    s1.Push(new Reorder("[2 3 +]".ToStack(), typeof(int)));
+    s1.Push(new Defer("[2 3 +]".ToStack(), typeof(int)));
     s1.Push(code);
     Assert.Equal("[[+] R<int>[2 3 +] 1]", s1.ToRepr());
     var s2 = interpreter.ReorderPre(s1);

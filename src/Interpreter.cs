@@ -80,7 +80,7 @@ public class Interpreter {
           var s = new Stack();
           s.Push(new Symbol("pop"));
           s.Push(o);
-          stack.Push(new Reorder(s, t));
+          stack.Push(new Defer(s, t));
       });
     instructions["dup"] = new InstructionFunc(stack => {
         if (isStrict || stack.Any())
@@ -428,7 +428,7 @@ public class Interpreter {
     var data = stack;
     if (data.Any()) {
       object o = data.Pop();
-      if (o is Reorder r) {
+      if (o is Defer r) {
         // Recurse.
         var s = new Stack(r.stack); // This reverses the stack.
         s.Push(new Stack());

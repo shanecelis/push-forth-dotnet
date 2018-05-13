@@ -45,7 +45,7 @@ public class NullaryInstruction : Instruction {
     var ins = new NullaryInstruction((stack) => {
         var s = new Stack();
         s.Push(new Symbol(name));
-        stack.Push(new Reorder(s, typeof(X)));
+        stack.Push(new Defer(s, typeof(X)));
       });
     return ins;
   }
@@ -89,9 +89,9 @@ public class UnaryInstruction<X> : Instruction {
         var s = new Stack();
         s.Push(new Symbol(name));
         s.Push(a);
-        stack.Push(new Reorder(s, typeof(Z)));
+        stack.Push(new Defer(s, typeof(Z)));
       });
-    ins.predicateX = x => x is X || (x is Reorder r && r.type == typeof(X));
+    ins.predicateX = x => x is X || (x is Defer r && r.type == typeof(X));
     return ins;
   }
 }
@@ -145,10 +145,10 @@ public class BinaryInstruction<X, Y> : Instruction {
         s.Push(new Symbol(name));
         s.Push(a);
         s.Push(b);
-        stack.Push(new Reorder(s, t));
+        stack.Push(new Defer(s, t));
       });
-    ins.predicateX = x => x is X || (x is Reorder r && r.type == typeof(X));
-    ins.predicateY = y => y is Y || (y is Reorder r && r.type == typeof(Y));
+    ins.predicateX = x => x is X || (x is Defer r && r.type == typeof(X));
+    ins.predicateY = y => y is Y || (y is Defer r && r.type == typeof(Y));
     return ins;
   }
 }
@@ -223,7 +223,7 @@ public class ReorderInstruction : Instruction {
       code.Push(new Symbol(name));
       foreach(var t in passedTypes)
         code.Push(t);
-      stack.Push(new Reorder(code, produces.FirstOrDefault()));
+      stack.Push(new Defer(code, produces.FirstOrDefault()));
     }
     // Everything checks out. Add the types we produced.
     foreach(var produced in (leaveReorderItems ? produces.Skip(1) : produces)) {
@@ -239,9 +239,9 @@ public class ReorderInstruction : Instruction {
   }
 }
 
-public class Reorder : Tuple<Stack, Type>, ReprType {
-  public Reorder(Stack s) : base(s, null) { }
-  public Reorder(Stack s, Type t) : base(s, t) { }
+public class Defer : Tuple<Stack, Type>, ReprType {
+  public Defer(Stack s) : base(s, null) { }
+  public Defer(Stack s, Type t) : base(s, t) { }
   public Stack stack => Item1;
   public Type type => Item2;
   public override string ToString() {
@@ -327,11 +327,11 @@ public class TrinaryInstruction<X, Y, Z> : Instruction {
         s.Push(a);
         s.Push(b);
         s.Push(c);
-        stack.Push(new Reorder(s, typeof(W)));
+        stack.Push(new Defer(s, typeof(W)));
       });
-    ins.predicateX = x => x is X || (x is Reorder r && r.type == typeof(X));
-    ins.predicateY = y => y is Y || (y is Reorder r && r.type == typeof(Y));
-    ins.predicateZ = z => z is Z || (z is Reorder r && r.type == typeof(Z));
+    ins.predicateX = x => x is X || (x is Defer r && r.type == typeof(X));
+    ins.predicateY = y => y is Y || (y is Defer r && r.type == typeof(Y));
+    ins.predicateZ = z => z is Z || (z is Defer r && r.type == typeof(Z));
     return ins;
   }
 }

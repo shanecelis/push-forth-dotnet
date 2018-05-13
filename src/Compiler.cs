@@ -71,7 +71,7 @@ public class Compiler {
         // Compile if possible. Interpret otherwise.
         //Compile()
         ilStack.il.Emit(OpCodes.Br, end);
-        ilStack.il.MarkLabel(otherwise)
+        ilStack.il.MarkLabel(otherwise);
         //Compile();
         ilStack.il.MarkLabel(end);
       });
