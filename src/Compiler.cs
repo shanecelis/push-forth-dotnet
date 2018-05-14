@@ -65,36 +65,57 @@ public class Compiler {
       },
       typeof(Stack));
     instructions["if"] = new InstructionFunc(stack => {
-        var condition = (bool) stack.Pop();
+        if (stack.Peek() is bool) {
+          var condition = (bool) stack.Pop();
+          var consequent = (Stack) stack.Pop();
+          var otherwise = (Stack) stack.Pop();
+
+          stack.Push(new CompilationUnit(ilStack => {
+                Compile(condition ? consequent : otherwise,
+                        ilStack,
+                        new [] { instructions });
+              },
+              typeof(int)));
+      } else {
+        var condition = (CompilationUnit) stack.Pop();
         var consequent = (Stack) stack.Pop();
         var otherwise = (Stack) stack.Pop();
 
-        stack.Push(new CompilationUnit(ilStack => {
-              Compile(condition ? consequent : otherwise,
-                      ilStack,
-                      new [] { instructions });
-            },
-            typeof(int)));
+        var data1 = (Stack) stack.Clone();
+        var data2 = (Stack) stack.Clone();
+        Action<ILStack> _emitter;
+        _emitter = ilStack => {
+          // if (ilStack.types.Peek() != typeof(bool))
+          //   throw new Exception($"Expected a bool not {ilStack.types.Peek().PrettyName()}");
+          // ilStack.types.Pop();
+          // if (ilStack.types.Peek() != typeof(Stack))
+          //   throw new Exception($"Expected a Stack for consequent not {ilStack.types.Peek().PrettyName()}");
+          // ilStack.types.Pop();
+          // if (ilStack.types.Peek() != typeof(Stack))
+          //   throw new Exception($"Expected a Stack for consequent not {ilStack.types.Peek().PrettyName()}");
+          var ifnot = ilStack.il.DefineLabel();
+          var end = ilStack.il.DefineLabel();
+          // ilStack.Push(true);
+          condition.emitter(ilStack);
+          ilStack.il.Emit(OpCodes.Brfalse_S, ifnot);
+          ilStack.types.Pop(); // consume the bool
+          // Compile if possible. Interpret ifnot.
+          data1.Push(consequent);
+          Console.WriteLine("Consequent " + data1.ToRepr());
+          Compile(data1, ilStack, new [] { instructions });
+          // ilStack.il.Emit(OpCodes.Ldc_I4_1);
+          // ilStack.Push(1);
+          ilStack.types.Pop(); // In reality only type gets put on the stack.
+          ilStack.il.Emit(OpCodes.Br, end);
+          ilStack.il.MarkLabel(ifnot);
+          // ilStack.Push(0);
+          data2.Push(otherwise);
+          Compile(data2, ilStack, new [] { instructions });
+          ilStack.il.MarkLabel(end);
+        };
+        stack.Push(new CompilationUnit(_emitter, typeof(int)));
+        }
       });
-      //   if (ilStack.types.Peek() != typeof(bool))
-      //     throw new Exception($"Expected a bool not {ilStack.types.Peek().PrettyName()}");
-      //   ilStack.types.Pop();
-      //   if (ilStack.types.Peek() != typeof(Stack))
-      //     throw new Exception($"Expected a Stack for consequent not {ilStack.types.Peek().PrettyName()}");
-      //   ilStack.types.Pop();
-      //   if (ilStack.types.Peek() != typeof(Stack))
-      //     throw new Exception($"Expected a Stack for consequent not {ilStack.types.Peek().PrettyName()}");
-
-      //   var otherwise = ilStack.il.DefineLabel();
-      //   var end = ilStack.il.DefineLabel();
-      //   ilStack.il.Emit(OpCodes.Brfalse, otherwise);
-      //   // Compile if possible. Interpret otherwise.
-      //   //Compile()
-      //   ilStack.il.Emit(OpCodes.Br, end);
-      //   ilStack.il.MarkLabel(otherwise);
-      //   //Compile();
-      //   ilStack.il.MarkLabel(end);
-      // });
   }
 
   internal static Stack
@@ -105,15 +126,8 @@ public class Compiler {
     Stack data;
     while (! Interpreter.IsHalted(program)) {
       program = Interpreter.Eval(program, instructionSets);
-      // code = program.Pop();
-      // data = program;
-      // object o = data.Peek();
-      // if (o is CompilationUnit cu)
-      //   cu.emitter(ils);
-      // data.Push(code);
-      // program = data;
     }
-    Console.WriteLine("Compiled Program " + program.ToRepr());
+    // Console.WriteLine("Compiled Program " + program.ToRepr());
     // Compile after it's all done.
     code = program.Pop();
     data = program;

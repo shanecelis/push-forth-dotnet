@@ -45,6 +45,9 @@ public class ILStack {
     } else if (o is string s) {
       il.Emit(OpCodes.Ldstr, s);
       types.Push(typeof(string));
+    } else if (o is bool b) {
+      il.Emit(b ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+      types.Push(typeof(bool));
     } else if (o is Symbol sym) {
       il.Emit(OpCodes.Ldstr, sym.name);
       il.Emit(OpCodes.Newobj,

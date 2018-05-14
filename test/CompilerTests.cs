@@ -753,7 +753,14 @@ public class CompilerTests
   public void TestIf() {
     Assert.Equal("[[] 1]", Run("[[if] true [1] [0]]"));
     Assert.Equal("[[] 0]", Run("[[if] false [1] [0]]"));
+
+    Assert.Equal("[[] 1]", Run("[[2 1 > if] [1] [0]]"));
+    Assert.Equal("[[] 0]", Run("[[2 1 < if] [1] [0]]"));
+
+    Assert.Equal("[[] 2]", Run("[[2 1 > if] [2] [0]]"));
+    Assert.Equal("[[] 3]", Run("[[2 1 < if] [1] [3]]"));
   }
+
   [Fact]
   public void TestCompileBadArgs() {
     Assert.Throws<Exception>(() => compiler.Compile<int>("[[x *] ]".ToStack(), "x"));
