@@ -12,13 +12,48 @@ public class ILStackIndex : Tuple<int> {
   public ILStackIndex(int i) : base(i) { }
 }
 
-public class ILStack {
+// public class BranchILStack : ILStack {
+//   IEnumerable<ILStack> branches;
+//   public BranchILStack(IEnumerable<ILStack> branches) : base(null) {
+
+//   }
+
+//   public object Pop() {
+// }
+
+public class StackBranch<T> {
+  public IEnumerable<Stack<T>> stacks;
+
+  public void Push(T o) {
+    foreach(var stack in stacks)
+      stack.Push(o);
+  }
+
+  public T Peek() {
+    return stacks.Select(s => s.Peek()).Distinct().Single();
+  }
+
+  public T Pop() {
+    return stacks.Select(s => s.Pop()).Distinct().Single();
+  }
+}
+
+public class ILStack : ICloneable {
   public readonly ILGenerator il;
   public int count => types.Count;
   public Stack<Type> types = new Stack<Type>();
+  // public StackBranch<Type> types = new StackBranch<Type>();
   public Stack<Stack<Type>> stackTypes = new Stack<Stack<Type>>();
+  // public Stack<Stack<Type>> branchTypes = new Stack<Stack<Type>>();
   Dictionary<Type, LocalBuilder> tempVars
     = new Dictionary<Type, LocalBuilder>();
+
+  public object Clone() {
+    return new ILStack(il) {
+      types = this.types.Clone(),
+      stackTypes = this.stackTypes.Clone()
+    };
+  }
 
   public ILStack(ILGenerator il) {
     this.il = il;
@@ -72,11 +107,12 @@ public class ILStack {
     }
   }
 
-  public object Pop() {
-    if (typeof(Stack) == types.Pop())
+  public void Pop() {
+    var t = types.Pop();
+    if (typeof(Stack) == t)
       stackTypes.Pop();
     il.Emit(OpCodes.Pop);
-    return Peek();
+    // return Peek();
   }
 
   public void Clear() {
@@ -138,9 +174,9 @@ public class ILStack {
   //   il.Emit(OpCodes.Brfalse, dontUnboxLabel);
   // }
 
-  public object Peek() {
-    return new ILStackIndex(count - 1);
-  }
+  // public object Peek() {
+  //   return new ILStackIndex(count - 1);
+  // }
 
   // Make a return stack.
   // Should return a local variable reference or something.

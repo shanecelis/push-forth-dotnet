@@ -759,6 +759,17 @@ public class CompilerTests
 
     Assert.Equal("[[] 2]", Run("[[2 1 > if] [2] [0]]"));
     Assert.Equal("[[] 3]", Run("[[2 1 < if] [1] [3]]"));
+
+    Assert.Equal("[[] 1 2]", Run("[[2 1 > if] [2 1] [0 0]]"));
+    // Assert.Equal("[[] 3]", Run("[[2 1 < if] [1] [3 3]]"));
+  }
+  [Fact]
+  public void TestWhile4Post() {
+    // Run("[[do-while] [1 + dup 5] 0]");
+    Assert.Throws<Exception>(() => Run("[[do-while] [1 + dup 5] 0]"));
+    // do-while :: s -> (s, bool) -> s
+    // do-while :: [T ... ] -> [T ... ]
+    Assert.Equal("[[] 5]", Run("[[do-while] [1 + dup 5 <] 0]"));
   }
 
   [Fact]

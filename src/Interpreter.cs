@@ -60,6 +60,14 @@ public class Interpreter {
         else
           stack.Push(new Continuation(otherwise));
       });
+    // How can I get a generic function.  I want something like this:
+    // AddInstruction<T>("if2", (Stack stack, bool condition, T consequent, T otherwise)=> {
+    //     if (condition)
+    //       stack.Push(new Continuation(consequent));
+    //     else
+    //       stack.Push(new Continuation(otherwise));
+    //   });
+
     // Needed this to track down a bug.
     AddInstruction("!int", (Stack stack, Symbol s, int x) => {
         AddInstruction(s.name, () => x);

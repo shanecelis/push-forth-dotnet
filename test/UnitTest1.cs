@@ -458,6 +458,12 @@ public class UnitTest1
   public void TestIf() {
     Assert.Equal("[[] 1]", Run("[[if] true [1] [0]]"));
     Assert.Equal("[[] 0]", Run("[[if] false [1] [0]]"));
+
+    Assert.Equal("[[] 2]", Run("[[if] true [1 1 +] [0]]"));
+    Assert.Equal("[[] 0]", Run("[[if] false [1] [0 0 +]]"));
+
+    Assert.Equal("[[] 2]", Run("[[if] true [1 1 +] [0]]"));
+    Assert.Equal("[[] 0]", Run("[[if] false [1] [0 0 +]]"));
   }
 
   [Fact]

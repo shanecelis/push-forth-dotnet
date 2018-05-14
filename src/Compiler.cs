@@ -7,6 +7,10 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Text.RegularExpressions;
 
+// https://social.msdn.microsoft.com/Forums/vstudio/en-US/c79fe8b3-4444-4173-a582-fb2f0ad979a5/systemsecurityverificationexception-operation-could-destabilize-the-runtime-during-code-coverage?forum=clr
+// using System.Security;
+// [assembly: SecurityRules(SecurityRuleSet.Level1, SkipVerificationInFullTrust = true)]
+
 namespace SeawispHunter.PushForth {
 
 public class Compiler {
@@ -102,10 +106,12 @@ public class Compiler {
           // Compile if possible. Interpret ifnot.
           data1.Push(consequent);
           Console.WriteLine("Consequent " + data1.ToRepr());
+          var typesCount = ilStack.types.Count;
           Compile(data1, ilStack, new [] { instructions });
           // ilStack.il.Emit(OpCodes.Ldc_I4_1);
           // ilStack.Push(1);
-          ilStack.types.Pop(); // In reality only type gets put on the stack.
+          while (ilStack.types.Count > typesCount)
+            ilStack.types.Pop(); // In reality only type gets put on the stack.
           ilStack.il.Emit(OpCodes.Br, end);
           ilStack.il.MarkLabel(ifnot);
           // ilStack.Push(0);
@@ -115,6 +121,29 @@ public class Compiler {
         };
         stack.Push(new CompilationUnit(_emitter, typeof(int)));
         }
+      });
+    instructions["do-while"] = new InstructionFunc(stack => {
+        var code = (Stack) stack.Pop();
+        // var program = (Stack) stack.Clone();
+        // program.Push(code);
+        var program = new Stack();
+        // It's already on the stack. Just an ilStack noop.
+        program.Push(new CompilationUnit(_ => { ; }, typeof(int)));
+        program.Push(code);
+        Action<ILStack> emitter =
+        ilStack => {
+          var test = ilStack.il.DefineLabel();
+          var body = ilStack.il.DefineLabel();
+          // ilStack.il.Emit(OpCodes.Br, test);
+          ilStack.il.MarkLabel(body);
+          Compile(program, ilStack, new [] { instructions });
+          ilStack.il.MarkLabel(test);
+          if (ilStack.types.Peek() != typeof(bool))
+            throw new Exception("Must have bool on top of stack");
+          ilStack.il.Emit(OpCodes.Brtrue_S, body);
+          ilStack.types.Pop();
+        };
+        stack.Push(new CompilationUnit(emitter, typeof(int)));
       });
   }
 

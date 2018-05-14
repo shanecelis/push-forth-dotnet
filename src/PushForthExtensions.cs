@@ -268,5 +268,13 @@ public static class PushForthExtensions {
     return s.Dequeue();
   }
 
+  // https://stackoverflow.com/questions/7391348/c-sharp-clone-a-stack
+  public static Stack<T> Clone<T>(this Stack<T> original) {
+    var arr = new T[original.Count];
+    original.CopyTo(arr, 0);
+    Array.Reverse(arr);
+    return new Stack<T>(arr);
+  }
+
 }
 }

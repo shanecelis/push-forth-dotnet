@@ -20,6 +20,15 @@
    access to some stack items at compile time so I can compile them. This argues
    for pushing items onto the stack when required. It also means that any values
    that can be handled at compile time should be.
+
+   It's even more complicated than that. The type I want for `if` is something
+   like bool -> T -> T -> T. But I don't have any generic type handling, at
+   least not with constraints.
+
+   Also evaluating two separate stacks leaves the `types` stack into different
+   possibly incompatible branches. This is difficult to contend with, but not
+   insurmountable. Perhaps analyzing a Stack which evaluates to the same type(s)
+   is the answer.
 ** Argument Handling
 *** Pass all data stack items onto CIL stack immediately
     This is what I'm currently doing.  It has a couple problems though.
