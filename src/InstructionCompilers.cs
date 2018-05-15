@@ -83,8 +83,9 @@ public class InstructionCompiler : Instruction {
              ilStack.il.Emit(OpCodes.Call, methodInfo);
 
              if (methodInfo.ReturnType != typeof(void)) {
-               if (methodInfo.ReturnType.IsValueType)
-                 ilStack.il.Emit(OpCodes.Unbox_Any, methodInfo.ReturnType);
+               // It's returned unboxed, typically.
+               // if (methodInfo.ReturnType.IsValueType)
+               //   ilStack.il.Emit(OpCodes.Unbox_Any, methodInfo.ReturnType);
                ilStack.types.Push(methodInfo.ReturnType);
              }
              },

@@ -75,6 +75,10 @@ public class CompilerTests
 
     ILGenerator il = hello.GetILGenerator(256);
     // Load the first argument, which is a string, onto the stack.
+    // Func<int, int, int> f = (int x, int y) => x + y;
+    //f(2, 1) => 3;
+    // Expression<Func<int, int, int>> e = (int x, int y) => x + y;
+    // Func<int, int, int> g = e.Compile();
     il.Emit(OpCodes.Ldarg_0);
     il.Emit(OpCodes.Ldarg_1);
     il.Emit(OpCodes.Add);
@@ -763,6 +767,18 @@ public class CompilerTests
     Assert.Equal("[[] 1 2]", Run("[[2 1 > if] [2 1] [0 0]]"));
     // Assert.Equal("[[] 3]", Run("[[2 1 < if] [1] [3 3]]"));
   }
+
+  [Fact]
+  public void TestOne() {
+    Assert.Equal("[[] 1]", Run("[[one]]"));
+  }
+
+  [Fact]
+  public void TestCount() {
+    Assert.Equal("[[] 0]", Run("[[count] []]"));
+    Assert.Equal("[[] 1]", Run("[[count] [a]]"));
+  }
+
   [Fact]
   public void TestWhile4Post() {
     // Run("[[do-while] [1 + dup 5] 0]");
@@ -770,6 +786,7 @@ public class CompilerTests
     // do-while :: s -> (s, bool) -> s
     // do-while :: [T ... ] -> [T ... ]
     Assert.Equal("[[] 5]", Run("[[do-while] [1 + dup 5 <] 0]"));
+    // Assert.Equal("[[] 5]", Run("[[do-while] [1 cons dup count 5 <] []]"));
   }
 
   [Fact]

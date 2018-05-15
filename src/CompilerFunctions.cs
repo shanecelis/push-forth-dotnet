@@ -9,8 +9,10 @@ using System.Reflection.Emit;
 namespace SeawispHunter.PushForth {
 
 public static class CompilerFunctions {
+  public static int One() => 1;
   public static object Car(Stack s) => s.Car();
   public static Stack Cdr(Stack s) => s.Cdr(); 
+  public static int Count(Stack s) => s.Count;
   public static Stack Unit(object o) {
     var s = new Stack();
     s.Push(o);
@@ -22,7 +24,6 @@ public static class CompilerFunctions {
     s.Push(o);
     return s;
   }
-
 }
 
 }
