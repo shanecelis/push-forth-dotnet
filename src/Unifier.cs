@@ -11,7 +11,11 @@ public class Variable : Tuple<string> {
 }
 
 /*
-  Eh, just rewrote it using page 328 from Russell and Norvig.
+  I tried to use this code:
+
+  https://raw.githubusercontent.com/elkdanger/jigsaw-library/da2019975dc85863695e1ee8d64a0b4be7e4eb84/Utilities/Unifier.cs
+
+  But I ended up just rewriting it using page 328 from Russell and Norvig.
  */
 public static class Unifier {
 
@@ -23,7 +27,6 @@ public static class Unifier {
       return Unify(v, theta[w.name], theta);
     else if (OccurCheck(v, x))
       throw new Exception("Cyclical binding");
-      // return null;
     else {
       theta[v.name] = x;
       return theta;
@@ -70,89 +73,5 @@ public static class Unifier {
     if (x is IEnumerable s)
       return s.Cast<object>().Select(o => Substitute(bindings, o)).CastBack();
     return x;
-  }
-}
-
-public class Unifier2 {
-
-  public static bool IsConstant(object e) {
-    return !(e is IEnumerable) && !(e is string);
-  }
-
-  public static bool Occurs(string s, IEnumerable e) {
-    // e.Cast<object>.Any(x => 
-    foreach(var x in e) {
-      if (x is string t) {
-        if (s == t)
-          return true;
-      } else if (x is IEnumerable f) {
-        // XXX This looks wrong.
-        // return Occurs(s, f);
-        if (Occurs(s, f))
-          return true;
-      }
-    }
-    return false;
-  }
-
-  public static object Substitute(Dictionary<string, dynamic> bindings,
-                                  object x) {
-    if (x is string str && bindings.ContainsKey(str))
-      return bindings[str];
-    if (x is IEnumerable s)
-      return s.Cast<object>().Select(o => Substitute(bindings, o)).CastBack();
-      // return PushForthExtensions.Cons(Substitute(bindings, s.Peek()),
-      //                                 (Stack) Substitute(bindings, s.Cdr()));
-    return x;
-  }
-
-  public static void Unify(Variable v, object o, Dictionary<string, object> theta) {
-    if (o is IEnumerable e && Occurs(v.name, e))
-      throw new Exception("Cyclical binding");
-    else
-      theta[v.name] = o;
-  }
-
-  public static Dictionary<string, object> Unify(object e1, object e2) {
-    if (IsConstant(e1) && IsConstant(e2)) {
-      if (e1.Equals(e2))
-        return new Dictionary<string,object>();
-      else
-        throw new Exception($"Unification failed for e1 {e1} and e2 {e2}.");
-    }
-
-    if (e1 is string s1) {
-      if (e2 is IEnumerable st2 && Occurs(s1, st2))
-        throw new Exception("Cyclical binding");
-      else
-        return new Dictionary<string, object>() { { s1, e2 } };
-    }
-
-    if (e2 is string s2) {
-      if (e1 is IEnumerable st1 && Occurs(s2, st1))
-        throw new Exception("Cyclical binding");
-      else
-        return new Dictionary<string, object>() { { s2, e1 } };
-    }
-
-    if (e1 is IEnumerable st1c && e2 is IEnumerable st2c) {
-      if (! st1c.Any() || ! st2c.Any()) {
-        if (st1c.Any() || st2c.Any())
-          throw new Exception("Lists are not the same length");
-        else
-          return new Dictionary<string, object>();
-      }
-      var b1 = Unify(st1c.Peek(), st2c.Peek());
-      var b2 = Unify(Substitute(b1, st1c.Cdr()),
-                     Substitute(b1, st2c.Cdr()));
-
-      // Merge b2 into b1.
-      foreach (var kv in b2)
-        b1.Add(kv.Key, kv.Value);
-
-      return b1;
-    } else {
-      throw new Exception($"Expected either list, string, or constant arguments; not e1 {e1.ToReprQuasiDynamic()} and e2 {e2.ToReprQuasiDynamic()}");
-    }
   }
 }

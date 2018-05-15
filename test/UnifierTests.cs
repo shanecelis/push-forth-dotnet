@@ -59,7 +59,6 @@ public class UnifierTests
     return new Stack(new Stack(s.Cast<object>().Select(x => (x is Symbol sym) ? V(sym.name) : x).ToArray()));
   }
 
-
   [Fact]
   public void TestUnifier() {
     Assert.Equal("{ a -> 9 }", Unifier.Unify(V("a"), 9).ToRepr());
