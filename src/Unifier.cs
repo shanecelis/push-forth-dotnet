@@ -34,8 +34,8 @@ public static class Unifier {
   }
 
   public static bool OccurCheck(Variable v, object x) {
-    if (x is string s) {
-      return v.name == s;
+    if (x is Variable w) {
+      return v.name == w.name;
     } else if (x is IEnumerable e)
       return e.Cast<object>().Any(o => OccurCheck(v, o));
     else
@@ -60,10 +60,10 @@ public static class Unifier {
           throw new Exception("Lists are not the same length");
         else
           return theta;
-      }
-      return Unify(e.Cdr(), f.Cdr(), Unify(e.Peek(), f.Peek(), theta));
+      } else
+        return Unify(e.Cdr(), f.Cdr(), Unify(e.Peek(), f.Peek(), theta));
     } else
-      throw new Exception($"Expected either list, string, or constant arguments; not e1 {a.ToReprQuasiDynamic()} and e2 {b.ToReprQuasiDynamic()}");
+      throw new Exception($"Unification failed for e1 {a.ToReprQuasiDynamic()} and e2 {b.ToReprQuasiDynamic()}");
   }
 
   public static object Substitute(Dictionary<string, dynamic> bindings,

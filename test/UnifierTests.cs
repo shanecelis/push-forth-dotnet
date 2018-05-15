@@ -40,12 +40,12 @@ public class UnifierTests
     Dictionary<string, object> dict;
     Assert.Equal("{ a -> 9 }", (dict = Unifier.Unify(V("a"), 9)).ToRepr());
     Assert.False(Occurs("a", new Stack()));
-    Assert.True(Occurs("a", new Stack(new object[] { "a" })));
-    Assert.True(Occurs("a", new Stack(new object[] { 9, 3, "a" })));
-    Assert.True(Occurs("a", new Stack(new object[] { 9, 3, new Stack(new object[] { 1, "a", 2 }) })));
+    Assert.True(Occurs("a", new Stack(new object[] { V("a") })));
+    Assert.True(Occurs("a", new Stack(new object[] { 9, 3, V("a") })));
+    Assert.True(Occurs("a", new Stack(new object[] { 9, 3, new Stack(new object[] { 1, V("a"), 2 }) })));
 
     Assert.False(Occurs("a", new Stack(new object[] { 9, 3, new Stack(new object[] { 1, 2 }) })));
-    Assert.True(Occurs("a", new Stack(new object[] { 9, 3, new Stack(new object[] { 1, 2 }), "a"})));
+    Assert.True(Occurs("a", new Stack(new object[] { 9, 3, new Stack(new object[] { 1, 2 }), V("a")})));
   }
 
   public bool Occurs(string s, object o) {
@@ -54,9 +54,12 @@ public class UnifierTests
 
   public Variable V(string s) => new Variable(s);
 
+  // Convert symbols into variables.
   public Stack ToVarStack(string str) {
     var s = str.ToStack();
-    return new Stack(new Stack(s.Cast<object>().Select(x => (x is Symbol sym) ? V(sym.name) : x).ToArray()));
+
+    // return new Stack(new Stack(s.Cast<object>().Select(x => (x is Symbol sym) ? V(sym.name) : x).ToArray()));
+    return s.Map(x => (x is Symbol sym) ? V(sym.name) : x);
   }
 
   [Fact]
@@ -71,9 +74,17 @@ public class UnifierTests
     Assert.Equal("{ x -> 1 }", Unifier.Unify(@"[1]".ToStack(), ToVarStack(@"[x]")).ToRepr());
     Assert.Equal("{ x -> 1 }", Unifier.Unify(@"[1]".ToStack(), ToVarStack("[x]")).ToRepr());
     Assert.Equal("{ x -> 1 }", Unifier.Unify(@"[1 2]".ToStack(), ToVarStack("[x 2]")).ToRepr());
+    Assert.Equal("{ x -> [1] }", Unifier.Unify(@"[[1] 2]".ToStack(), ToVarStack("[x 2]")).ToRepr());
     Assert.Equal("{ x -> 1 }", Unifier.Unify(@"[0 1 2]".ToStack(), ToVarStack("[0 x 2]")).ToRepr());
     Assert.Equal("{ x -> 1, y -> 2 }", Unifier.Unify(ToVarStack("[0 1 y]"), ToVarStack("[0 x 2]")).ToRepr());
     Assert.Equal("{ x -> 1, y -> 1 }", Unifier.Unify(ToVarStack("[0 1 y]"), ToVarStack("[0 x x]")).ToRepr());
+
+
+    // No inconsistent values.
+    Assert.Throws<Exception>(() => Unifier.Unify(@"[1 2]".ToStack(), ToVarStack("[x x]")).ToRepr());
+    // No cyclic bindings.
+    Assert.Throws<Exception>(() => Unifier.Unify(ToVarStack("[[1 x] 2]"), ToVarStack("[x 2]")).ToRepr());
+    // Assert.Equal("{ x -> 1 }", Unifier.Unify(ToVarStack("[[1 x] 2]"), ToVarStack("[x 2]")).ToRepr());
   }
 }
 }
