@@ -289,18 +289,76 @@ public static class PushForthExtensions {
     return s;
   }
 
+  // public static String ToRepr(this object o) => o.ToString();
+  // public static String ToRepr(this int o) => o.ToString();
+
   public static String ToRepr<K,V>(this Dictionary<K,V> dict) {
     var sb = new StringBuilder();
-    sb.Append("{ ");
+    sb.Append("{");
     foreach(var kv in dict) {
+      sb.Append(" ");
       sb.Append(kv.Key.ToString());
       sb.Append(" -> ");
-      sb.Append(kv.Value.ToString());
-      sb.Append(", ");
+      // This requires System.DynamicRuntime and Microsoft.CSharp
+      // dynamic v = kv.Value;
+      // sb.Append(v.ToRepr());
+      object v = kv.Value;
+      sb.Append(v.ToReprQuasiDynamic());
+      // if (v is Stack s)
+      //   sb.Append(s.ToRepr());
+      // else if (v is Dictionary<K,V> d)
+      //   sb.Append(d.ToRepr());
+      // else
+      //   sb.Append(v.ToString());
+      sb.Append(",");
     }
-    sb.Remove(sb.Length - 2, 2);
+    if (sb.Length > 1)
+      sb.Remove(sb.Length - 1, 1);
     sb.Append(" }");
     return sb.ToString();
+  }
+
+  public static string ToReprQuasiDynamic(this object v) {
+    if (v is Stack s)
+      return s.ToRepr();
+    if (v is IEnumerable e)
+      return e.ToRepr();
+    // else if (v is Dictionary<K,V> d)
+    //   return d.ToRepr();
+    else
+      return v.ToString();
+  }
+
+  public static string ToRepr(this IEnumerable e) {
+    var sb = new StringBuilder();
+    sb.Append("E(");
+    foreach(object x in e) {
+      sb.Append(x.ToReprQuasiDynamic());
+      sb.Append(", ");
+    }
+    if (sb.Length > 2)
+      sb.Remove(sb.Length - 2, 2);
+    sb.Append(")");
+    return sb.ToString();
+  }
+
+  public static object Peek(this IEnumerable e) {
+    return e.Cast<object>().First();
+  }
+
+  public static IEnumerable Cdr(this IEnumerable e) {
+    return e.Cast<object>().Skip(1).CastBack();
+  }
+
+  public static IEnumerable CastBack<T>(this IEnumerable<T> e) {
+    foreach(T x in e)
+      yield return x;
+  }
+
+  public static bool Any(this IEnumerable e) {
+    foreach (var x in e)
+      return true;
+    return false;
   }
 }
 }
