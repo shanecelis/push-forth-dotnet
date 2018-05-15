@@ -9,12 +9,8 @@ using System.Reflection.Emit;
 namespace SeawispHunter.PushForth {
 
 public static class CompilerFunctions {
-  public static object Car(Stack s) => s.Peek();
-  public static Stack Cdr(Stack s) {
-    s = (Stack) s.Clone();
-    s.Pop();
-    return s;
-  }
+  public static object Car(Stack s) => s.Car();
+  public static Stack Cdr(Stack s) => s.Cdr(); 
   public static Stack Unit(object o) {
     var s = new Stack();
     s.Push(o);

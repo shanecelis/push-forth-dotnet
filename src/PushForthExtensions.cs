@@ -276,5 +276,31 @@ public static class PushForthExtensions {
     return new Stack<T>(arr);
   }
 
+  public static Stack Cons(object o, Stack s) {
+    s.Push(o);
+    return s;
+  }
+
+  public static object Car(this Stack s) => s.Peek();
+
+  public static Stack Cdr(this Stack s) {
+    s = (Stack) s.Clone();
+    s.Pop();
+    return s;
+  }
+
+  public static String ToRepr<K,V>(this Dictionary<K,V> dict) {
+    var sb = new StringBuilder();
+    sb.Append("{ ");
+    foreach(var kv in dict) {
+      sb.Append(kv.Key.ToString());
+      sb.Append(" -> ");
+      sb.Append(kv.Value.ToString());
+      sb.Append(", ");
+    }
+    sb.Remove(sb.Length - 2, 2);
+    sb.Append(" }");
+    return sb.ToString();
+  }
 }
 }

@@ -13,7 +13,20 @@
   Func<object, Stack> f = Compile("[3 8 x]", "x");
   f(null);
   - [X] Accept arguments
-  - 
+** Generic types 
+   `pop` pops the top thing. What if `pop<int>` popped the first int? What's its
+   type? 
+   
+   void Pop<T>(T obj); // :: [T] -> []
+
+   T Add<T>(T a, T b); // :: [T T] -> [T]
+
+   While // :: [bool X Y ...] -> [X Y ...]
+   If // :: [bool ([X] -> [Y]) ([X] -> [Y])]
+   If // :: [bool ([X] -> [Y]) ([X] -> [Y])]
+
+   I may need a unifier.
+
 * Compiler Notes
 ** If
    `If` exposes a new issue in the argument handling. Namely that I need to have
@@ -30,12 +43,12 @@
    insurmountable. Perhaps analyzing a Stack which evaluates to the same type(s)
    is the answer.
 ** Argument Handling
-*** Pass all data stack items onto CIL stack immediately
+*** ABORTED Pass all data stack items onto CIL stack immediately
     This is what I'm currently doing.  It has a couple problems though.
     
     - Hard to put an instance object above the arguments
     - What if boxing or unboxing is required?
-*** Don't push data stack items onto CIL stack until required
+*** DONE Don't push data stack items onto CIL stack until required
     I started doing this, then I stopped.  Some issues were this:
 
     - Had to populate data stack with fake entries.
