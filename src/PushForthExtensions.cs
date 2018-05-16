@@ -160,6 +160,8 @@ public static class PushForthExtensions {
   // }
   public static Type ToType(this string s) {
     switch (s) {
+      case "bool":
+        return typeof(bool);
       case "byte":
         return typeof(byte);
       case "sbyte":
@@ -183,7 +185,7 @@ public static class PushForthExtensions {
       case "float":
         return typeof(float);
       default:
-        return Type.GetType(s);
+        return Type.GetType(s, true);
     }
   }
 
@@ -387,6 +389,19 @@ public static class PushForthExtensions {
     foreach (var x in e)
       return true;
     return false;
+  }
+
+  public static Parser<T> FailOnThrow<T>(this Parser<T> parser) {
+    if (parser == null) throw new ArgumentNullException("parser");
+
+    return i => {
+        try {
+          var result = parser(i);
+          return result;
+        } catch (Exception e) {
+          return Result.Failure<T>(i, $"Got exception {e}.", new string[0]);
+        }
+      };
   }
 }
 }

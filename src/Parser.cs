@@ -51,7 +51,7 @@ public class StackParser {
 
   private static readonly Parser<Type> typeofLiteral =
     from _ in Parse.String("typeof")
-    from s in Parse.CharExcept(")").Many().Text()
+    from s in Parse.CharExcept(") ").Many().Text()
     .Contained(Parse.Char('(').Token(),
                Parse.Char(')').Token())
     select s.ToType();
@@ -95,9 +95,24 @@ public class StackParser {
     from trailingSpaces in Parse.Char(' ').Many()
     select new Stack(contents.Reverse().ToArray());
 
-  private static readonly Parser<char> pivotChar =
-    from c in Parse.Char('•')
-    select c;
+  private static readonly Parser<Variable> varLiteral =
+    from _ in Parse.Char('\'')
+    from s in bareWord
+    select new Variable(s);
+
+  private static readonly Parser<Type> typeLiteral =
+    from s in bareWord
+    select s.ToType();
+
+  internal static readonly Parser<Stack> typeRep =
+    from lbracket in Parse.Char('[')
+    from leadingSpaces in Parse.Char(' ').Many()
+    from contents in varLiteral.ToCell().Or(typeLiteral.FailOnThrow().ToCell()).Many()
+    from rbracket in Parse.Char(']')
+    from trailingSpaces in Parse.Char(' ').Many()
+    select new Stack(contents.Reverse().ToArray());
+
+  private static readonly Parser<char> pivotChar = Parse.Char('•');
 
   internal static readonly Parser<Stack> pivotRep =
     from lbracket in Parse.Char('[')
@@ -112,16 +127,16 @@ public class StackParser {
     from trailingSpaces in Parse.Char(' ').Many()
     select Interpreter.Cons(new Stack(code.ToArray()), new Stack(data.Reverse().ToArray()));
 
-  public static Stack ParseStack(string s) {
-    return stackRep.Parse(s);
-  }
 
-  public static Stack ParsePivot(string s) {
-    return pivotRep.Parse(s);
+  public static Stack ParseStack(string s) => stackRep.Parse(s);
 
-  }
+  public static Stack ParsePivot(string s) => pivotRep.Parse(s);
 
-  public static Stack ParseWithResolution<T>(string s, Dictionary<string, T> dict) {
+  public static Stack ParseTypeSignature(string s) => typeRep.Parse(s);
+
+  // XXX Rename to ParseWithSubstitution
+  public static Stack ParseWithResolution<T>(string s,
+                                             Dictionary<string, T> dict) {
     Parser<object> cell =
       quotedString.ToCell().Or(booleanLiteral.ToCell()).Or(floatRep.ToCell()).Or(doubleRep.ToCell()).Or(integer.ToCell()).Or(typeofLiteral.ToCell()).Or(symbol.Resolve(dict));
     Parser<Stack> stackRep = null;
