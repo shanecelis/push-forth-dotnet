@@ -17,6 +17,13 @@ public class StackParser {
     from c in Parse.AnyChar
     select c;
 
+  private static readonly Parser<char> quotedChar =
+    from open in Parse.Char('\'')
+    from c in Parse.CharExcept("'")
+    from close in Parse.Char('\'')
+    from trailingSpaces in Parse.Char(' ').Many()
+    select c;
+
   private static readonly Parser<string> quotedString =
     from open in Parse.Char('"')
     from text in escapedChar.Or(_quotedText).Many().Text()
@@ -70,7 +77,7 @@ public class StackParser {
   private static readonly Parser<object> cell =
     // quotedString.Or(bareWord).Or(integer.Select(i => i.ToString()));
     // quotedString.ToCell().Or(integer.ToCell()).Or(symbol.ToCell());
-    quotedString.ToCell().Or(booleanLiteral.ToCell()).Or(floatRep.ToCell()).Or(doubleRep.ToCell()).Or(integer.ToCell()).Or(symbol.ToCell());
+    quotedString.ToCell().Or(quotedChar.ToCell()).Or(booleanLiteral.ToCell()).Or(floatRep.ToCell()).Or(doubleRep.ToCell()).Or(integer.ToCell()).Or(symbol.ToCell());
 
   internal static readonly Parser<Stack> stackRep =
     from lbracket in Parse.Char('[')

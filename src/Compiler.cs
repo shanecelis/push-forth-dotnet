@@ -106,7 +106,7 @@ public class Compiler {
           ilStack.types.Pop(); // consume the bool
           // Compile if possible. Interpret ifnot.
           data1.Push(consequent);
-          Console.WriteLine("Consequent " + data1.ToRepr());
+          // Console.WriteLine("Consequent " + data1.ToRepr());
           var typesCount = ilStack.types.Count;
           Compile(data1, ilStack, new [] { instructions });
           // ilStack.il.Emit(OpCodes.Ldc_I4_1);

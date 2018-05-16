@@ -59,7 +59,7 @@ public class UnifierTests
     var s = str.ToStack();
 
     // return new Stack(new Stack(s.Cast<object>().Select(x => (x is Symbol sym) ? V(sym.name) : x).ToArray()));
-    return s.Map(x => (x is Symbol sym) ? V(sym.name) : x);
+    return s.Map(x => (x is Symbol sym && sym.name.Length == 1) ? V(sym.name) : x);
   }
 
   [Fact]
@@ -79,12 +79,30 @@ public class UnifierTests
     Assert.Equal("{ x -> 1, y -> 2 }", Unifier.Unify(ToVarStack("[0 1 y]"), ToVarStack("[0 x 2]")).ToRepr());
     Assert.Equal("{ x -> 1, y -> 1 }", Unifier.Unify(ToVarStack("[0 1 y]"), ToVarStack("[0 x x]")).ToRepr());
 
-
     // No inconsistent values.
     Assert.Throws<Exception>(() => Unifier.Unify(@"[1 2]".ToStack(), ToVarStack("[x x]")).ToRepr());
     // No cyclic bindings.
     Assert.Throws<Exception>(() => Unifier.Unify(ToVarStack("[[1 x] 2]"), ToVarStack("[x 2]")).ToRepr());
     // Assert.Equal("{ x -> 1 }", Unifier.Unify(ToVarStack("[[1 x] 2]"), ToVarStack("[x 2]")).ToRepr());
+  }
+
+  [Fact]
+  public void TestUnifierApplied() {
+    var popInputs = ToVarStack("[a]");
+    var popOutputs = ToVarStack("[]");
+    var dupInputs = ToVarStack("[b]");
+    var dupOutputs = ToVarStack("[b b]");
+    var addInputs = ToVarStack("[int int]");
+    var addOutputs = ToVarStack("[int]");
+    var code = "[pop dup +]".ToStack();
+    var codeInputs = ToVarStack("[x y]");
+    var codeOutputs = ToVarStack("[int]");
+    // binding y -> int, x -> ?
+    var data = ToVarStack("[int int char]");
+    // Assert.True(false);
+
+
+    // Unifier.Unify(
   }
 }
 }

@@ -211,7 +211,9 @@ public class ReorderInstruction : Instruction {
       object o = stack.Pop();
       var t = getType(o);
       // if (t == consume) {
-      if (consume.IsAssignableFrom(t)) {
+      if (consume == typeof(Variable)) {
+        passedTypes.Enqueue(o);
+      } else if (consume.IsAssignableFrom(t)) {
         passedTypes.Enqueue(o);
       } else {
         return TypeMismatch(stack, passedTypes, o, consume);

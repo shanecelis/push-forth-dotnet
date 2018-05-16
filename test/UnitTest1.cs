@@ -761,6 +761,57 @@ public class UnitTest1
     Assert.False(e2.MoveNext());
   }
 
+
+  [Fact]
+  public void TestTypeCheckNoReorderUnify() {
+    var s = "[[1 1 true if]]".ToStack();
+    var typedS = s.Map(o => o.GetType());
+    Assert.Equal("[[int int Boolean Symbol]]", typedS.ToRepr());
+    var typedS2 = s.Map(o => o is Symbol ? o : o.GetType());
+    Assert.Equal("[[int int Boolean if]]", typedS2.ToRepr());
+    var a = new Variable("a");
+    interpreter.reorderInstructions["if"] = new TypeCheckInstruction2("if",
+                                                                      new TypeOrVariable[] { typeof(bool), a, a },
+                                                                      new TypeOrVariable[] { a })
+    { getType = o => o is Type t ? t : o.GetType(),
+      putType = t => t,
+      leaveReorderItems = false };
+
+    var e2 = interpreter
+      .EvalStream(typedS2,
+                  Interpreter.IsHalted,
+                  interpreter.ReorderPre)
+      .Select(x => x.ToPivot())
+      .GetEnumerator();
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[if Boolean int • int]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[if Boolean • int int]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[if • Boolean int int]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[• int]", e2.Current);
+    Assert.False(e2.MoveNext());
+
+    s = "[[1 'c' true if]]".ToStack();
+    typedS2 = s.Map(o => o is Symbol ? o : o.GetType());
+    e2 = interpreter
+      .EvalStream(typedS2,
+                  Interpreter.IsHalted,
+                  interpreter.ReorderPre)
+      .Select(x => x.ToPivot())
+      .GetEnumerator();
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[if Boolean Char • int]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[if Boolean • Char int]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[if • Boolean Char int]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[• int]", e2.Current);
+    Assert.False(e2.MoveNext());
+  }
+
   [Fact]
   public void TestTypeCheckRequiringReorder() {
     var s = "[[1 1 a +]]".ToStack();
