@@ -158,6 +158,34 @@ public static class PushForthExtensions {
   //                          : "",
   //                        mi.IsStatic ? "static " : "");
   // }
+  public static Type ToType(this string s) {
+    switch (s) {
+      case "byte":
+        return typeof(byte);
+      case "sbyte":
+        return typeof(sbyte);
+      case "ushort":
+        return typeof(ushort);
+      case "uint":
+        return typeof(uint);
+      case "ulong":
+        return typeof(ulong);
+      case "short":
+        return typeof(short);
+      case "int":
+        return typeof(int);
+      case "long":
+        return typeof(long);
+      case "decimal":
+        return typeof(decimal);
+      case "double":
+        return typeof(double);
+      case "float":
+        return typeof(float);
+      default:
+        return Type.GetType(s);
+    }
+  }
 
   public static string NumericTypeAsString(this Type t) {
     if (t.IsEnum)

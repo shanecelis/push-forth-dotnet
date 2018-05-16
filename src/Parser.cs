@@ -49,6 +49,13 @@ public class StackParser {
     from trailingSpaces in Parse.Char(' ').Many()
     select float.Parse(num) * (op.IsDefined ? -1 : 1);
 
+  private static readonly Parser<Type> typeofLiteral =
+    from _ in Parse.String("typeof")
+    from s in Parse.CharExcept(")").Many().Text()
+    .Contained(Parse.Char('(').Token(),
+               Parse.Char(')').Token())
+    select s.ToType();
+
   private static readonly Parser<bool> trueLiteral =
     from s in Parse.String("true")
     from trailingSpaces in Parse.Char(' ').Many()
@@ -77,7 +84,7 @@ public class StackParser {
   private static readonly Parser<object> cell =
     // quotedString.Or(bareWord).Or(integer.Select(i => i.ToString()));
     // quotedString.ToCell().Or(integer.ToCell()).Or(symbol.ToCell());
-    quotedString.ToCell().Or(quotedChar.ToCell()).Or(booleanLiteral.ToCell()).Or(floatRep.ToCell()).Or(doubleRep.ToCell()).Or(integer.ToCell()).Or(symbol.ToCell());
+    quotedString.ToCell().Or(quotedChar.ToCell()).Or(booleanLiteral.ToCell()).Or(floatRep.ToCell()).Or(doubleRep.ToCell()).Or(integer.ToCell()).Or(typeofLiteral.ToCell()).Or(symbol.ToCell());
 
   internal static readonly Parser<Stack> stackRep =
     from lbracket in Parse.Char('[')
@@ -111,11 +118,12 @@ public class StackParser {
 
   public static Stack ParsePivot(string s) {
     return pivotRep.Parse(s);
+
   }
 
   public static Stack ParseWithResolution<T>(string s, Dictionary<string, T> dict) {
     Parser<object> cell =
-      quotedString.ToCell().Or(booleanLiteral.ToCell()).Or(floatRep.ToCell()).Or(doubleRep.ToCell()).Or(integer.ToCell()).Or(symbol.Resolve(dict));
+      quotedString.ToCell().Or(booleanLiteral.ToCell()).Or(floatRep.ToCell()).Or(doubleRep.ToCell()).Or(integer.ToCell()).Or(typeofLiteral.ToCell()).Or(symbol.Resolve(dict));
     Parser<Stack> stackRep = null;
     stackRep =
       from lbracket in Parse.Char('[')

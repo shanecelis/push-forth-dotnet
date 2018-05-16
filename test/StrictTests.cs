@@ -376,5 +376,11 @@ public class StrictTests
     var d1 = interpreter.Eval(d0);
     Assert.Equal("[[] [[] 3]]", interpreter.StackToString(d1));
   }
+
+  [Fact]
+  public void TestParseTypeof() {
+    var d0 = Interpreter.ParseString("[typeof(int)]");
+    Assert.Equal(typeof(int), d0.Peek());
+  }
 }
 }
