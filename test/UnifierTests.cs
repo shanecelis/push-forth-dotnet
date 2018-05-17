@@ -24,15 +24,15 @@ public class UnifierTests
   public void TestSubsitute() {
     var d = new Dictionary<string, object>();
     d["a"] = 1;
-    Assert.Equal(1, Unifier.Substitute(d, "a"));
+    Assert.Equal(1, Unifier.Substitute(d, V("a")));
     Assert.Equal("b", Unifier.Substitute(d, "b"));
-    Assert.Equal(new [] { 1 }, Unifier.Substitute(d, new object[] { "a" }));
+    Assert.Equal(new [] { 1 }, Unifier.Substitute(d, new object[] { V("a") }));
     Assert.Equal(new [] { "b" }, Unifier.Substitute(d, new object[] { "b" }));
-    Assert.Equal(new object[] { "b", 1 }, Unifier.Substitute(d, new object[] { "b", "a" }));
-    Assert.True(Unifier.Substitute(d, new object[] { "b", "a" }) is IEnumerable);
-    Assert.True(new object[] { "b", "a" } is IEnumerable);
-    Assert.True(new Stack(new object[] { "b", "a" }) is IEnumerable);
-    Assert.True(new Stack(new object[] { "b", "a" }).Cdr() is IEnumerable);
+    Assert.Equal(new object[] { "b", 1 }, Unifier.Substitute(d, new object[] { "b", V("a") }));
+    Assert.True(Unifier.Substitute(d, new object[] { "b", V("a") }) is IEnumerable);
+    Assert.True(new object[] { "b", V("a") } is IEnumerable);
+    Assert.True(new Stack(new object[] { "b", V("a") }) is IEnumerable);
+    Assert.True(new Stack(new object[] { "b", V("a") }).Cdr() is IEnumerable);
   }
 
   [Fact]

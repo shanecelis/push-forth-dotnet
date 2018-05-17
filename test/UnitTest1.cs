@@ -761,19 +761,20 @@ public class UnitTest1
     Assert.False(e2.MoveNext());
   }
 
-
   [Fact]
   public void TestTypeCheckNoReorderUnify() {
     var s = "[[1 1 true if]]".ToStack();
     var typedS = s.Map(o => o.GetType());
-    Assert.Equal("[[int int Boolean Symbol]]", typedS.ToRepr());
+    Assert.Equal("[[int int bool Symbol]]", typedS.ToRepr());
     var typedS2 = s.Map(o => o is Symbol ? o : o.GetType());
-    Assert.Equal("[[int int Boolean if]]", typedS2.ToRepr());
-    var a = new Variable("a");
+    Assert.Equal("[[int int bool if]]", typedS2.ToRepr());
+    // var a = new Variable("a");
     interpreter.reorderInstructions["if"]
       = new TypeCheckInstruction2("if",
-                                  new TypeOrVariable[] { typeof(bool), a, a },
-                                  new TypeOrVariable[] { a })
+                                  "[bool 'a 'a]",
+                                  "['a]")
+                                  // new object[] { typeof(bool), a, a },
+                                  // new TypeOrVariable[] { a })
     { getType = o => o is Type t ? t : o.GetType(),
       putType = t => t,
       leaveReorderItems = false };
@@ -785,11 +786,11 @@ public class UnitTest1
       .Select(x => x.ToPivot())
       .GetEnumerator();
     Assert.True(e2.MoveNext());
-    Assert.Equal("[if Boolean int • int]", e2.Current);
+    Assert.Equal("[if bool int • int]", e2.Current);
     Assert.True(e2.MoveNext());
-    Assert.Equal("[if Boolean • int int]", e2.Current);
+    Assert.Equal("[if bool • int int]", e2.Current);
     Assert.True(e2.MoveNext());
-    Assert.Equal("[if • Boolean int int]", e2.Current);
+    Assert.Equal("[if • bool int int]", e2.Current);
     Assert.True(e2.MoveNext());
     Assert.Equal("[• int]", e2.Current);
     Assert.False(e2.MoveNext());
@@ -803,11 +804,11 @@ public class UnitTest1
       .Select(x => x.ToPivot())
       .GetEnumerator();
     Assert.True(e2.MoveNext());
-    Assert.Equal("[if Boolean Char • int]", e2.Current);
+    Assert.Equal("[if bool char • int]", e2.Current);
     Assert.True(e2.MoveNext());
-    Assert.Equal("[if Boolean • Char int]", e2.Current);
+    Assert.Equal("[if bool • char int]", e2.Current);
     Assert.True(e2.MoveNext());
-    Assert.Equal("[if • Boolean Char int]", e2.Current);
+    Assert.Equal("[if • bool char int]", e2.Current);
     Assert.Throws<Exception>(() => e2.MoveNext());
     // Assert.Equal("[• int]", e2.Current);
     // Assert.False(e2.MoveNext());
@@ -886,6 +887,44 @@ public class UnitTest1
     Assert.True(e2.MoveNext());
     Assert.Equal("[+ • a int int]", e2.Current);
     Assert.Throws<Exception>(() => e2.MoveNext());
+  }
+
+  [Fact]
+  public void TestDetermineInputAndOutput() {
+    var s = "[[if typeof(int)]]".ToStack();
+    var _if
+      = new TypeCheckInstruction3("if",
+                                  "[bool 'a 'a]",
+                                  "['a]")
+    { getType = o => o is Type t ? t : o.GetType() };
+    interpreter.reorderInstructions["if"] = _if;
+
+    var s2 = interpreter.Run(s, Interpreter.IsHalted, interpreter.ReorderPre).ToRepr();
+    Assert.Equal("[[] int 'a ['a 'a bool]]", s2);
+  }
+
+  [Fact]
+  public void TestDetermineInputAndOutput2() {
+    var s = "[[if typeof(int) + typeof(char)]]".ToStack();
+    var _if
+      = new TypeCheckInstruction3("if",
+                                  "[bool 'a 'a]",
+                                  "['a]")
+      { getType = o => o is Type t ? t : o.GetType() };
+    var add
+      = new TypeCheckInstruction3("+",
+                                  "[int int]",
+                                  "[int]")
+      { getType = o => o is Type t ? t : o.GetType() };
+    interpreter.reorderInstructions["if"] = _if;
+    interpreter.reorderInstructions["+"] = add;
+
+    var s2 = interpreter.Run(s, Interpreter.IsHalted, interpreter.ReorderPre);
+    Assert.Equal("[[] char int { a -> int } ['a 'a bool]]", s2.ToRepr());
+    s2.Pop();
+    var (consumes, produces) = TypeCheckInstruction3.ConsumesAndProduces(s2);
+    Assert.Equal("[int int bool]", consumes.ToRepr());
+    Assert.Equal("[char int]", produces.ToRepr());
   }
 }
 }

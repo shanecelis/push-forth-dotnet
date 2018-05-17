@@ -49,6 +49,8 @@ public static class PushForthExtensions {
       //   sb.Append(instructions.First(kv => kv.Value == i).Key);
       else if (x is Type t)
         sb.Append(t.PrettyName());
+      else if (x is IDictionary d)
+        sb.Append(d.ToRepr());
       else if (x is string str)
         sb.Append($"\"{str}\"");
       else
@@ -74,6 +76,8 @@ public static class PushForthExtensions {
       //   sb.Append(instructions.First(kv => kv.Value == i).Key);
       else if (x is Type t)
         sb.Append(t.PrettyName());
+      else if (x is IDictionary d)
+        sb.Append(d.ToRepr());
       else if (x is string str)
         sb.Append($"\"{str}\"");
       else
@@ -93,6 +97,8 @@ public static class PushForthExtensions {
       //   sb.Append(instructions.First(kv => kv.Value == i).Key);
       else if (x is Type t)
         sb.Append(t.PrettyName());
+      else if (x is IDictionary d)
+        sb.Append(d.ToRepr());
       else if (x is string str)
         sb.Append($"\"{str}\"");
       else
@@ -166,6 +172,8 @@ public static class PushForthExtensions {
         return typeof(byte);
       case "sbyte":
         return typeof(sbyte);
+      case "char":
+        return typeof(char);
       case "ushort":
         return typeof(ushort);
       case "uint":
@@ -193,10 +201,14 @@ public static class PushForthExtensions {
     if (t.IsEnum)
       return null;
     switch (Type.GetTypeCode(t)) {
+      case TypeCode.Boolean:
+        return "bool";
       case TypeCode.Byte:
         return "byte";
       case TypeCode.SByte:
         return "sbyte";
+      case TypeCode.Char:
+        return "char";
       case TypeCode.UInt16:
         return "ushort";
       case TypeCode.UInt32:
@@ -229,8 +241,10 @@ public static class PushForthExtensions {
     if (t.IsEnum)
       return false;
     switch (Type.GetTypeCode(t)) {
+      case TypeCode.Boolean: // XXX This is a lie!
       case TypeCode.Byte:
       case TypeCode.SByte:
+      case TypeCode.Char:
       case TypeCode.UInt16:
       case TypeCode.UInt32:
       case TypeCode.UInt64:
@@ -322,10 +336,10 @@ public static class PushForthExtensions {
   // public static String ToRepr(this object o) => o.ToString();
   // public static String ToRepr(this int o) => o.ToString();
 
-  public static String ToRepr<K,V>(this Dictionary<K,V> dict) {
+  public static String ToRepr(this IDictionary dict) {
     var sb = new StringBuilder();
     sb.Append("{");
-    foreach(var kv in dict) {
+    foreach(DictionaryEntry kv in dict) {
       sb.Append(" ");
       sb.Append(kv.Key.ToString());
       sb.Append(" -> ");
@@ -351,10 +365,12 @@ public static class PushForthExtensions {
   public static string ToReprQuasiDynamic(this object v) {
     if (v is Stack s)
       return s.ToRepr();
-    if (v is IEnumerable e)
+    else if (v is IEnumerable e)
       return e.ToRepr();
-    // else if (v is Dictionary<K,V> d)
-    //   return d.ToRepr();
+    else if (v is IDictionary d)
+      return d.ToRepr();
+    else if (v is Type t)
+      return t.PrettyName();
     else
       return v.ToString();
   }
@@ -389,6 +405,13 @@ public static class PushForthExtensions {
     foreach (var x in e)
       return true;
     return false;
+  }
+
+  public static Stack ToStack(this IEnumerable e) {
+    var s = new Stack();
+    foreach (var x in e)
+      s.Push(x);
+    return s;
   }
 
   public static Parser<T> FailOnThrow<T>(this Parser<T> parser) {

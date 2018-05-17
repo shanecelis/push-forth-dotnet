@@ -8,6 +8,7 @@ using SeawispHunter.PushForth;
 public class Variable : Tuple<string> {
   public Variable(string name) : base(name) { }
   public string name => Item1;
+  public override string ToString() => "'" + name;
 }
 
 /*
@@ -68,8 +69,8 @@ public static class Unifier {
 
   public static object Substitute(Dictionary<string, dynamic> bindings,
                                   object x) {
-    if (x is string str && bindings.ContainsKey(str))
-      return bindings[str];
+    if (x is Variable v && bindings.ContainsKey(v.name))
+      return bindings[v.name];
     if (x is IEnumerable s)
       return s.Cast<object>().Select(o => Substitute(bindings, o)).CastBack();
     return x;

@@ -24,6 +24,10 @@ public class Continuation : Tuple<Stack> {
 
 // public class Cell : OneOfBase<Symbol, int, string> { }
 
+// public class Interpreter : _Interpreter {
+
+// }
+
 public class Interpreter {
 
   public Dictionary<string, Instruction> instructions
@@ -61,7 +65,7 @@ public class Interpreter {
           stack.Push(new Continuation(otherwise));
       });
     // How can I get a generic function.  I want something like this:
-    // AddInstruction<T>("if2", (Stack stack, bool condition, T consequent, T otherwise)=> {
+    // AddInsuruction<T>("if2", (Stack stack, bool condition, T consequent, T otherwise)=> {
     //     if (condition)
     //       stack.Push(new Continuation(consequent));
     //     else
