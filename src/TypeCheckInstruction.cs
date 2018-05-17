@@ -117,7 +117,6 @@ public class TypeCheckInstruction3 : TypedInstruction {
   public readonly IEnumerable<TypeOrVar> produces;
   public readonly string name;
   public Func<object, Type> getType = o => o is IReprType d ? d.type : o.GetType();
-  // public Dictionary<string, Type> bindings = new Dictionary<string, Type>();
 
   public TypeCheckInstruction3(string name,
                                IEnumerable<TypeOrVar> consumes,
@@ -136,12 +135,12 @@ public class TypeCheckInstruction3 : TypedInstruction {
 
   public Stack Apply(Stack stack) {
     // var consumeStack = (Stack) stack.Pop();
+    var consumeStack = new Stack();
     // Let's make the produceStack implicit.
     // var produceStack = (Stack) stack.Pop();
-    var consumeStack = new Stack();
     var produceStack = stack;
+    // XXX I don't really do anything with passedTypes anymore.
     var passedTypes = new Queue();
-
     var uniqVars = new Dictionary<Variable, Variable>();
 
     foreach(var consume in consumes) {
@@ -207,6 +206,9 @@ public class TypeCheckInstruction3 : TypedInstruction {
     return stack;
   }
 
+  /* Take the output from a bunch of TypeCheckInstruction3s and create a list of
+     what the program consumes and what it produces.
+   */
   public static (Stack, Stack) ConsumesAndProduces(Stack stack) {
     var consumeStack = new Stack();
     var producesStack = new Stack();

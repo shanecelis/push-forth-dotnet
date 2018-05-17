@@ -959,6 +959,23 @@ public class InterpreterTests {
     Assert.Equal("[]", consumes.ToRepr());
     Assert.Equal("[int int char char]", produces.ToRepr());
   }
+
+  [Fact]
+  public void TestTypeCheckDupDupWithVars() {
+    var s = "[[dup typeof(char) dup]]".ToStack();
+    var dup
+      = new TypeCheckInstruction3("dup",
+                                  "['a]",
+                                  "['a 'a]")
+      { getType = o => o is Type t ? t : o.GetType() };
+    interpreter.reorderInstructions["dup"] = dup;
+    var s2 = interpreter.Run(s, Interpreter.IsHalted, interpreter.ReorderPre);
+    Assert.Equal("[[] 'a1 'a1 { a1 -> char } 'a0 'a0 ['a0]]", s2.ToRepr());
+    s2.Pop();
+    var (consumes, produces) = TypeCheckInstruction3.ConsumesAndProduces(s2);
+    Assert.Equal("['a0]", consumes.ToRepr());
+    Assert.Equal("['a0 'a0 char char]", produces.ToRepr());
+  }
 }
 
 }

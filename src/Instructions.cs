@@ -266,6 +266,7 @@ public class Defer : Tuple<Stack, Type>, IReprType {
   }
 }
 
+/** Stand-in that represents another type. */
 public interface IReprType {
   Type type { get; }
 }
