@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Sprache;
+using OneOf;
 
 namespace SeawispHunter.PushForth {
 
@@ -15,6 +16,10 @@ public static class PushForthExtensions {
   public static Parser<object> ToCell<T>(this Parser<T> parser) {
     return parser.Select(t => (object) t);
   }
+
+  public static Parser<OneOf<Type,Variable>> ToTypeOrVariable(this Parser<Variable> parser) => parser.Select(t => (OneOf<Type,Variable>) t);
+
+  public static Parser<OneOf<Type,Variable>> ToTypeOrVariable(this Parser<Type> parser) => parser.Select(t => (OneOf<Type,Variable>) t);
 
   public static Parser<object> Resolve<T>(this Parser<Symbol> parser, Dictionary<string, T> dict) {
     return parser.Select(s => {

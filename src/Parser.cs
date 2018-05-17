@@ -112,6 +112,14 @@ public class StackParser {
     from trailingSpaces in Parse.Char(' ').Many()
     select new Stack(contents.Reverse().ToArray());
 
+  internal static readonly Parser<Stack<OneOf<Type, Variable>>> typeRep2 =
+    from lbracket in Parse.Char('[')
+    from leadingSpaces in Parse.Char(' ').Many()
+    from contents in varLiteral.ToTypeOrVariable().Or(typeLiteral.FailOnThrow().ToTypeOrVariable()).Many()
+    from rbracket in Parse.Char(']')
+    from trailingSpaces in Parse.Char(' ').Many()
+    select new Stack<OneOf<Type, Variable>>(contents.Reverse().ToArray());
+
   private static readonly Parser<char> pivotChar = Parse.Char('•');
 
   internal static readonly Parser<Stack> pivotRep =
@@ -133,6 +141,9 @@ public class StackParser {
   public static Stack ParsePivot(string s) => pivotRep.Parse(s);
 
   public static Stack ParseTypeSignature(string s) => typeRep.Parse(s);
+
+  public static Stack<OneOf<Type, Variable>>
+    ParseTypeSignature2(string s) => typeRep2.Parse(s);
 
   // XXX Rename to ParseWithSubstitution
   public static Stack ParseWithResolution<T>(string s,

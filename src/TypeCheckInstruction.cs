@@ -5,6 +5,7 @@ using System.Linq;
 using OneOf;
 
 namespace SeawispHunter.PushForth {
+using TypeOrVar = OneOf<Type, Variable>;
 
 // https://github.com/mcintyre321/OneOf/blob/1240b20094d25aa1af9d3e2c064f23a5ce372b11/OneOf.Tests/MixedReferenceAndValueTypeTests.cs
 // public class TypeOrVariable : OneOfBase<Type, Variable> {
@@ -14,7 +15,6 @@ namespace SeawispHunter.PushForth {
 //   public static implicit operator TypeOrVariable(Type t) {
 //     return new TypeOrVariable(t);
 //   }
-
 //   public static implicit operator TypeOrVariable(Variable v) {
 //     return new TypeOrVariable(v);
 //   }
@@ -109,16 +109,18 @@ public class TypeCheckInstruction2 : Instruction {
   }
 }
 
-public class TypeCheckInstruction3 : Instruction {
-  public readonly IEnumerable consumes;
-  public readonly IEnumerable produces;
+public class TypeCheckInstruction3 : TypedInstruction {
+  public IEnumerable<TypeOrVar> inputTypes => consumes;
+  public IEnumerable<TypeOrVar> outputTypes => produces;
+  public readonly IEnumerable<TypeOrVar> consumes;
+  public readonly IEnumerable<TypeOrVar> produces;
   public readonly string name;
   public Func<object, Type> getType = o => o is IReprType d ? d.type : o.GetType();
   public Dictionary<string, Type> bindings = new Dictionary<string, Type>();
 
   public TypeCheckInstruction3(string name,
-                               IEnumerable consumes,
-                               IEnumerable produces) {
+                               IEnumerable<TypeOrVar> consumes,
+                               IEnumerable<TypeOrVar> produces) {
     this.name = name;
     this.consumes = consumes;
     this.produces = produces;
@@ -128,8 +130,8 @@ public class TypeCheckInstruction3 : Instruction {
                                string consumes,
                                string produces)
     : this(name,
-           StackParser.ParseTypeSignature(consumes),
-           StackParser.ParseTypeSignature(produces)) { }
+           StackParser.ParseTypeSignature2(consumes),
+           StackParser.ParseTypeSignature2(produces)) { }
 
   public Stack Apply(Stack stack) {
     // var consumeStack = (Stack) stack.Pop();
@@ -142,7 +144,8 @@ public class TypeCheckInstruction3 : Instruction {
       if (produceStack.Any()) {
         object o = produceStack.Pop();
         var t = getType(o);
-        if (consume is Type type) {
+        if (consume.TryPickT0(out Type type, out Variable v)) {
+        // if (consume is Type type) {
           if (type.IsAssignableFrom(t)) {
             passedTypes.Enqueue(o);
           } else if (o is Variable w) {
@@ -150,7 +153,8 @@ public class TypeCheckInstruction3 : Instruction {
           } else {
             throw new Exception($"Type check instruction {name} expected type {type} but got {o}");
           }
-        } else if (consume is Variable v) {
+        // } else if (consume is Variable v) {
+          } else {
           // It's a variable.
           if (bindings.TryGetValue(v.name, out Type vtype)) {
             if (vtype.IsAssignableFrom(t)) {
@@ -162,11 +166,15 @@ public class TypeCheckInstruction3 : Instruction {
             bindings[v.name] = t;
             passedTypes.Enqueue(o);
           }
-        } else {
-          throw new Exception($"Expected Type or Variable not {consume} with type {consume.GetType().PrettyName()}.");
-        } 
+        }
+        //   else {
+        //   throw new Exception($"Expected Type or Variable not {consume} with type {consume.GetType().PrettyName()}.");
+        // } 
       } else {
-        consumeStack.Push(consume);
+        if (consume.TryPickT0(out Type type, out Variable v))
+          consumeStack.Push(type);
+        else
+          consumeStack.Push(v);
       }
     }
     if (consumeStack.Any())
@@ -174,13 +182,16 @@ public class TypeCheckInstruction3 : Instruction {
     // Everything checks out. Add the types we produced.
     // foreach(var produced in (leaveReorderItems ? produces.Skip(1) : produces)) {
     foreach(var produced in produces) {
-      if (produced is Type ptype)
-        produceStack.Push(ptype);
-      else if (produced is Variable varx) {
-        if (bindings.TryGetValue(varx.name, out Type vtype))
+
+      if (produced.TryPickT0(out Type type, out Variable var)) {
+      // if (produced is Type ptype)
+        produceStack.Push(type);
+      // else if (produced is Variable varx) {
+      } else {
+        if (bindings.TryGetValue(var.name, out Type vtype))
           produceStack.Push(vtype);
         else
-          produceStack.Push(varx);
+          produceStack.Push(var);
       }
     }
     // stack.Push(produceStack);

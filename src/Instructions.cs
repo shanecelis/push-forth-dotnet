@@ -2,11 +2,23 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using OneOf;
 
 namespace SeawispHunter.PushForth {
 
+using TypeOrVar = OneOf<Type, Variable>;
+
 public interface Instruction {
   Stack Apply(Stack stack);
+}
+
+public interface TypedInstruction : Instruction {
+  IEnumerable<TypeOrVar> inputTypes { get; }
+  IEnumerable<TypeOrVar> outputTypes { get; }
+  // IEnumerable<OneOf<Type, Variable>> inputTypes { get; }
+  // IEnumerable<OneOf<Type, Variable>> outputTypes { get; }
+  // IEnumerable inputTypes { get; }
+  // IEnumerable outputTypes { get; }
 }
 
 public class InstructionFunc : Instruction {
