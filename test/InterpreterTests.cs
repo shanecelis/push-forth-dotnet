@@ -11,6 +11,7 @@ public class InterpreterTests {
   Interpreter interpreter;
   public InterpreterTests() {
     interpreter = new Interpreter(false);
+    UniqueVariable.Clear();
   }
   public string Run(string code) {
     var d0 = Interpreter.ParseString(code);
@@ -898,7 +899,7 @@ public class InterpreterTests {
     interpreter.reorderInstructions["if"] = _if;
 
     var s2 = interpreter.Run(s, Interpreter.IsHalted, interpreter.ReorderPre).ToRepr();
-    Assert.Equal("[[] int 'a ['a 'a bool]]", s2);
+    Assert.Equal("[[] int 'a0 ['a0 'a0 bool]]", s2);
   }
 
   [Fact]
@@ -918,11 +919,46 @@ public class InterpreterTests {
     interpreter.reorderInstructions["+"] = add;
 
     var s2 = interpreter.Run(s, Interpreter.IsHalted, interpreter.ReorderPre);
-    Assert.Equal("[[] char int { a -> int } ['a 'a bool]]", s2.ToRepr());
+    Assert.Equal("[[] char int { a0 -> int } ['a0 'a0 bool]]", s2.ToRepr());
     s2.Pop();
     var (consumes, produces) = TypeCheckInstruction3.ConsumesAndProduces(s2);
-    Assert.Equal("[int int bool]", consumes.ToRepr());
-    Assert.Equal("[char int]", produces.ToRepr());
+    Assert.Equal("[bool int int]", consumes.ToRepr());
+    Assert.Equal("[int char]", produces.ToRepr());
+  }
+
+  [Fact]
+  public void TestTypeCheckDup() {
+    var s = "[[typeof(int) dup]]".ToStack();
+    var dup
+      = new TypeCheckInstruction3("dup",
+                                  "['a]",
+                                  "['a 'a]")
+      { getType = o => o is Type t ? t : o.GetType() };
+    interpreter.reorderInstructions["dup"] = dup;
+    var s2 = interpreter.Run(s, Interpreter.IsHalted, interpreter.ReorderPre);
+    Assert.Equal("[[] 'a0 'a0 { a0 -> int }]", s2.ToRepr());
+    s2.Pop();
+    var (consumes, produces) = TypeCheckInstruction3.ConsumesAndProduces(s2);
+    Assert.Equal("[]", consumes.ToRepr());
+    Assert.Equal("[int int]", produces.ToRepr());
+  }
+
+  [Fact]
+  public void TestTypeCheckDupDup() {
+    var s = "[[typeof(int) dup typeof(char) dup]]".ToStack();
+    var dup
+      = new TypeCheckInstruction3("dup",
+                                  "['a]",
+                                  "['a 'a]")
+      { getType = o => o is Type t ? t : o.GetType() };
+    interpreter.reorderInstructions["dup"] = dup;
+    var s2 = interpreter.Run(s, Interpreter.IsHalted, interpreter.ReorderPre);
+    Assert.Equal("[[] 'a1 'a1 { a1 -> char } 'a0 'a0 { a0 -> int }]", s2.ToRepr());
+    s2.Pop();
+    var (consumes, produces) = TypeCheckInstruction3.ConsumesAndProduces(s2);
+    Assert.Equal("[]", consumes.ToRepr());
+    Assert.Equal("[int int char char]", produces.ToRepr());
   }
 }
+
 }

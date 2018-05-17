@@ -9,6 +9,23 @@ public class Variable : Tuple<string> {
   public Variable(string name) : base(name) { }
   public string name => Item1;
   public override string ToString() => "'" + name;
+
+  public virtual Variable MakeUnique() {
+   return new UniqueVariable(name);
+  }
+}
+
+public class UniqueVariable : Variable {
+  private static int uniqueSuffix = 0;
+  public UniqueVariable(string name) : base(name + uniqueSuffix++) { }
+
+  public override Variable MakeUnique() {
+   return this;
+  }
+
+  public static void Clear() {
+    uniqueSuffix = 0;
+  }
 }
 
 /*

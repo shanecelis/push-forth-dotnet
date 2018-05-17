@@ -5,7 +5,8 @@ using System.Linq;
 using OneOf;
 
 namespace SeawispHunter.PushForth {
-using TypeOrVar = OneOf<Type, Variable>;
+
+  using TypeOrVar = OneOf<Type, Variable>;
 
 // https://github.com/mcintyre321/OneOf/blob/1240b20094d25aa1af9d3e2c064f23a5ce372b11/OneOf.Tests/MixedReferenceAndValueTypeTests.cs
 // public class TypeOrVariable : OneOfBase<Type, Variable> {
@@ -116,7 +117,7 @@ public class TypeCheckInstruction3 : TypedInstruction {
   public readonly IEnumerable<TypeOrVar> produces;
   public readonly string name;
   public Func<object, Type> getType = o => o is IReprType d ? d.type : o.GetType();
-  public Dictionary<string, Type> bindings = new Dictionary<string, Type>();
+  // public Dictionary<string, Type> bindings = new Dictionary<string, Type>();
 
   public TypeCheckInstruction3(string name,
                                IEnumerable<TypeOrVar> consumes,
@@ -140,6 +141,9 @@ public class TypeCheckInstruction3 : TypedInstruction {
     var consumeStack = new Stack();
     var produceStack = stack;
     var passedTypes = new Queue();
+
+    var uniqVars = new Dictionary<Variable, Variable>();
+
     foreach(var consume in consumes) {
       if (produceStack.Any()) {
         object o = produceStack.Pop();
@@ -149,23 +153,26 @@ public class TypeCheckInstruction3 : TypedInstruction {
           if (type.IsAssignableFrom(t)) {
             passedTypes.Enqueue(o);
           } else if (o is Variable w) {
-            stack.Push(new Dictionary<string, object>() { {w.name, type } });
+            var w2 = uniqVars.GetOrCreate(w, x => x.MakeUnique());
+            stack.Push(new Dictionary<string, object>() { { w2.name, type } });
           } else {
             throw new Exception($"Type check instruction {name} expected type {type} but got {o}");
           }
         // } else if (consume is Variable v) {
           } else {
           // It's a variable.
-          if (bindings.TryGetValue(v.name, out Type vtype)) {
-            if (vtype.IsAssignableFrom(t)) {
-              passedTypes.Enqueue(o);
-            } else {
-              throw new Exception($"Type check instruction {name} with variable {v.name} expected type {vtype} but got {o}");
-            }
-          } else {
-            bindings[v.name] = t;
-            passedTypes.Enqueue(o);
-          }
+            var v2 = uniqVars.GetOrCreate(v, x => x.MakeUnique());
+            stack.Push(new Dictionary<string, object>() { { v2.name, t } });
+          // if (bindings.TryGetValue(v.name, out Type vtype)) {
+          //   if (vtype.IsAssignableFrom(t)) {
+          //     passedTypes.Enqueue(o);
+          //   } else {
+          //     throw new Exception($"Type check instruction {name} with variable {v.name} expected type {vtype} but got {o}");
+          //   }
+          // } else {
+          //   bindings[v.name] = t;
+          //   passedTypes.Enqueue(o);
+          // }
         }
         //   else {
         //   throw new Exception($"Expected Type or Variable not {consume} with type {consume.GetType().PrettyName()}.");
@@ -173,8 +180,10 @@ public class TypeCheckInstruction3 : TypedInstruction {
       } else {
         if (consume.TryPickT0(out Type type, out Variable v))
           consumeStack.Push(type);
-        else
-          consumeStack.Push(v);
+        else {
+          var v2 = uniqVars.GetOrCreate(v, x => x.MakeUnique());
+          consumeStack.Push(v2);
+        }
       }
     }
     if (consumeStack.Any())
@@ -182,16 +191,16 @@ public class TypeCheckInstruction3 : TypedInstruction {
     // Everything checks out. Add the types we produced.
     // foreach(var produced in (leaveReorderItems ? produces.Skip(1) : produces)) {
     foreach(var produced in produces) {
-
-      if (produced.TryPickT0(out Type type, out Variable var)) {
+      if (produced.TryPickT0(out Type type, out Variable v)) {
       // if (produced is Type ptype)
         produceStack.Push(type);
       // else if (produced is Variable varx) {
       } else {
-        if (bindings.TryGetValue(var.name, out Type vtype))
-          produceStack.Push(vtype);
-        else
-          produceStack.Push(var);
+        // if (bindings.TryGetValue(var.name, out Type vtype))
+        //   produceStack.Push(vtype);
+        // else
+        var v2 = uniqVars.GetOrCreate(v, x => x.MakeUnique());
+        produceStack.Push(v2);
       }
     }
     // stack.Push(produceStack);
@@ -208,13 +217,14 @@ public class TypeCheckInstruction3 : TypedInstruction {
         consumeStack = Interpreter.Append(consumes, consumeStack);
       } else if (o is Dictionary<string, object> d) {
         foreach(var kv in d)
-          bindings[kv.Key] = kv.Value;
+          bindings.Add(kv.Key, kv.Value);
       } else {
         producesStack.Push(o);
       }
     }
     consumeStack = ((IEnumerable) Unifier.Substitute(bindings, consumeStack)).ToStack();
-    return (new Stack(consumeStack), new Stack(producesStack));
+    producesStack = ((IEnumerable) Unifier.Substitute(bindings, producesStack)).ToStack();
+    return (consumeStack, new Stack(producesStack));
   }
 
   private static string CellToString(object o) {

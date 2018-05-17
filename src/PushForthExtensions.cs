@@ -431,5 +431,12 @@ public static class PushForthExtensions {
         }
       };
   }
+
+  public static TValue GetOrCreate<TKey, TValue>(this IDictionary<TKey, TValue> dict, TKey key, Func<TKey, TValue> func) {
+    TValue val;
+    if (! dict.TryGetValue(key, out val))
+        dict.Add(key, val = func(key));
+    return val;
+  }
 }
 }
