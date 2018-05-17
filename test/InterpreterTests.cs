@@ -5,13 +5,11 @@ using System.Collections.Generic;
 using Xunit;
 using SeawispHunter.PushForth;
 
-namespace SeawispHunter.PushForth 
-{
-public class UnitTest1
-{
+namespace SeawispHunter.PushForth {
 
+public class InterpreterTests {
   Interpreter interpreter;
-  public UnitTest1() {
+  public InterpreterTests() {
     interpreter = new Interpreter(false);
   }
   public string Run(string code) {
