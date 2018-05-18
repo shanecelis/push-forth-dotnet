@@ -176,12 +176,10 @@ public class BinaryInstruction<X, Y> : TypedInstruction {
 }
 
 public class TypeCheckInstruction : ReorderInstruction {
-
   public TypeCheckInstruction(string name,
                               IEnumerable<Type> consumes,
                               IEnumerable<Type> produces)
-    : base(name, consumes, produces)
-  { }
+    : base(name, consumes, produces) { }
 
   public override Stack TypeMismatch(Stack stack, ICollection passedTypes, object o, Type consume) {
     throw new Exception($"Type check instruction {name} expected type {consume} but got {o}");
@@ -236,6 +234,7 @@ public class ReorderInstruction : TypedInstruction {
       var t = getType(o);
       // if (t == consume) {
       if (consume == typeof(Variable)) {
+        // XXX What is going on here?
         passedTypes.Enqueue(o);
       } else if (consume.IsAssignableFrom(t)) {
         passedTypes.Enqueue(o);
@@ -251,6 +250,7 @@ public class ReorderInstruction : TypedInstruction {
         code.Push(t);
       stack.Push(new Defer(code, produces.FirstOrDefault()));
     }
+
     // Everything checks out. Add the types we produced.
     foreach(var produced in (leaveReorderItems ? produces.Skip(1) : produces)) {
       stack.Push(putType(produced));
