@@ -28,6 +28,22 @@ public class Continuation : Tuple<Stack> {
 
 // }
 
+public class ReorderInterpreter : Interpreter {
+  public ReorderInterpreter(Dictionary<string, Instruction> instructions) {
+    foreach(var kv in instructions) {
+      if (kv.Value is TypedInstruction ti) {
+        this.instructions.Add(kv.Key,
+                              new ReorderInstruction(kv.Key,
+                                                     ti.inputTypes,
+                                                     ti.outputTypes));
+      } else {
+        throw new Exception($"Can't make reorder instruction out of '{kv.Key}'.");
+      }
+
+    }
+  }
+}
+
 public class Interpreter {
 
   public Dictionary<string, Instruction> instructions

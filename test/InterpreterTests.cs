@@ -70,6 +70,11 @@ public class InterpreterTests {
     var v = new Queue(new [] {1, 2, 3});
     Assert.Equal(new object[] {1, 2, 3}, v.ToArray());
     Assert.Equal(new object[] {1, 2, 3}, v.GetEnumerator().ToEnumerable().Cast<object>().ToArray());
+
+    // Enumerating does not change the stack.
+    foreach (var x in s)
+      ;
+    Assert.Equal("[3 2 1]", s.ToRepr());
   }
 
   [Fact]
@@ -962,6 +967,23 @@ public class InterpreterTests {
 
   [Fact]
   public void TestTypeCheckDupDupWithVars() {
+    var s = "[[dup typeof(char) dup]]".ToStack();
+    var dup
+      = new TypeCheckInstruction3("dup",
+                                  "['a]",
+                                  "['a 'a]")
+      { getType = o => o is Type t ? t : o.GetType() };
+    interpreter.reorderInstructions["dup"] = dup;
+    var s2 = interpreter.Run(s, Interpreter.IsHalted, interpreter.ReorderPre);
+    Assert.Equal("[[] 'a1 'a1 { a1 -> char } 'a0 'a0 ['a0]]", s2.ToRepr());
+    s2.Pop();
+    var (consumes, produces) = TypeCheckInstruction3.ConsumesAndProduces(s2);
+    Assert.Equal("['a0]", consumes.ToRepr());
+    Assert.Equal("['a0 'a0 char char]", produces.ToRepr());
+  }
+
+  [Fact]
+  public void TestTypeCheckDupDupWithVars2() {
     var s = "[[dup typeof(char) dup]]".ToStack();
     var dup
       = new TypeCheckInstruction3("dup",

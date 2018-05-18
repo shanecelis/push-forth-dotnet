@@ -13,6 +13,42 @@ public class Variable : Tuple<string> {
   public virtual Variable MakeUnique() {
    return new UniqueVariable(name);
   }
+
+  public static bool IsVariableType(Type t) => t.IsSubclassOf(typeof(Variable));
+
+  public static Variable Instantiate(Type t) {
+    return (Variable) Activator.CreateInstance(t);
+  }
+
+  public static Type TypeFromChar(char c) {
+    switch (c) {
+      case 'a': return typeof(Variable.A);
+      case 'b': return typeof(Variable.B);
+      case 'c': return typeof(Variable.C);
+      case 'd': return typeof(Variable.D);
+      default:
+        throw new Exception($"No variable type for char '{c}'.");
+    }
+  }
+
+  // public static Variable ToInstance(Type t) {
+  //   if (t == typeof(Variable.A))
+  //     return new Variable("a");
+  //   if (t == typeof(Variable.B))
+  //     return new Variable("b");
+  //   if (t == typeof(Variable.C))
+  //     return new Variable("c");
+  //   if (t == typeof(Variable.D))
+  //     return new Variable("d");
+  //   else
+  //     throw new Exception($"No way to instantiate variable for type {t.PrettyName()}.");
+  // }
+
+  // I really don't need more than a handful of these to pass through the system.
+  public class A : Variable { public A() : base("a") { } };
+  public class B : Variable { public B() : base("b") { } };
+  public class C : Variable { public C() : base("c") { } };
+  public class D : Variable { public D() : base("d") { } };
 }
 
 public class UniqueVariable : Variable {

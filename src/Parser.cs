@@ -100,6 +100,11 @@ public class StackParser {
     from s in bareWord
     select new Variable(s);
 
+  private static readonly Parser<Type> varTypeLiteral =
+    from _ in Parse.Char('\'')
+    from c in Parse.Chars("abcd")
+    select Variable.TypeFromChar(c);
+
   private static readonly Parser<Type> typeLiteral =
     from s in bareWord
     select s.ToType();
@@ -119,6 +124,14 @@ public class StackParser {
     from rbracket in Parse.Char(']')
     from trailingSpaces in Parse.Char(' ').Many()
     select new Stack<OneOf<Type, Variable>>(contents.Reverse().ToArray());
+
+  internal static readonly Parser<Stack<Type>> typeRep3 =
+    from lbracket in Parse.Char('[')
+    from leadingSpaces in Parse.Char(' ').Many()
+    from contents in varTypeLiteral.Or(typeLiteral.FailOnThrow()).Many()
+    from rbracket in Parse.Char(']')
+    from trailingSpaces in Parse.Char(' ').Many()
+    select new Stack<Type>(contents.Reverse().ToArray());
 
   private static readonly Parser<char> pivotChar = Parse.Char('•');
 
@@ -144,6 +157,9 @@ public class StackParser {
 
   public static Stack<OneOf<Type, Variable>>
     ParseTypeSignature2(string s) => typeRep2.Parse(s);
+
+  public static Stack<Type>
+    ParseTypeSignature3(string s) => typeRep3.Parse(s);
 
   // XXX Rename to ParseWithSubstitution
   public static Stack ParseWithResolution<T>(string s,
