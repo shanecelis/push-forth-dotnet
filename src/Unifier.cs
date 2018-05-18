@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using SeawispHunter.PushForth;
+namespace SeawispHunter.PushForth {
 
 public class Variable : Tuple<string> {
   public Variable(string name) : base(name) { }
@@ -128,4 +128,6 @@ public static class Unifier {
       return s.Cast<object>().Select(o => Substitute(bindings, o)).CastBack();
     return x;
   }
+}
+
 }

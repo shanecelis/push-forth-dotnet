@@ -278,10 +278,8 @@ public class StrictInterpreter {
     //     }
     //     return stack;
     //   });
-    instructions["while"] = new TrinaryInstruction<Stack, Stack, object>((stack, x, z, y) => {
-        if (! z.Any()) {
-          stack.Push(y);
-        } else {
+    AddInstruction("while", (Stack stack, Stack x, Stack z) => {
+        if (z.Any()) {
           var code = new Stack();
           code.Push(instructions["i"]);
           // code.Push(new Symbol("i"));
@@ -292,7 +290,7 @@ public class StrictInterpreter {
           code.Push(subcode);
           code = Append(x, code);
           // code.Push(x);
-          stack.Push(y);
+          stack.Push(z);
           stack.Push(new Continuation(code));
         }
       });
@@ -300,7 +298,7 @@ public class StrictInterpreter {
     AddInstruction("==", (int a, int b) => a == b);
     AddInstruction("<", (int a, int b) => a < b);
     AddInstruction(">", (int a, int b) => a > b);
-    instructions["while2"] = new TrinaryInstruction<Stack, bool, object>((stack, x, z, y) => {
+    AddInstruction("while2", (Stack stack, Stack x, bool z, object y) => {
         if (! z) {
           stack.Push(y);
         } else {

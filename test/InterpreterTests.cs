@@ -367,32 +367,30 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestStackToString2() {
-    var interpreter = new Interpreter();
     var d0 = interpreter.ParseWithResolution("[[cons] 0 [1 2]]]");
     Assert.Equal("[[cons] 0 [1 2]]", interpreter.StackToString(d0));
     Assert.Equal("[[cons] 0 [1 2]]", interpreter.StackToString(d0));
   }
 
-  [Fact]
-  public void TestWhile() {
-    var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString("[[while] [1 +] [[]] 0]");
-    var d1 = interpreter.Eval(d0);
-    // Assert.Equal(Interpreter.ParseString("[[[1 +] [[1 +] while] i] 0]"), d1);
-    Assert.Equal("[[1 + [[1 +] while] i] 0]", interpreter.StackToString(d1));
-    var d2 = interpreter.Eval(d1);
-    Assert.Equal("[[+ [[1 +] while] i] 1 0]", interpreter.StackToString(d2));
-    var d3 = interpreter.Eval(d2);
-    Assert.Equal("[[[[1 +] while] i] 1]", interpreter.StackToString(d3));
-    var d4 = interpreter.Eval(d3);
-    Assert.Equal("[[i] [[1 +] while] 1]", interpreter.StackToString(d4));
-    var d5 = interpreter.Eval(d4);
-    Assert.Equal("[[[1 +] while] 1]", interpreter.StackToString(d5));
-    var d6 = interpreter.Eval(d5);
-    Assert.Equal("[[while] [1 +] 1]", interpreter.StackToString(d6));
-    var d7 = interpreter.Eval(d6);
-    Assert.Equal("[[] [1 +] 1]", interpreter.StackToString(d7));
-  }
+  // [Fact]
+  // public void TestWhile() {
+  //   var d0 = Interpreter.ParseString("[[while] [1 +] [[]] 0]");
+  //   var d1 = interpreter.Eval(d0);
+  //   // Assert.Equal(Interpreter.ParseString("[[[1 +] [[1 +] while] i] 0]"), d1);
+  //   Assert.Equal("[[1 + [[1 +] while] i] 0]", interpreter.StackToString(d1));
+  //   var d2 = interpreter.Eval(d1);
+  //   Assert.Equal("[[+ [[1 +] while] i] 1 0]", interpreter.StackToString(d2));
+  //   var d3 = interpreter.Eval(d2);
+  //   Assert.Equal("[[[[1 +] while] i] 1]", interpreter.StackToString(d3));
+  //   var d4 = interpreter.Eval(d3);
+  //   Assert.Equal("[[i] [[1 +] while] 1]", interpreter.StackToString(d4));
+  //   var d5 = interpreter.Eval(d4);
+  //   Assert.Equal("[[[1 +] while] 1]", interpreter.StackToString(d5));
+  //   var d6 = interpreter.Eval(d5);
+  //   Assert.Equal("[[while] [1 +] 1]", interpreter.StackToString(d6));
+  //   var d7 = interpreter.Eval(d6);
+  //   Assert.Equal("[[] [1 +] 1]", interpreter.StackToString(d7));
+  // }
 
   [Fact]
   public void TestWhile2() {
@@ -445,15 +443,48 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestRun() {
-    var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString("[[while] [1 +] [[]] 0]");
+    interpreter = strictInterpreter;
+    var d0 = Interpreter.ParseString("[[while] [cdr swap 1 + swap] [1 2] 0]");
     var d1 = interpreter.Run(d0);
-    Assert.Equal("[[] [1 +] 1]", interpreter.StackToString(d1));
+    Assert.Equal("[[] 2]", interpreter.StackToString(d1));
+  }
+
+  [Fact]
+  public void TestWhileRun() {
+    interpreter = strictInterpreter;
+    var e2 = interpreter.EvalStream("[[while] [cdr swap 1 + swap] [1 2] 0]".ToStack()).Select(x => interpreter.StackToString(x)).GetEnumerator();
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[[cdr swap 1 + swap [[cdr swap 1 + swap] while] i] [1 2] 0]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.True(e2.MoveNext());
+    Assert.True(e2.MoveNext());
+    Assert.True(e2.MoveNext());
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[[[[cdr swap 1 + swap] while] i] [2] 1]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[[i] [[cdr swap 1 + swap] while] [2] 1]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[[[cdr swap 1 + swap] while] [2] 1]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[[while] [cdr swap 1 + swap] [2] 1]", e2.Current);
+
+    Assert.True(e2.MoveNext());
+    Assert.True(e2.MoveNext());
+    Assert.True(e2.MoveNext());
+    Assert.True(e2.MoveNext());
+    Assert.True(e2.MoveNext());
+    Assert.True(e2.MoveNext());
+    Assert.True(e2.MoveNext());
+    Assert.True(e2.MoveNext());
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[[while] [cdr swap 1 + swap] [] 2]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[[] 2]", e2.Current);
+    Assert.False(e2.MoveNext());
   }
 
   [Fact]
   public void TestEval() {
-    var interpreter = new Interpreter();
     var d0 = Interpreter.ParseString("[[eval] [[+] 1 2]]");
     var d1 = interpreter.Eval(d0);
     Assert.Equal("[[] [[] 3]]", interpreter.StackToString(d1));
@@ -813,8 +844,8 @@ public class InterpreterTests : InterpreterTestUtil {
     var s = "[[dup typeof(char) dup]]";
     var dup
       = new DetermineTypesInstruction("dup",
-                                  "['a]",
-                                  "['a 'a]")
+                                      "['a]",
+                                      "['a 'a]")
       { getType = o => o is Type t ? t : o.GetType() };
     interpreter.instructions["dup"] = dup;
     Assert.Equal("[[] 'a1 'a1 { a1 -> char } 'a0 'a0 ['a0]]", Run(s));

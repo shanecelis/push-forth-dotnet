@@ -306,25 +306,25 @@ public class StrictTests
     Assert.Equal("[[cons] 0 [1 2]]", interpreter.StackToString(d0));
   }
 
-  [Fact]
-  public void TestWhile() {
-    var d0 = Interpreter.ParseString("[[while] [1 +] [[]] 0]");
-    var d1 = interpreter.Eval(d0);
-    // Assert.Equal(Interpreter.ParseString("[[[1 +] [[1 +] while] i] 0]"), d1);
-    Assert.Equal("[[1 + [[1 +] while] i] 0]", interpreter.StackToString(d1));
-    var d2 = interpreter.Eval(d1);
-    Assert.Equal("[[+ [[1 +] while] i] 1 0]", interpreter.StackToString(d2));
-    var d3 = interpreter.Eval(d2);
-    Assert.Equal("[[[[1 +] while] i] 1]", interpreter.StackToString(d3));
-    var d4 = interpreter.Eval(d3);
-    Assert.Equal("[[i] [[1 +] while] 1]", interpreter.StackToString(d4));
-    var d5 = interpreter.Eval(d4);
-    Assert.Equal("[[[1 +] while] 1]", interpreter.StackToString(d5));
-    var d6 = interpreter.Eval(d5);
-    Assert.Equal("[[while] [1 +] 1]", interpreter.StackToString(d6));
-    var d7 = interpreter.Eval(d6);
-    Assert.Equal("[[] [1 +] 1]", interpreter.StackToString(d7));
-  }
+  // [Fact]
+  // public void TestWhile() {
+  //   var d0 = Interpreter.ParseString("[[while] [1 +] [[]] 0]");
+  //   var d1 = interpreter.Eval(d0);
+  //   // Assert.Equal(Interpreter.ParseString("[[[1 +] [[1 +] while] i] 0]"), d1);
+  //   Assert.Equal("[[1 + [[1 +] while] i] 0]", interpreter.StackToString(d1));
+  //   var d2 = interpreter.Eval(d1);
+  //   Assert.Equal("[[+ [[1 +] while] i] 1 0]", interpreter.StackToString(d2));
+  //   var d3 = interpreter.Eval(d2);
+  //   Assert.Equal("[[[[1 +] while] i] 1]", interpreter.StackToString(d3));
+  //   var d4 = interpreter.Eval(d3);
+  //   Assert.Equal("[[i] [[1 +] while] 1]", interpreter.StackToString(d4));
+  //   var d5 = interpreter.Eval(d4);
+  //   Assert.Equal("[[[1 +] while] 1]", interpreter.StackToString(d5));
+  //   var d6 = interpreter.Eval(d5);
+  //   Assert.Equal("[[while] [1 +] 1]", interpreter.StackToString(d6));
+  //   var d7 = interpreter.Eval(d6);
+  //   Assert.Equal("[[] [1 +] 1]", interpreter.StackToString(d7));
+  // }
 
   [Fact]
   public void TestWhile2() {
@@ -365,9 +365,9 @@ public class StrictTests
 
   [Fact]
   public void TestRun() {
-    var d0 = Interpreter.ParseString("[[while] [1 +] [[]] 0]");
+    var d0 = Interpreter.ParseString("[[while] [cdr swap 1 + swap] [[]] 0]");
     var d1 = interpreter.Run(d0);
-    Assert.Equal("[[] [1 +] 1]", interpreter.StackToString(d1));
+    Assert.Equal("[[] 1]", interpreter.StackToString(d1));
   }
 
   [Fact]

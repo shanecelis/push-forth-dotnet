@@ -16,6 +16,7 @@ public class InterpreterTestUtil {
   protected Stack lastRun;
   protected Stack lastEval;
   public InterpreterTestUtil() {
+    // Maybe I should do these lazily.
     nonstrictInterpreter = new Interpreter();
     strictInterpreter = new StrictInterpreter();
     reorderInterpreter = new ReorderInterpreter();
