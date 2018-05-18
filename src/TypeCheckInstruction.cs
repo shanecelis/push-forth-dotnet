@@ -6,21 +6,6 @@ using OneOf;
 
 namespace SeawispHunter.PushForth {
 
-  using TypeOrVar = OneOf<Type, Variable>;
-
-// https://github.com/mcintyre321/OneOf/blob/1240b20094d25aa1af9d3e2c064f23a5ce372b11/OneOf.Tests/MixedReferenceAndValueTypeTests.cs
-// public class TypeOrVariable : OneOfBase<Type, Variable> {
-//   private TypeOrVariable() { }
-//   private TypeOrVariable(Type t) : base(0, value0 : t) { }
-//   private TypeOrVariable(Variable v) : base(1, value1 : v) { }
-//   public static implicit operator TypeOrVariable(Type t) {
-//     return new TypeOrVariable(t);
-//   }
-//   public static implicit operator TypeOrVariable(Variable v) {
-//     return new TypeOrVariable(v);
-//   }
-// }
-
 public class TypeCheckInstruction2 : Instruction {
   public readonly IEnumerable consumes;
   public readonly IEnumerable produces;
@@ -110,8 +95,10 @@ public class TypeCheckInstruction2 : Instruction {
   }
 }
 
-
-public class TypeCheckInstruction4 : TypedInstruction {
+/*
+  This isn't just type checking. It determines the types of a given program.
+ */
+public class DetermineTypesInstruction : TypedInstruction {
   public IEnumerable<Type> inputTypes => consumes;
   public IEnumerable<Type> outputTypes => produces;
   public readonly IEnumerable<Type> consumes;
@@ -119,7 +106,7 @@ public class TypeCheckInstruction4 : TypedInstruction {
   public readonly string name;
   public Func<object, Type> getType = o => o is IReprType d ? d.type : o.GetType();
 
-  public TypeCheckInstruction4(string name,
+  public DetermineTypesInstruction(string name,
                                IEnumerable<Type> consumes,
                                IEnumerable<Type> produces) {
     this.name = name;
@@ -127,7 +114,7 @@ public class TypeCheckInstruction4 : TypedInstruction {
     this.produces = produces;
   }
 
-  public TypeCheckInstruction4(string name,
+  public DetermineTypesInstruction(string name,
                                string consumes,
                                string produces)
     : this(name,
