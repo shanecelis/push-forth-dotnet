@@ -265,6 +265,35 @@ public class ReorderInstruction : TypedInstruction {
   }
 }
 
+public class DeferInstruction : TypedInstruction {
+  string name;
+  internal IEnumerable<Type> _inputTypes = Type.EmptyTypes;
+  internal IEnumerable<Type> _outputTypes = Type.EmptyTypes;
+  public IEnumerable<Type> inputTypes => _inputTypes;
+  public IEnumerable<Type> outputTypes => _outputTypes;
+
+  public DeferInstruction(string name,
+                          IEnumerable<Type> inputTypes,
+                          IEnumerable<Type> outputTypes) {
+    this.name = name;
+    this._inputTypes = inputTypes;
+    this._outputTypes = outputTypes;
+  }
+
+  public DeferInstruction(string name, TypedInstruction ins)
+    : this(name, ins.inputTypes, ins.outputTypes) { }
+
+  public Stack Apply(Stack stack) {
+    var code = new Stack();
+    code.Push(new Symbol(name));
+    int inputCount = inputTypes.Count();
+    for (int i = 0; i < inputCount; i++)
+      code.Push(stack.Pop());
+    stack.Push(new Defer(code, outputTypes.FirstOrDefault()));
+    return stack;
+  }
+}
+
 public class Defer : Tuple<Stack, Type>, IReprType {
   public Defer(Stack s) : base(s, null) { }
   public Defer(Stack s, Type t) : base(s, t) { }

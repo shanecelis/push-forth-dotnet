@@ -7,11 +7,12 @@ namespace SeawispHunter.PushForth {
 
 public class StrictInstruction : TypedInstruction {
 
-  IEnumerable<Type> _inputTypes = new Type[] { };
-  IEnumerable<Type> _outputTypes = new Type[] { };
+  internal IEnumerable<Type> _inputTypes = Type.EmptyTypes;
+  internal IEnumerable<Type> _outputTypes = Type.EmptyTypes;
   public IEnumerable<Type> inputTypes => _inputTypes;
   public IEnumerable<Type> outputTypes => _outputTypes;
   Action<Stack> func;
+
   public StrictInstruction(Action<Stack> func) {
     this.func = func;
   }

@@ -70,9 +70,10 @@ public class ReorderWrapper : TypedInstruction {
       }
     }
 
-    // Push the good args back onto the stack.
+    // Push the good arguments back onto the stack.
     foreach(var arg in acceptedArguments)
       stack.Push(arg);
+    // Then run the real instruction.
     return innerInstruction.Apply(stack);
   }
 

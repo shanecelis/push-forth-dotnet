@@ -11,16 +11,22 @@ namespace SeawispHunter.PushForth {
 public class ReorderWrapperTests : InterpreterTestUtil {
 
   Interpreter strictInterpreter;
+  Interpreter nonstrictInterpreter;
   Interpreter reorderInterpreter;
   public ReorderWrapperTests() {
     strictInterpreter = new Interpreter();
     strictInterpreter.instructions.Clear();
     strictInterpreter.instructions["+"] = StrictInstruction.Binary((int a, int b) => a + b);
 
+    nonstrictInterpreter = new Interpreter();
+    nonstrictInterpreter.instructions.Clear();
+    nonstrictInterpreter.instructions["+"] =
+      new ReorderWrapper("+", StrictInstruction.Binary((int a, int b) => a + b));
+
     reorderInterpreter = new Interpreter();
     reorderInterpreter.instructions.Clear();
     reorderInterpreter.instructions["+"] =
-      new ReorderWrapper("+", StrictInstruction.Binary((int a, int b) => a + b));
+      new ReorderWrapper("+", new DeferInstruction("+", StrictInstruction.Binary((int a, int b) => a + b)));
   }
 
   [Fact]
@@ -28,13 +34,15 @@ public class ReorderWrapperTests : InterpreterTestUtil {
     interpreter = strictInterpreter;
     Assert.Equal("[[] 10]", Run("[[2 3 5 + +]]"));
     Assert.Throws<InvalidCastException>(() => Run("[[2 3 a 5 + +]]"));
+    Assert.Throws<InvalidOperationException>(() => Run("[[3 5 + +]]"));
   }
 
   [Fact]
   public void TestReorderInstruction() {
-    interpreter = reorderInterpreter;
+    interpreter = nonstrictInterpreter;
     Assert.Equal("[[] 10]", Run("[[2 3 5 + +]]"));
     Assert.Equal("[[] a 10]", Run("[[2 3 a 5 + +]]"));
+    Assert.Equal("[[] 8]", Run("[[3 5 + +]]"));
   }
 
   // [Fact]
