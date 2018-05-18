@@ -6,6 +6,9 @@ using OneOf;
 
 namespace SeawispHunter.PushForth {
 
+/** Wraps an instruction such that mistyped arguments are _reordered_ and lack
+    of arguments causes noops.
+ */
 public class ReorderWrapper : TypedInstruction {
   public IEnumerable<Type> inputTypes { get; set; }
   public IEnumerable<Type> outputTypes { get; set; }

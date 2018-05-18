@@ -23,7 +23,6 @@ public class InterpreterTestUtil {
     cleanInterpreter = new StrictInterpreter();
     cleanInterpreter.instructions.Clear();
     interpreter = nonstrictInterpreter;
-    UniqueVariable.Clear();
   }
   public string Run(string code) {
     var d0 = code.ToStack();

@@ -5,7 +5,10 @@ using System.Linq;
 
 namespace SeawispHunter.PushForth {
 
-/*
+/**
+   These instructions expect and require that arguments be of the right types
+   and the appropriate amount. Any violation of those expectations will produce
+   an exception.
  */
 public class StrictInstruction : TypedInstruction {
 

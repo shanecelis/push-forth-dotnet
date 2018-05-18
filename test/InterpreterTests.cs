@@ -748,6 +748,7 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestDetermineInputAndOutput() {
+    UniqueVariable.Clear();
     interpreter = reorderInterpreter;
     var s = "[[if typeof(int)]]";
     var _if
@@ -762,6 +763,7 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestDetermineInputAndOutput2() {
+    UniqueVariable.Clear();
     var s = "[[if typeof(int) + typeof(char)]]".ToStack();
     var _if
       = new DetermineTypesInstruction("if",
@@ -787,6 +789,7 @@ public class InterpreterTests : InterpreterTestUtil {
   [Fact]
   public void TestTypeCheckDup() {
     interpreter = cleanInterpreter;
+    UniqueVariable.Clear();
     var s = "[[typeof(int) dup]]";
     var dup
       = new DetermineTypesInstruction("dup",
@@ -805,6 +808,7 @@ public class InterpreterTests : InterpreterTestUtil {
   [Fact]
   public void TestTypeCheckDupDup() {
     interpreter = cleanInterpreter;
+    UniqueVariable.Clear();
     var s = "[[typeof(int) dup typeof(char) dup]]";
     var dup
       = new DetermineTypesInstruction("dup",
@@ -823,6 +827,7 @@ public class InterpreterTests : InterpreterTestUtil {
   [Fact]
   public void TestTypeCheckDupDupWithVars() {
     interpreter = cleanInterpreter;
+    UniqueVariable.Clear();
     var s = "[[dup typeof(char) dup]]";
     var dup
       = new DetermineTypesInstruction("dup",
@@ -841,6 +846,7 @@ public class InterpreterTests : InterpreterTestUtil {
   [Fact]
   public void TestTypeCheckDupDupWithVars2() {
     interpreter = cleanInterpreter;
+    UniqueVariable.Clear();
     var s = "[[dup typeof(char) dup]]";
     var dup
       = new DetermineTypesInstruction("dup",

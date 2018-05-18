@@ -6,11 +6,14 @@ using OneOf;
 
 namespace SeawispHunter.PushForth {
 
+/** The basic Instruction interface. */
 public interface Instruction {
   // string name { get; }
   Stack Apply(Stack stack);
 }
 
+/** Include the types of inputs and outputs. These may include generic types via
+    typeof(Variable.{A,B,C,...}). */
 public interface TypedInstruction : Instruction {
   IEnumerable<Type> inputTypes { get; }
   IEnumerable<Type> outputTypes { get; }
@@ -30,6 +33,8 @@ public class InstructionFunc : Instruction {
     return func(stack);
   }
 }
+
+// XXX This can probably be removed in favor of StrictInstruction.
 public class TypeCheckInstruction : ReorderInstruction {
   public TypeCheckInstruction(string name,
                               IEnumerable<Type> consumes,
@@ -41,6 +46,7 @@ public class TypeCheckInstruction : ReorderInstruction {
   }
 }
 
+// XXX This can probably be removed in favor of ReorderWrapper.
 public class ReorderInstruction : TypedInstruction {
   public IEnumerable<Type> inputTypes { get; set; }
   public IEnumerable<Type> outputTypes { get; set; }

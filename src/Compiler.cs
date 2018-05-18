@@ -13,14 +13,14 @@ using System.Text.RegularExpressions;
 
 namespace SeawispHunter.PushForth {
 
-public class Compiler {
+public class Compiler : StrictInterpreter {
 
-  public Dictionary<string, Instruction> instructions
-    = new Dictionary<string, Instruction>();
   Dictionary<string, Func<Stack>> memoizedPrograms
     = new Dictionary<string, Func<Stack>>();
 
-  public Compiler() {
+  public Compiler() { }
+
+  public override void LoadInstructions() {
     foreach (var op in new [] { "+", "-", "*", "/", ">", "<", ">=", "<=", "==" })
       instructions[op] = new MathOpCompiler(op);
 
