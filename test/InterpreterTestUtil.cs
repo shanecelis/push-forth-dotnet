@@ -26,33 +26,33 @@ public class InterpreterTestUtil {
     UniqueVariable.Clear();
   }
   public string Run(string code) {
-    var d0 = Interpreter.ParseString(code);
+    var d0 = code.ToStack();
     var d1 = lastRun = interpreter.Run(d0);
     // Assert.Equal(Interpreter.ParseString("[[[1 +] [[1 +] while] i] 0]"), d1);
     return interpreter.StackToString(d1);
   }
 
   public string Reorder(string code) {
-    var d0 = Interpreter.ParseString(code);
+    var d0 = code.ToStack();
     var d1 = reorderInterpreter.Reorder(d0);
     // Assert.Equal(Interpreter.ParseString("[[[1 +] [[1 +] while] i] 0]"), d1);
     return interpreter.StackToString(d1);
   }
 
   public string Eval(string code) {
-    var d0 = Interpreter.ParseString(code);
+    var d0 = code.ToStack();
     var d1 = lastEval = interpreter.Eval(d0);
     // Assert.Equal(Interpreter.ParseString("[[[1 +] [[1 +] while] i] 0]"), d1);
     return interpreter.StackToString(d1);
   }
 
   public IEnumerable<string> EvalStream(string code) {
-    var d0 = Interpreter.ParseString(code);
+    var d0 = code.ToStack();
     return interpreter.EvalStream(d0).Select(x => interpreter.StackToString(x));
   }
 
   public bool IsHalted(string program) {
-    var d0 = Interpreter.ParseString(program);
+    var d0 = program.ToStack();
     var d1 = Interpreter.IsHalted(d0);
     return d1;
   }

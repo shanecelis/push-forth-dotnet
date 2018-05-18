@@ -50,17 +50,17 @@ public class InterpreterTests : InterpreterTestUtil {
     c.Push(2);
     var d0 = new Stack();
     d0.Push(c);
-    Assert.Equal(Interpreter.ParseString("[[2 1 +]]"), d0);
+    Assert.Equal("[[2 1 +]]".ToStack(), d0);
     var c_f = new Stack();
     var d_f = new Stack();
     d_f.Push(3);
     d_f.Push(c_f);
     var d1 = interpreter.Eval(d0);
-    Assert.Equal(Interpreter.ParseString("[[1 +] 2]"), d1);
+    Assert.Equal("[[1 +] 2]".ToStack(), d1);
     var d2 = interpreter.Eval(d1);
-    Assert.Equal(Interpreter.ParseString("[[+] 1 2]"), d2);
+    Assert.Equal("[[+] 1 2]".ToStack(), d2);
     var d3 = interpreter.Eval(d2);
-    Assert.Equal(Interpreter.ParseString("[[] 3]"), d3);
+    Assert.Equal("[[] 3]".ToStack(), d3);
     Assert.Equal(d_f, d3);
   }
 
@@ -68,9 +68,9 @@ public class InterpreterTests : InterpreterTestUtil {
   public void TestMissing()
   {
     var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString("[[+] 1]");
+    var d0 = "[[+] 1]".ToStack();
     var d1 = interpreter.Eval(d0);
-    Assert.Equal(Interpreter.ParseString("[[] 1]"), d1);
+    Assert.Equal("[[] 1]".ToStack(), d1);
   }
 
   [Fact]
@@ -79,29 +79,29 @@ public class InterpreterTests : InterpreterTestUtil {
     var code = new Stack();
     code.Push(new Symbol("a"));
     code.Push(new Symbol("+"));
-    Assert.Equal(Interpreter.ParseString("[+ a]"), code);
+    Assert.Equal("[+ a]".ToStack(), code);
 
     var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString("[[2 1 a +]]");
+    var d0 = "[[2 1 a +]]".ToStack();
     var d1 = interpreter.Eval(d0);
-    Assert.Equal(Interpreter.ParseString("[[1 a +] 2]"), d1);
+    Assert.Equal("[[1 a +] 2]".ToStack(), d1);
     var d2 = interpreter.Eval(d1);
-    Assert.Equal(Interpreter.ParseString("[[a +] 1 2]"), d2);
+    Assert.Equal("[[a +] 1 2]".ToStack(), d2);
     var d3 = interpreter.Eval(d2);
-    Assert.Equal(Interpreter.ParseString("[[+] a 1 2]"), d3);
+    Assert.Equal("[[+] a 1 2]".ToStack(), d3);
     var d4 = interpreter.Eval(d3);
     Assert.Equal(interpreter.ParseWithResolution("[[+ a] 1 2]"), d4);
     var d5 = interpreter.Eval(d4);
-    Assert.Equal(Interpreter.ParseString("[[a] 3]"), d5);
+    Assert.Equal("[[a] 3]".ToStack(), d5);
     var d6 = interpreter.Eval(d5);
-    Assert.Equal(Interpreter.ParseString("[[] a 3]"), d6);
+    Assert.Equal("[[] a 3]".ToStack(), d6);
   }
 
 
   [Fact]
   public void TestBoolParsing()
   {
-    var d0 = Interpreter.ParseString("[true false]");
+    var d0 = "[true false]".ToStack();
     var s = new Stack();
     s.Push(false);
     s.Push(true);
@@ -113,66 +113,66 @@ public class InterpreterTests : InterpreterTestUtil {
     var code = new Stack();
     code.Push(new Symbol("a"));
     code.Push(new Symbol("add"));
-    Assert.Equal(Interpreter.ParseString("[add a]"), code);
+    Assert.Equal("[add a]".ToStack(), code);
 
     var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString("[[2 1 a add]]");
+    var d0 = "[[2 1 a add]]".ToStack();
     var d1 = interpreter.Eval(d0);
-    Assert.Equal(Interpreter.ParseString("[[1 a add] 2]"), d1);
+    Assert.Equal("[[1 a add] 2]".ToStack(), d1);
     var d2 = interpreter.Eval(d1);
-    Assert.Equal(Interpreter.ParseString("[[a add] 1 2]"), d2);
+    Assert.Equal("[[a add] 1 2]".ToStack(), d2);
     var d3 = interpreter.Eval(d2);
-    Assert.Equal(Interpreter.ParseString("[[add] a 1 2]"), d3);
+    Assert.Equal("[[add] a 1 2]".ToStack(), d3);
     var d4 = interpreter.Eval(d3);
-    Assert.Equal(Interpreter.ParseString("[[add a] 1 2]"), d4);
+    Assert.Equal("[[add a] 1 2]".ToStack(), d4);
     var d5 = interpreter.Eval(d4);
-    Assert.Equal(Interpreter.ParseString("[[a] 3]"), d5);
+    Assert.Equal("[[a] 3]".ToStack(), d5);
     var d6 = interpreter.Eval(d5);
-    Assert.Equal(Interpreter.ParseString("[[] a 3]"), d6);
+    Assert.Equal("[[] a 3]".ToStack(), d6);
   }
 
   [Fact]
   public void TestSkippingSecondArg()
   {
     var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString("[[2 a 1 +]]");
+    var d0 = "[[2 a 1 +]]".ToStack();
     var d1 = interpreter.Eval(d0);
-    Assert.Equal(Interpreter.ParseString("[[a 1 +] 2]"), d1);
+    Assert.Equal("[[a 1 +] 2]".ToStack(), d1);
     var d2 = interpreter.Eval(d1);
-    Assert.Equal(Interpreter.ParseString("[[1 +] a 2]"), d2);
+    Assert.Equal("[[1 +] a 2]".ToStack(), d2);
     var d3 = interpreter.Eval(d2);
-    Assert.Equal(Interpreter.ParseString("[[+] 1 a 2]"), d3);
+    Assert.Equal("[[+] 1 a 2]".ToStack(), d3);
     var d4 = interpreter.Eval(d3);
     Assert.Equal(interpreter.ParseWithResolution("[[+ a ] 1 2]"), d4);
     var d5 = interpreter.Eval(d4);
-    Assert.Equal(Interpreter.ParseString("[[a] 3]"), d5);
+    Assert.Equal("[[a] 3]".ToStack(), d5);
     var d6 = interpreter.Eval(d5);
-    Assert.Equal(Interpreter.ParseString("[[] a 3]"), d6);
+    Assert.Equal("[[] a 3]".ToStack(), d6);
   }
 
   [Fact]
   public void TestSkippingSecondArgWithResolution()
   {
     var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString("[[2 a 1 add]]");
+    var d0 = "[[2 a 1 add]]".ToStack();
     var d1 = interpreter.Eval(d0);
-    Assert.Equal(Interpreter.ParseString("[[a 1 add] 2]"), d1);
+    Assert.Equal("[[a 1 add] 2]".ToStack(), d1);
     var d2 = interpreter.Eval(d1);
-    Assert.Equal(Interpreter.ParseString("[[1 add] a 2]"), d2);
+    Assert.Equal("[[1 add] a 2]".ToStack(), d2);
     var d3 = interpreter.Eval(d2);
-    Assert.Equal(Interpreter.ParseString("[[add] 1 a 2]"), d3);
+    Assert.Equal("[[add] 1 a 2]".ToStack(), d3);
     var d4 = interpreter.Eval(d3);
-    Assert.Equal(Interpreter.ParseString("[[add a ] 1 2]"), d4);
+    Assert.Equal("[[add a ] 1 2]".ToStack(), d4);
     var d5 = interpreter.Eval(d4);
-    Assert.Equal(Interpreter.ParseString("[[a] 3]"), d5);
+    Assert.Equal("[[a] 3]".ToStack(), d5);
     var d6 = interpreter.Eval(d5);
-    Assert.Equal(Interpreter.ParseString("[[] a 3]"), d6);
+    Assert.Equal("[[] a 3]".ToStack(), d6);
   }
 
   [Fact]
   public void TestArgumentOrder() {
     var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString("[[5 4 minus]]");
+    var d0 = "[[5 4 minus]]".ToStack();
     var d1 = interpreter.Eval(d0);
     var d2 = interpreter.Eval(d1);
     var d3 = interpreter.Eval(d2);
@@ -180,20 +180,20 @@ public class InterpreterTests : InterpreterTestUtil {
     // (5 4 integer.-) => (1)
     // Not sure how I feel about it.  Feels weird.
     // I'm going to do it differently.
-    Assert.Equal(Interpreter.ParseString("[[] -1]"), d3);
+    Assert.Equal("[[] -1]".ToStack(), d3);
   }
 
   [Fact]
   public void TestAppend() {
-    var a = Interpreter.ParseString("[1 2]");
-    var b = Interpreter.ParseString("[3 4]");
-    var c = Interpreter.ParseString("[1 2 3 4]");
+    var a = "[1 2]".ToStack();
+    var b = "[3 4]".ToStack();
+    var c = "[1 2 3 4]".ToStack();
     Assert.Equal(c, Interpreter.Append(a, b));
 
-    b = Interpreter.ParseString("[3 4]");
+    b = "[3 4]".ToStack();
     Assert.Equal(c, Interpreter.Append(new Queue(new [] {2, 1}), b));
 
-    b = Interpreter.ParseString("[3 4]");
+    b = "[3 4]".ToStack();
     Assert.Equal(c, Interpreter.Append(new [] {2, 1}, b));
 
     Assert.Equal(a, Interpreter.Append(a, new Stack()));
@@ -203,25 +203,25 @@ public class InterpreterTests : InterpreterTestUtil {
   [Fact]
   public void TestParsing() {
     var a = new Stack();
-    Assert.Equal(a, Interpreter.ParseString("[]"));
+    Assert.Equal(a, "[]".ToStack());
     a.Push(new Symbol("hi"));
-    Assert.Equal(a, Interpreter.ParseString("[hi]"));
+    Assert.Equal(a, "[hi]".ToStack());
     a.Push(new Symbol("bye"));
-    Assert.Equal(a, Interpreter.ParseString("[bye hi]"));
+    Assert.Equal(a, "[bye hi]".ToStack());
     a.Push("string");
-    Assert.Equal(a, Interpreter.ParseString("[\"string\" bye hi]"));
-    Assert.Equal(a, Interpreter.ParseString("[\"string\"   bye   hi]"));
-    Assert.Equal(a, Interpreter.ParseString("[  \"string\"   bye   hi]"));
+    Assert.Equal(a, "[\"string\" bye hi]".ToStack());
+    Assert.Equal(a, "[\"string\"   bye   hi]".ToStack());
+    Assert.Equal(a, "[  \"string\"   bye   hi]".ToStack());
     a.Push(1);
-    Assert.Equal(a, Interpreter.ParseString("[1  \"string\"   bye   hi]"));
+    Assert.Equal(a, "[1  \"string\"   bye   hi]".ToStack());
     a.Push(2f);
-    Assert.Equal(a, Interpreter.ParseString("[2f 1  \"string\"   bye   hi]"));
+    Assert.Equal(a, "[2f 1  \"string\"   bye   hi]".ToStack());
     a.Push(3f);
-    Assert.Equal(a, Interpreter.ParseString("[3.0f  2f 1  \"string\"   bye   hi]"));
+    Assert.Equal(a, "[3.0f  2f 1  \"string\"   bye   hi]".ToStack());
     a.Push(4.0);
-    Assert.Equal(a, Interpreter.ParseString("[4.0 3.0f  2f 1  \"string\"   bye   hi]"));
+    Assert.Equal(a, "[4.0 3.0f  2f 1  \"string\"   bye   hi]".ToStack());
     a.Push(-4.0);
-    Assert.Equal(a, Interpreter.ParseString("[-4.0 4.0 3.0f  2f 1  \"string\"   bye   hi]"));
+    Assert.Equal(a, "[-4.0 4.0 3.0f  2f 1  \"string\"   bye   hi]".ToStack());
   }
 
   [Fact]
@@ -229,50 +229,50 @@ public class InterpreterTests : InterpreterTestUtil {
     var a = new Stack();
     var b = new Stack();
     a.Push(b);
-    Assert.Equal(a, Interpreter.ParseString("[[]]"));
+    Assert.Equal(a, "[[]]".ToStack());
     b.Push(1);
-    Assert.Equal(a, Interpreter.ParseString("[[1]]"));
+    Assert.Equal(a, "[[1]]".ToStack());
     a.Push(2);
-    Assert.Equal(a, Interpreter.ParseString("[2[1]]"));
-    Assert.Equal(a, Interpreter.ParseString("[2 [1]]"));
+    Assert.Equal(a, "[2[1]]".ToStack());
+    Assert.Equal(a, "[2 [1]]".ToStack());
   }
 
   [Fact]
   public void TestDup() {
     var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString("[[dup] 5]");
+    var d0 = "[[dup] 5]".ToStack();
     var d1 = interpreter.Eval(d0);
-    Assert.Equal(Interpreter.ParseString("[[] 5 5]"), d1);
+    Assert.Equal("[[] 5 5]".ToStack(), d1);
   }
 
   [Fact]
   public void TestDupNoData() {
     var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString("[[dup]]");
+    var d0 = "[[dup]]".ToStack();
     var d1 = interpreter.Eval(d0);
-    Assert.Equal(Interpreter.ParseString("[[]]"), d1);
+    Assert.Equal("[[]]".ToStack(), d1);
   }
 
   [Fact]
   public void TestSwap() {
     var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString("[[swap] 1 2]");
+    var d0 = "[[swap] 1 2]".ToStack();
     var d1 = interpreter.Eval(d0);
-    Assert.Equal(Interpreter.ParseString("[[] 2 1]"), d1);
+    Assert.Equal("[[] 2 1]".ToStack(), d1);
   }
 
   [Fact]
   public void TestSwapLessData() {
     var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString("[[swap] 2]");
+    var d0 = "[[swap] 2]".ToStack();
     var d1 = interpreter.Eval(d0);
-    Assert.Equal(Interpreter.ParseString("[[] 2]"), d1);
+    Assert.Equal("[[] 2]".ToStack(), d1);
   }
 
   [Fact]
   public void TestICombinatorWithBadArgument() {
     var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString("[[i] 2]");
+    var d0 = "[[i] 2]".ToStack();
     var d1 = interpreter.Eval(d0);
     Assert.Equal(interpreter.ParseWithResolution("[[i 2]]"), d1);
   }
@@ -280,21 +280,21 @@ public class InterpreterTests : InterpreterTestUtil {
   [Fact]
   public void TestICombinatorWithStack() {
     var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString("[[i] [1 2 +]]");
+    var d0 = "[[i] [1 2 +]]".ToStack();
     var d1 = interpreter.Eval(d0);
-    // Assert.Equal(Interpreter.ParseString("[[1 2 +]]"), d1);
+    // Assert.Equal("[[1 2 +]]".ToStack(), d1);
     Assert.Equal("[[1 2 +]]", interpreter.StackToString(d1));
     var d2 = interpreter.Eval(d1);
-    Assert.NotEqual(Interpreter.ParseString("[[] [1 2 +]]"), d2);
-    // Assert.Equal(Interpreter.ParseString("[[] 3]"), d2);
+    Assert.NotEqual("[[] [1 2 +]]".ToStack(), d2);
+    // Assert.Equal("[[] 3]".ToStack(), d2);
   }
 
   [Fact]
   public void TestCar() {
     var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString("[[car] [2]]");
+    var d0 = "[[car] [2]]".ToStack();
     var d1 = interpreter.Eval(d0);
-    Assert.Equal(Interpreter.ParseString("[[] 2]"), d1);
+    Assert.Equal("[[] 2]".ToStack(), d1);
     Assert.Equal("[[] 2 [2 3]]", Run("[[dup car] [2 3]]"));
     Assert.Equal("[[] [2] [[2] 3]]", Run("[[dup car] [[2] 3]]"));
   }
@@ -302,65 +302,65 @@ public class InterpreterTests : InterpreterTestUtil {
   [Fact]
   public void TestCdr() {
     var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString("[[cdr] [2 5]]");
+    var d0 = "[[cdr] [2 5]]".ToStack();
     var d1 = interpreter.Eval(d0);
-    Assert.Equal(Interpreter.ParseString("[[] [5]]"), d1);
+    Assert.Equal("[[] [5]]".ToStack(), d1);
   }
 
   [Fact]
   public void TestContinuationProblem() {
     var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString("[[pop] 1 [2 5]]");
+    var d0 = "[[pop] 1 [2 5]]".ToStack();
     var d1 = interpreter.Eval(d0);
-    Assert.Equal(Interpreter.ParseString("[[] [2 5]]"), d1);
+    Assert.Equal("[[] [2 5]]".ToStack(), d1);
   }
 
   [Fact]
   public void TestCat() {
     var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString("[[cat] 1 2]]");
+    var d0 = "[[cat] 1 2]]".ToStack();
     var d1 = interpreter.Eval(d0);
-    Assert.Equal(Interpreter.ParseString("[[] [1 2]]"), d1);
+    Assert.Equal("[[] [1 2]]".ToStack(), d1);
   }
 
   [Fact]
   public void TestSplit() {
     var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString("[[split] [1 2]]]");
+    var d0 = "[[split] [1 2]]]".ToStack();
     var d1 = interpreter.Eval(d0);
-    Assert.Equal(Interpreter.ParseString("[[] 1 2]"), d1);
+    Assert.Equal("[[] 1 2]".ToStack(), d1);
   }
 
   [Fact]
   public void TestSplitMissingArg() {
     var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString("[[split] 0 [1 2]]]");
+    var d0 = "[[split] 0 [1 2]]]".ToStack();
     var d1 = interpreter.Eval(d0);
     var d2 = interpreter.Eval(d1);
     var d3 = interpreter.Eval(d2);
-    Assert.Equal(Interpreter.ParseString("[[] 0 1 2]"), d3);
+    Assert.Equal("[[] 0 1 2]".ToStack(), d3);
   }
 
   [Fact]
   public void TestUnit() {
     var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString("[[unit] 0 [1 2]]]");
+    var d0 = "[[unit] 0 [1 2]]]".ToStack();
     var d1 = interpreter.Eval(d0);
-    Assert.Equal(Interpreter.ParseString("[[] [0] [1 2]]"), d1);
+    Assert.Equal("[[] [0] [1 2]]".ToStack(), d1);
   }
 
   [Fact]
   public void TestCons() {
     var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString("[[cons] 0 [1 2]]]");
+    var d0 = "[[cons] 0 [1 2]]]".ToStack();
     var d1 = interpreter.Eval(d0);
-    Assert.Equal(Interpreter.ParseString("[[] [0 1 2]]"), d1);
+    Assert.Equal("[[] [0 1 2]]".ToStack(), d1);
   }
 
   [Fact]
   public void TestStackToString() {
     var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString("[[cons] 0 [1 2]]]");
+    var d0 = "[[cons] 0 [1 2]]]".ToStack();
     Assert.Equal("[[cons] 0 [1 2]]", interpreter.StackToString(d0));
     Assert.Equal("[[cons] 0 [1 2]]", interpreter.StackToString(d0));
   }
@@ -374,9 +374,9 @@ public class InterpreterTests : InterpreterTestUtil {
 
   // [Fact]
   // public void TestWhile() {
-  //   var d0 = Interpreter.ParseString("[[while] [1 +] [[]] 0]");
+  //   var d0 = "[[while] [1 +] [[]] 0]".ToStack();
   //   var d1 = interpreter.Eval(d0);
-  //   // Assert.Equal(Interpreter.ParseString("[[[1 +] [[1 +] while] i] 0]"), d1);
+  //   // Assert.Equal("[[[1 +] [[1 +] while] i] 0]".ToStack(), d1);
   //   Assert.Equal("[[1 + [[1 +] while] i] 0]", interpreter.StackToString(d1));
   //   var d2 = interpreter.Eval(d1);
   //   Assert.Equal("[[+ [[1 +] while] i] 1 0]", interpreter.StackToString(d2));
@@ -395,18 +395,18 @@ public class InterpreterTests : InterpreterTestUtil {
   [Fact]
   public void TestWhile2() {
     var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString("[[while2] [1 + dup 5 >] true 0]");
+    var d0 = "[[while2] [1 + dup 5 >] true 0]".ToStack();
     var d1 = interpreter.Run(d0);
-    // Assert.Equal(Interpreter.ParseString("[[[1 +] [[1 +] while] i] 0]"), d1);
+    // Assert.Equal("[[[1 +] [[1 +] while] i] 0]".ToStack(), d1);
     Assert.Equal("[[] 5]", interpreter.StackToString(d1));
   }
 
   [Fact]
   public void TestWhile3() {
     var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString("[[while3] [1 + dup 5 >] true 0]");
+    var d0 = "[[while3] [1 + dup 5 >] true 0]".ToStack();
     var d1 = interpreter.Run(d0);
-    // Assert.Equal(Interpreter.ParseString("[[[1 +] [[1 +] while] i] 0]"), d1);
+    // Assert.Equal("[[[1 +] [[1 +] while] i] 0]".ToStack(), d1);
     Assert.Equal("[[] 5]", interpreter.StackToString(d1));
   }
 
@@ -435,16 +435,16 @@ public class InterpreterTests : InterpreterTestUtil {
   [Fact]
   public void TestWhile2False() {
     var interpreter = new Interpreter();
-    var d0 = Interpreter.ParseString("[[while2] [1 + dup 5 >] false 0]");
+    var d0 = "[[while2] [1 + dup 5 >] false 0]".ToStack();
     var d1 = interpreter.Run(d0);
-    // Assert.Equal(Interpreter.ParseString("[[[1 +] [[1 +] while] i] 0]"), d1);
+    // Assert.Equal("[[[1 +] [[1 +] while] i] 0]".ToStack(), d1);
     Assert.Equal("[[] 0]", interpreter.StackToString(d1));
   }
 
   [Fact]
   public void TestRun() {
     interpreter = strictInterpreter;
-    var d0 = Interpreter.ParseString("[[while] [cdr swap 1 + swap] [1 2] 0]");
+    var d0 = "[[while] [cdr swap 1 + swap] [1 2] 0]".ToStack();
     var d1 = interpreter.Run(d0);
     Assert.Equal("[[] 2]", interpreter.StackToString(d1));
   }
@@ -485,7 +485,7 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestEval() {
-    var d0 = Interpreter.ParseString("[[eval] [[+] 1 2]]");
+    var d0 = "[[eval] [[+] 1 2]]".ToStack();
     var d1 = interpreter.Eval(d0);
     Assert.Equal("[[] [[] 3]]", interpreter.StackToString(d1));
   }
@@ -507,18 +507,18 @@ public class InterpreterTests : InterpreterTestUtil {
   [Fact]
   public void TestReorder() {
     interpreter = reorderInterpreter;
-    var d0 = Interpreter.ParseString("[[2 a 1 +]]");
+    var d0 = "[[2 a 1 +]]".ToStack();
     var d1 = interpreter.Eval(d0);
-    Assert.Equal(Interpreter.ParseString("[[a 1 +] 2]"), d1);
+    Assert.Equal("[[a 1 +] 2]".ToStack(), d1);
     var d2 = interpreter.Eval(d1);
-    Assert.Equal(Interpreter.ParseString("[[1 +] a 2]"), d2);
+    Assert.Equal("[[1 +] a 2]".ToStack(), d2);
     var d3 = interpreter.Eval(d2);
-    Assert.Equal(Interpreter.ParseString("[[+] 1 a 2]"), d3);
+    Assert.Equal("[[+] 1 a 2]".ToStack(), d3);
     var d4 = interpreter.Eval(d3);
     // Assert.Equal(interpreter.ParseWithResolution("[[+ a ] 1 2]"), d4);
     Assert.Equal("[[+ a] 1 2]", interpreter.StackToString(d4));
-    // var d4b = Interpreter.ParseString("[[' reorder run] [[+ a ] 1 2] []]");
-    // var d4b = Interpreter.ParseString("[[reorder] [[+ a ] 1 2] []]");
+    // var d4b = "[[' reorder run] [[+ a ] 1 2] []]".ToStack();
+    // var d4b = "[[reorder] [[+ a ] 1 2] []]".ToStack();
     // var d5 = interpreter.Eval(d4b);
     Assert.Equal("[[a] R<int>[2 1 +]]",
                  Eval("[[+ a ] 1 2]"));
@@ -539,7 +539,7 @@ public class InterpreterTests : InterpreterTestUtil {
     // Assert.Equal("[[] [[a] R<System.Int32> [2 1 +]]]",
     //              Eval("[[reorder-post] [[a] R<System.Int32> [2 1 +]]]"));
     // var d6 = interpreter.Eval(d5);
-    // Assert.Equal(Interpreter.ParseString("[[2 1 +] [[] a]]"), d6);
+    // Assert.Equal("[[2 1 +] [[] a]]".ToStack(), d6);
   }
   [Fact]
   public void TestPivotString() {

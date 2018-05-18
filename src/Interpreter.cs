@@ -445,9 +445,9 @@ public class StrictInterpreter {
     // How's this versus a.Clone()?
   }
 
-  public static Stack ParseString(string s) {
-    return StackParser.ParseStack(s);
-  }
+  // public static Stack ParseString(string s) {
+  //   return StackParser.ParseStack(s);
+  // }
 
   public Stack ParseWithResolution(string s) {
     return StackParser.ParseWithResolution(s, instructions);

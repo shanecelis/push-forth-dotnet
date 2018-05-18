@@ -32,7 +32,7 @@ public static class PushForthExtensions {
   }
 
   public static Stack ToStack(this string repr) {
-    return Interpreter.ParseString(repr);
+    return StackParser.ParseStack(repr);
   }
 
   public static string ToRepr(this Stack s) {
