@@ -897,7 +897,7 @@ public class InterpreterTests {
   public void TestDetermineInputAndOutput() {
     var s = "[[if typeof(int)]]".ToStack();
     var _if
-      = new TypeCheckInstruction3("if",
+      = new TypeCheckInstruction4("if",
                                   "[bool 'a 'a]",
                                   "['a]")
     { getType = o => o is Type t ? t : o.GetType() };
@@ -911,12 +911,12 @@ public class InterpreterTests {
   public void TestDetermineInputAndOutput2() {
     var s = "[[if typeof(int) + typeof(char)]]".ToStack();
     var _if
-      = new TypeCheckInstruction3("if",
+      = new TypeCheckInstruction4("if",
                                   "[bool 'a 'a]",
                                   "['a]")
       { getType = o => o is Type t ? t : o.GetType() };
     var add
-      = new TypeCheckInstruction3("+",
+      = new TypeCheckInstruction4("+",
                                   "[int int]",
                                   "[int]")
       { getType = o => o is Type t ? t : o.GetType() };
@@ -926,7 +926,7 @@ public class InterpreterTests {
     var s2 = interpreter.Run(s, Interpreter.IsHalted, interpreter.ReorderPre);
     Assert.Equal("[[] char int { a0 -> int } ['a0 'a0 bool]]", s2.ToRepr());
     s2.Pop();
-    var (consumes, produces) = TypeCheckInstruction3.ConsumesAndProduces(s2);
+    var (consumes, produces) = TypeCheckInstruction4.ConsumesAndProduces(s2);
     Assert.Equal("[bool int int]", consumes.ToRepr());
     Assert.Equal("[int char]", produces.ToRepr());
   }
@@ -935,7 +935,7 @@ public class InterpreterTests {
   public void TestTypeCheckDup() {
     var s = "[[typeof(int) dup]]".ToStack();
     var dup
-      = new TypeCheckInstruction3("dup",
+      = new TypeCheckInstruction4("dup",
                                   "['a]",
                                   "['a 'a]")
       { getType = o => o is Type t ? t : o.GetType() };
@@ -943,7 +943,7 @@ public class InterpreterTests {
     var s2 = interpreter.Run(s, Interpreter.IsHalted, interpreter.ReorderPre);
     Assert.Equal("[[] 'a0 'a0 { a0 -> int }]", s2.ToRepr());
     s2.Pop();
-    var (consumes, produces) = TypeCheckInstruction3.ConsumesAndProduces(s2);
+    var (consumes, produces) = TypeCheckInstruction4.ConsumesAndProduces(s2);
     Assert.Equal("[]", consumes.ToRepr());
     Assert.Equal("[int int]", produces.ToRepr());
   }
@@ -952,7 +952,7 @@ public class InterpreterTests {
   public void TestTypeCheckDupDup() {
     var s = "[[typeof(int) dup typeof(char) dup]]".ToStack();
     var dup
-      = new TypeCheckInstruction3("dup",
+      = new TypeCheckInstruction4("dup",
                                   "['a]",
                                   "['a 'a]")
       { getType = o => o is Type t ? t : o.GetType() };
@@ -960,7 +960,7 @@ public class InterpreterTests {
     var s2 = interpreter.Run(s, Interpreter.IsHalted, interpreter.ReorderPre);
     Assert.Equal("[[] 'a1 'a1 { a1 -> char } 'a0 'a0 { a0 -> int }]", s2.ToRepr());
     s2.Pop();
-    var (consumes, produces) = TypeCheckInstruction3.ConsumesAndProduces(s2);
+    var (consumes, produces) = TypeCheckInstruction4.ConsumesAndProduces(s2);
     Assert.Equal("[]", consumes.ToRepr());
     Assert.Equal("[int int char char]", produces.ToRepr());
   }
@@ -969,7 +969,7 @@ public class InterpreterTests {
   public void TestTypeCheckDupDupWithVars() {
     var s = "[[dup typeof(char) dup]]".ToStack();
     var dup
-      = new TypeCheckInstruction3("dup",
+      = new TypeCheckInstruction4("dup",
                                   "['a]",
                                   "['a 'a]")
       { getType = o => o is Type t ? t : o.GetType() };
@@ -977,7 +977,7 @@ public class InterpreterTests {
     var s2 = interpreter.Run(s, Interpreter.IsHalted, interpreter.ReorderPre);
     Assert.Equal("[[] 'a1 'a1 { a1 -> char } 'a0 'a0 ['a0]]", s2.ToRepr());
     s2.Pop();
-    var (consumes, produces) = TypeCheckInstruction3.ConsumesAndProduces(s2);
+    var (consumes, produces) = TypeCheckInstruction4.ConsumesAndProduces(s2);
     Assert.Equal("['a0]", consumes.ToRepr());
     Assert.Equal("['a0 'a0 char char]", produces.ToRepr());
   }
@@ -986,7 +986,7 @@ public class InterpreterTests {
   public void TestTypeCheckDupDupWithVars2() {
     var s = "[[dup typeof(char) dup]]".ToStack();
     var dup
-      = new TypeCheckInstruction3("dup",
+      = new TypeCheckInstruction4("dup",
                                   "['a]",
                                   "['a 'a]")
       { getType = o => o is Type t ? t : o.GetType() };
@@ -994,7 +994,7 @@ public class InterpreterTests {
     var s2 = interpreter.Run(s, Interpreter.IsHalted, interpreter.ReorderPre);
     Assert.Equal("[[] 'a1 'a1 { a1 -> char } 'a0 'a0 ['a0]]", s2.ToRepr());
     s2.Pop();
-    var (consumes, produces) = TypeCheckInstruction3.ConsumesAndProduces(s2);
+    var (consumes, produces) = TypeCheckInstruction4.ConsumesAndProduces(s2);
     Assert.Equal("['a0]", consumes.ToRepr());
     Assert.Equal("['a0 'a0 char char]", produces.ToRepr());
   }

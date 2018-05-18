@@ -103,6 +103,7 @@ public class StackParser {
   private static readonly Parser<Type> varTypeLiteral =
     from _ in Parse.Char('\'')
     from c in Parse.Chars("abcd")
+    from trailingSpaces in Parse.Char(' ').Many()
     select Variable.TypeFromChar(c);
 
   private static readonly Parser<Type> typeLiteral =

@@ -13,15 +13,6 @@ public interface Instruction {
 }
 
 public interface TypedInstruction : Instruction {
-  IEnumerable<TypeOrVar> inputTypes { get; }
-  IEnumerable<TypeOrVar> outputTypes { get; }
-  // IEnumerable<OneOf<Type, Variable>> inputTypes { get; }
-  // IEnumerable<OneOf<Type, Variable>> outputTypes { get; }
-  // IEnumerable inputTypes { get; }
-  // IEnumerable outputTypes { get; }
-}
-
-public interface TypedInstruction2 : Instruction {
   IEnumerable<Type> inputTypes { get; }
   IEnumerable<Type> outputTypes { get; }
 }
@@ -47,9 +38,9 @@ public class InstructionFunc : Instruction {
 }
 
 public class NullaryInstruction : TypedInstruction {
-  public IEnumerable<TypeOrVar> inputTypes => new TypeOrVar[] { };
-  IEnumerable<TypeOrVar> _outputTypes = new TypeOrVar[] { };
-  public IEnumerable<TypeOrVar> outputTypes => _outputTypes;
+  public IEnumerable<Type> inputTypes => new Type[] { };
+  IEnumerable<Type> _outputTypes = new Type[] { };
+  public IEnumerable<Type> outputTypes => _outputTypes;
   Action<Stack> func;
   public NullaryInstruction(Action<Stack> func) {
     this.func = func;
@@ -77,9 +68,9 @@ public class NullaryInstruction : TypedInstruction {
 }
 
 public class UnaryInstruction<X> : TypedInstruction {
-  public IEnumerable<TypeOrVar> inputTypes => new TypeOrVar[] { typeof(X) };
-  IEnumerable<TypeOrVar> _outputTypes = new TypeOrVar[] { };
-  public IEnumerable<TypeOrVar> outputTypes => _outputTypes;
+  public IEnumerable<Type> inputTypes => new Type[] { typeof(X) };
+  IEnumerable<Type> _outputTypes = new Type[] { };
+  public IEnumerable<Type> outputTypes => _outputTypes;
   Action<Stack, object> func;
   Func<object, bool> predicateX = x => x is X;
 
@@ -109,7 +100,7 @@ public class UnaryInstruction<X> : TypedInstruction {
   public static UnaryInstruction<X> WithResult<Y>(Func <X,Y> func) {
     return new UnaryInstruction<X>((stack, a) => {
           stack.Push(func(a));
-      }){ _outputTypes = new TypeOrVar[] { typeof(Y) }};
+      }){ _outputTypes = new Type[] { typeof(Y) }};
   }
 
   public static UnaryInstruction<X> Reorder<Z>(string name) {
@@ -125,9 +116,9 @@ public class UnaryInstruction<X> : TypedInstruction {
 }
 
 public class BinaryInstruction<X, Y> : TypedInstruction {
-  public IEnumerable<TypeOrVar> inputTypes => new TypeOrVar[] { typeof(X), typeof(Y) };
-  IEnumerable<TypeOrVar> _outputTypes = new TypeOrVar[] { };
-  public IEnumerable<TypeOrVar> outputTypes => _outputTypes;
+  public IEnumerable<Type> inputTypes => new Type[] { typeof(X), typeof(Y) };
+  IEnumerable<Type> _outputTypes = new Type[] { };
+  public IEnumerable<Type> outputTypes => _outputTypes;
   Action<Stack, object, object> func;
   Func<object, bool> predicateX = x => x is X;
   Func<object, bool> predicateY = y => y is Y;
@@ -167,7 +158,7 @@ public class BinaryInstruction<X, Y> : TypedInstruction {
   public static BinaryInstruction<X,Y> WithResult<Z>(Func <X,Y,Z> func) {
     return new BinaryInstruction<X,Y>((stack, a, b) => {
           stack.Push(func(a, b));
-      }){ _outputTypes = new TypeOrVar[] { typeof(Z) }};
+      }){ _outputTypes = new Type[] { typeof(Z) }};
   }
 
   public static BinaryInstruction<X,Y> Reorder(string name, Type t) {
@@ -198,29 +189,22 @@ public class TypeCheckInstruction : ReorderInstruction {
 }
 
 public class ReorderInstruction : TypedInstruction {
-  public IEnumerable<TypeOrVar> inputTypes { get; set; }
-  public IEnumerable<TypeOrVar> outputTypes { get; set; }
-  public IEnumerable<Type> consumes => inputTypes.Select(x => x.Match(t => t, v => typeof(Variable)));
-  public IEnumerable<Type> produces => outputTypes.Select(x => x.Match(t => t, v => typeof(Variable)));
+  public IEnumerable<Type> inputTypes { get; set; }
+  public IEnumerable<Type> outputTypes { get; set; }
+  public IEnumerable<Type> consumes => inputTypes;
+  public IEnumerable<Type> produces => outputTypes;
   public readonly string name;
   public Func<object, Type> getType = o => o is IReprType d ? d.type : o.GetType();
   public Func<Type, object> putType = o => new Dummy(o);
   public bool leaveReorderItems = true;
 
   public ReorderInstruction(string name,
-                            IEnumerable<TypeOrVar> inputTypes,
-                            IEnumerable<TypeOrVar> outputTypes) {
+                            IEnumerable<Type> inputTypes,
+                            IEnumerable<Type> outputTypes) {
     this.name = name;
     this.inputTypes = inputTypes;
     this.outputTypes = outputTypes;
   }
-
-  public ReorderInstruction(string name,
-                            IEnumerable<Type> consumes,
-                            IEnumerable<Type> produces)
-    : this(name,
-           consumes.Select(t => (TypeOrVar) t),
-           produces.Select(t => (TypeOrVar) t)) { }
 
   public virtual Stack TypeMismatch(Stack stack, ICollection passedTypes, object o, Type consume) {
     // Put the good arguments back.
@@ -310,9 +294,9 @@ public class Dummy : IReprType {
 }
 
 public class TrinaryInstruction<X, Y, Z> : TypedInstruction {
-  public IEnumerable<TypeOrVar> inputTypes => new TypeOrVar[] { typeof(X), typeof(Y), typeof(Z) };
-  IEnumerable<TypeOrVar> _outputTypes = new TypeOrVar[] { };
-  public IEnumerable<TypeOrVar> outputTypes => _outputTypes;
+  public IEnumerable<Type> inputTypes => new Type[] { typeof(X), typeof(Y), typeof(Z) };
+  IEnumerable<Type> _outputTypes = new Type[] { };
+  public IEnumerable<Type> outputTypes => _outputTypes;
   Action<Stack, object, object, object> func;
   Func<object, bool> predicateX = x => x is X;
   Func<object, bool> predicateY = y => y is Y;
@@ -363,7 +347,7 @@ public class TrinaryInstruction<X, Y, Z> : TypedInstruction {
   public static TrinaryInstruction<X, Y, Z> WithResult<W>(Func<X, Y, Z, W> func) {
     return new TrinaryInstruction<X, Y, Z>((stack, a, b, c) => {
         stack.Push(func(a, b, c));
-      }) { _outputTypes = new TypeOrVar[] { typeof(W) }};
+      }) { _outputTypes = new Type[] { typeof(W) }};
   }
 
   public static TrinaryInstruction<X,Y,Z> Reorder<W>(string name) {
