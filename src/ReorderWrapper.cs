@@ -15,7 +15,7 @@ public class ReorderWrapper : TypedInstruction {
   public readonly string name;
   public Func<object, Type> getType = o => o is IReprType d ? d.type : o.GetType();
   public Func<Type, object> putType = o => new Dummy(o);
-  Instruction innerInstruction;
+  protected Instruction innerInstruction;
   public ReorderWrapper(string name,
                         TypedInstruction innerInstruction)
     : this(name,

@@ -6,7 +6,37 @@ using OneOf;
 
 namespace SeawispHunter.PushForth {
 
+/** Consume the inputs and optionally place the output types. */
+public class ConsumeInstruction : TypedInstruction {
+  internal IEnumerable<Type> _inputTypes = Type.EmptyTypes;
+  internal IEnumerable<Type> _outputTypes = Type.EmptyTypes;
+  public IEnumerable<Type> inputTypes => _inputTypes;
+  public IEnumerable<Type> outputTypes => _outputTypes;
+  bool pushOutputs;
+  public ConsumeInstruction(bool pushOutputs,
+                            IEnumerable<Type> inputTypes,
+                            IEnumerable<Type> outputTypes) {
+    this.pushOutputs = pushOutputs;
+    this._inputTypes = inputTypes;
+    this._outputTypes = outputTypes;
+  }
 
+  public ConsumeInstruction(bool pushOutputs, TypedInstruction ins)
+    : this(pushOutputs, ins.inputTypes, ins.outputTypes) { }
+
+  public Stack Apply(Stack stack) {
+    int inputCount = inputTypes.Count();
+    for (int i = 0; i < inputCount; i++)
+      stack.Pop();
+    if (pushOutputs) {
+      foreach(var x in outputTypes)
+        stack.Push(x);
+    }
+    return stack;
+  }
+}
+
+/** Record an instruction that was called. */
 public class DeferInstruction : TypedInstruction {
   internal string name;
   internal IEnumerable<Type> _inputTypes = Type.EmptyTypes;

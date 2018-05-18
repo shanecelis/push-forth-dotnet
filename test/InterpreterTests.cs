@@ -593,7 +593,39 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestTypeCheckWithoutReorder() {
-    interpreter = reorderInterpreter;
+    interpreter = cleanInterpreter;
+    var s = "[[1 1 +]]".ToStack();
+    var typedS = s.Map(o => o.GetType());
+    Assert.Equal("[[int int Symbol]]", typedS.ToRepr());
+    var typedS2 = s.Map(o => {
+        if (o is Symbol)
+          return o;
+        else
+          return o.GetType();
+      });
+    Assert.Equal("[[int int +]]", typedS2.ToRepr());
+    interpreter.instructions["+"] = new TypeCheckInstruction("+",
+                                                             new [] { typeof(int), typeof(int) },
+                                                             new [] { typeof(int) })
+    { getType = o => o is Type t ? t : o.GetType(),
+      putType = t => t,
+      leaveReorderItems = false };
+    var e2 = interpreter
+      .EvalStream(typedS2)
+      .Select(x => x.ToPivot())
+      .GetEnumerator();
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[+ int • int]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[+ • int int]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[• int]", e2.Current);
+    Assert.False(e2.MoveNext());
+  }
+
+  [Fact]
+  public void TestTypeCheckWithoutReorder2() {
+    interpreter = cleanInterpreter;
     var s = "[[1 1 +]]".ToStack();
     var typedS = s.Map(o => o.GetType());
     Assert.Equal("[[int int Symbol]]", typedS.ToRepr());

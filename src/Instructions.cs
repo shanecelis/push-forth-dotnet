@@ -19,6 +19,12 @@ public interface TypedInstruction : Instruction {
   IEnumerable<Type> outputTypes { get; }
 }
 
+public class NoopInstruction : Instruction {
+  public Stack Apply(Stack stack) {
+    return stack;
+  }
+}
+
 public class InstructionFunc : Instruction {
   Func<Stack, Stack> func;
   public InstructionFunc(Func<Stack, Stack> func) {
@@ -46,84 +52,36 @@ public class TypeCheckInstruction : ReorderInstruction {
   }
 }
 
-// XXX This can probably be removed in favor of ReorderWrapper.
-public class ReorderInstruction : TypedInstruction {
-  public IEnumerable<Type> inputTypes { get; set; }
-  public IEnumerable<Type> outputTypes { get; set; }
-  public IEnumerable<Type> consumes => inputTypes;
-  public IEnumerable<Type> produces => outputTypes;
-  public readonly string name;
-  public Func<object, Type> getType = o => o is IReprType d ? d.type : o.GetType();
-  public Func<Type, object> putType = o => new Dummy(o);
+public class ReorderInstruction : ReorderWrapper {
+
   public bool leaveReorderItems = true;
+  Instruction _instruction = null;
+  Instruction instruction {
+    get {
+      if (_instruction == null) {
+        if (leaveReorderItems) {
+          _instruction = new DeferInstruction(name,
+                                              inputTypes,
+                                              outputTypes);
+        } else {
+          _instruction = new ConsumeInstruction(true,
+                                                inputTypes,
+                                                outputTypes);
+        }
+      }
+      return _instruction;
+    }
+  }
 
   public ReorderInstruction(string name,
                             IEnumerable<Type> inputTypes,
-                            IEnumerable<Type> outputTypes) {
-    this.name = name;
-    this.inputTypes = inputTypes;
-    this.outputTypes = outputTypes;
+                            IEnumerable<Type> outputTypes)
+    : base(name, inputTypes, outputTypes, null) {
+    innerInstruction
+      = new InstructionFunc(stack =>
+                            this.instruction.Apply(stack));
   }
 
-  public virtual Stack TypeMismatch(Stack stack, ICollection passedTypes, object o, Type consume) {
-    // Put the good arguments back.
-    stack = Interpreter.Append(passedTypes, stack);
-    // foreach(var passed in passedTypes)
-    //   stack.Push(passed);
-    var code = new Stack();
-    code.Push(o);
-    code.Push(new Symbol(name));
-    stack.Push(new Continuation(code));
-    return stack;
-  }
-
-  public virtual Stack NotEnoughElements(Stack stack, Queue passedTypes) {
-    foreach(object p in passedTypes)
-      stack.Push(p);
-    return stack;
-  }
-
-  public Stack Apply(Stack stack) {
-    var passedTypes = new Queue();
-    foreach(Type consume in consumes) {
-      if (! stack.Any()) {
-        // Not enough elements.
-        return NotEnoughElements(stack, passedTypes);
-      }
-
-      object o = stack.Pop();
-      var t = getType(o);
-      // if (t == consume) {
-      if (consume == typeof(Variable)) {
-        // XXX What is going on here?
-        passedTypes.Enqueue(o);
-      } else if (consume.IsAssignableFrom(t)) {
-        passedTypes.Enqueue(o);
-      } else {
-        return TypeMismatch(stack, passedTypes, o, consume);
-      }
-    }
-
-    if (leaveReorderItems) {
-      var code = new Stack();
-      code.Push(new Symbol(name));
-      foreach(var t in passedTypes)
-        code.Push(t);
-      stack.Push(new Defer(code, produces.FirstOrDefault()));
-    }
-
-    // Everything checks out. Add the types we produced.
-    foreach(var produced in (leaveReorderItems ? produces.Skip(1) : produces)) {
-      stack.Push(putType(produced));
-    }
-
-    return stack;
-  }
-
-  public override string ToString() {
-    return "(" + string.Join(",", consumes.Select(t => t.PrettyName())) + ") -> "
-      + "(" + string.Join(",", produces.Select(t => t.PrettyName())) + ")";
-  }
 }
 
 }
