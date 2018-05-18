@@ -22,12 +22,6 @@ public class Continuation : Tuple<Stack> {
   }
 }
 
-// public class Cell : OneOfBase<Symbol, int, string> { }
-
-// public class Interpreter : _Interpreter {
-
-// }
-
 // public class ReorderInterpreter : Interpreter {
 //   public ReorderInterpreter(Dictionary<string, Instruction> instructions) {
 //     foreach(var kv in instructions) {
@@ -48,17 +42,18 @@ public class ReorderInterpreter : StrictInterpreter {
 
   DeferInstruction di = null;
   public ReorderInterpreter() {
+    // XXX This weird data piping is because an Instruction doesn't and probably shouldn't know its own name.
     this.instructionFactory = ReorderWrapper.GetFactory(StrictInstruction.factory.Compose(i => {
           di = new DeferInstruction(null, i);
           return (TypedInstruction) di;
         }));
-    LoadInstructions(false);
+    isStrict = false;
+    LoadInstructions();
 
   }
 
-  public override void LoadInstructions(bool isStrict) {
-
-    base.LoadInstructions(isStrict);
+  public override void LoadInstructions() {
+    base.LoadInstructions();
     // Damn, the reorder is more complicated than the thing in itself.
     instructions["pop"] = new InstructionFunc(stack => {
           var o = stack.Pop();
@@ -130,28 +125,31 @@ public class Interpreter : StrictInterpreter {
 
   public Interpreter() {
     this.instructionFactory = ReorderWrapper.GetFactory(StrictInstruction.factory);
-    LoadInstructions(false);
-
+    isStrict = false;
   }
 }
 
 public class StrictInterpreter {
 
-  public Dictionary<string, Instruction> instructions
-    = new Dictionary<string, Instruction>();
+  public Dictionary<string, Instruction> instructions {
+    get {
+      if (_instructions == null) {
+        _instructions = new Dictionary<string, Instruction>();
+        LoadInstructions();
+      }
+      return _instructions;
+    }
+  }
 
+  public Dictionary<string, Instruction> _instructions = null;
   // XXX a FuncFactory<TypedInstruction> can't convert to a TypedInstructionFactory but
   // it can go the other way.
   public FuncFactory<TypedInstruction> instructionFactory = StrictInstruction.factory;
 
-  // public Dictionary<string, Instruction> reorderInstructions
-  //   = new Dictionary<string, Instruction>();
+  public StrictInterpreter() { }
+  protected bool isStrict = true;
 
-  public StrictInterpreter() {
-    LoadInstructions(true);
-  }
-
-  public virtual void LoadInstructions(bool isStrict) {
+  public virtual void LoadInstructions() {
 
     AddInstruction("i", (Stack stack, Stack code) => {
         stack.Push(new Continuation(code));
@@ -163,12 +161,6 @@ public class StrictInterpreter {
     AddInstruction("eval", (Stack stack) => {
         return Eval(stack);
       });
-    // AddInstruction("reorder-pre", (Stack program) => {
-    //     return ReorderPre(program);
-    //   });
-    // AddInstruction("reorder-post", (Stack program) => {
-    //     return ReorderPost(program);
-    //   });
     AddInstruction("!", (Stack stack, Symbol s, object x) => {
         AddInstruction(s.name, () => x);
       });
@@ -393,101 +385,38 @@ public class StrictInterpreter {
 
   public void AddInstruction(string name, Action action) {
     AddInstruction(name, instructionFactory.Nullary(action));
-    // // These actions don't even take a stack.
-    // if (! isStrict)
-    //   instructions[name] = new NullaryInstruction(_ => action());
-    // else
-    //   instructions[name] = new StrictNullaryInstruction(_ => action());
   }
 
   public void AddInstruction(string name, Action<Stack> func) {
     AddInstruction(name, instructionFactory.Nullary(func));
-    // if (! isStrict)
-    //   instructions[name] = new NullaryInstruction(func);
-    // else
-    //   instructions[name] = new StrictNullaryInstruction(func);
   }
 
   public void AddInstruction<X>(string name, Func<X> func) {
     AddInstruction(name, instructionFactory.Nullary(func));
-    // if (! isStrict)
-    //   instructions[name] = NullaryInstruction.WithResult(func);
-    // else
-    //   instructions[name] = StrictNullaryInstruction.WithResult(func);
-    // reorderInstructions[name] = NullaryInstruction.Reorder<X>(name);
-
-    // reorderInstructions[name] = new ReorderInstruction(name,
-    //                                                    new Type[] { },
-    //                                                    new [] { typeof(X) });
   }
 
   public void AddInstruction<X>(string name, Action<Stack,X> func) {
     AddInstruction(name, instructionFactory.Unary(func));
-    // if (! isStrict)
-    //   instructions[name] = new UnaryInstruction<X>(func);
-    // else
-    //   instructions[name] = new StrictUnaryInstruction<X>(func);
   }
 
   public void AddInstruction<X,Y>(string name, Func<X,Y> func) {
     AddInstruction(name, instructionFactory.Unary(func));
-    // if (! isStrict)
-    //   instructions[name] = UnaryInstruction<X>.WithResult(func);
-    // else
-    //   instructions[name] = StrictUnaryInstruction<X>.WithResult(func);
-    // reorderInstructions[name] = new ReorderInstruction(name,
-    //                                                    new [] { typeof(X) },
-    //                                                    new [] { typeof(Y) });
   }
 
   public void AddInstruction<X,Y,Z>(string name, Func<X,Y,Z> func) {
     AddInstruction(name, instructionFactory.Binary(func));
-    // if (! isStrict)
-    //   instructions[name] = BinaryInstruction<X,Y>.WithResult(func);
-    // else
-    //   instructions[name] = StrictBinaryInstruction<X,Y>.WithResult(func);
-
-    // reorderInstructions[name] = new ReorderInstruction(name,
-    //                                                    new [] { typeof(X), typeof(Y) },
-    //                                                    new [] { typeof(Z) });
-    // reorderInstructions[name] = BinaryInstruction<X,Y>.Reorder(name, typeof(Z));
   }
 
   public void AddInstruction<X,Y>(string name, Action<Stack,X,Y> func) {
     AddInstruction(name, instructionFactory.Binary(func));
-    // if (! isStrict)
-    //   instructions[name] = new BinaryInstruction<X,Y>(func);
-    // else
-    //   instructions[name] = new StrictBinaryInstruction<X,Y>(func);
-
-    // reorderInstructions[name] = new ReorderInstruction(name,
-    //                                                    new [] { typeof(X), typeof(Y) },
-    //                                                    new Type[] { });
-    // reorderInstructions[name] = BinaryInstruction<X,Y>.Reorder(name, null);
   }
 
   public void AddInstruction<X,Y,Z,W>(string name, Func<X,Y,Z,W> func) {
     AddInstruction(name, instructionFactory.Trinary(func));
-    // if (! isStrict)
-    //   instructions[name] = TrinaryInstruction<X,Y,Z>.WithResult(func);
-    // else
-    //   instructions[name] = StrictTrinaryInstruction<X,Y,Z>.WithResult(func);
-
-    // reorderInstructions[name] = new ReorderInstruction(name,
-    //                                                    new [] { typeof(X), typeof(Y), typeof(Z) },
-    //                                                    new [] { typeof(W) });
   }
 
   public void AddInstruction<X,Y,Z>(string name, Action<Stack,X,Y,Z> func) {
     AddInstruction(name, instructionFactory.Trinary(func));
-    // if (! isStrict)
-    //   instructions[name] = new TrinaryInstruction<X,Y,Z>(func);
-    // else
-    //   instructions[name] = new StrictTrinaryInstruction<X,Y,Z>(func);
-
-    // reorderInstructions[name] = new ReorderInstruction(name,
-    //                                                    new [] { typeof(X), typeof(Y), typeof(Z) },
-    //                                                    new Type[] { });
   }
 
   // XXX stack extensions?
