@@ -475,7 +475,7 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestReorder() {
-    var interpreter = new Interpreter();
+    interpreter = reorderInterpreter;
     var d0 = Interpreter.ParseString("[[2 a 1 +]]");
     var d1 = interpreter.Eval(d0);
     Assert.Equal(Interpreter.ParseString("[[a 1 +] 2]"), d1);
@@ -484,20 +484,20 @@ public class InterpreterTests : InterpreterTestUtil {
     var d3 = interpreter.Eval(d2);
     Assert.Equal(Interpreter.ParseString("[[+] 1 a 2]"), d3);
     var d4 = interpreter.Eval(d3);
-    Assert.Equal(interpreter.ParseWithResolution("[[+ a ] 1 2]"), d4);
+    // Assert.Equal(interpreter.ParseWithResolution("[[+ a ] 1 2]"), d4);
+    Assert.Equal("[[+ a] 1 2]", interpreter.StackToString(d4));
     // var d4b = Interpreter.ParseString("[[' reorder run] [[+ a ] 1 2] []]");
     // var d4b = Interpreter.ParseString("[[reorder] [[+ a ] 1 2] []]");
     // var d5 = interpreter.Eval(d4b);
-    Assert.Equal("[[] [[a] R<int>[2 1 +]]]",
-                 Eval("[[reorder-pre] [[+ a ] 1 2]]"));
-    var e1 = interpreter.Eval("[[reorder-pre] [[+ a ] 1 2]]".ToStack());
-    Assert.Equal("[[] [[a] R<int>[2 1 +]]]",
+    Assert.Equal("[[a] R<int>[2 1 +]]",
+                 Eval("[[+ a ] 1 2]"));
+    var e1 = interpreter.Eval("[[+ a ] 1 2]".ToStack());
+    Assert.Equal("[[a] R<int>[2 1 +]]",
                  e1.ToRepr());
-    e1.Pop();
-    var s = (Stack) e1.Pop();
+    var s = e1;
     Assert.Equal("[[a] R<int>[2 1 +]]",
                  s.ToRepr());
-    var e2 = interpreter.ReorderPost(s);
+    var e2 = ReorderInterpreter.ReorderPost(s);
     Assert.Equal("[[2 1 + a]]",
                  e2.ToRepr());
 
@@ -510,141 +510,6 @@ public class InterpreterTests : InterpreterTestUtil {
     // var d6 = interpreter.Eval(d5);
     // Assert.Equal(Interpreter.ParseString("[[2 1 +] [[] a]]"), d6);
   }
-
-  [Fact]
-  public void testNestedReordering() {
-    var s1 = "[[+] 1]".ToStack();
-    var code = s1.Pop();
-    s1.Push(new Defer("[2 3 +]".ToStack(), typeof(int)));
-    var i = interpreter.reorderInstructions["+"];
-    s1 = i.Apply(s1);
-    Assert.Equal("[R<int>[1 R<int>[2 3 +] +]]", s1.ToRepr());
-
-    s1 = "[[+] 1]".ToStack();
-    code = s1.Pop();
-    s1.Push(new Defer("[2 3 +]".ToStack(), typeof(int)));
-    s1.Push(code);
-    Assert.Equal("[[+] R<int>[2 3 +] 1]", s1.ToRepr());
-    var s2 = interpreter.ReorderPre(s1);
-    // Assert.Equal("", s2.ToRepr());
-    Assert.Equal("[[] R<int>[1 R<int>[2 3 +] +]]", interpreter.StackToString(s2, new [] {interpreter.reorderInstructions, interpreter.instructions }));
-  }
-
-  [Fact]
-  public void testLotsOfReordering() {
-    Assert.Equal("[[] d c b a 10]", Run("[[2 a 3 b c 5 + d +]]"));
-
-    Stack s1, s2;
-    // Assert.Equal("[[] d c b a R[2 R[3 5 +] +]]", (s1 = interpreter.RunReorderPre("[[2 a 3 b c 5 + d +]]".ToStack())).ToRepr());
-    Assert.Equal("[[] d c b a R<int>[2 R<int>[3 5 +] +]]", (s1 = interpreter.RunReorderPre("[[2 a 3 b c 5 + d +]]".ToStack())).ToRepr());
-
-    Assert.Equal("[[2 3 5 + + a b c d]]", (s2 = interpreter.RunReorderPost(s1)).ToRepr());
-    var strict = new Interpreter(true);
-    Assert.Equal("[[] d c b a 10]", strict.Run(s2).ToRepr());
-  }
-
-  [Fact]
-  public void testMoreReordering() {
-    var strict = new Interpreter(true);
-    // The non-strict interpreter moves around arguments such that they will continue to work.
-    Assert.Equal("[[] d c b a 6]", Run("[[2 a negate 3 b c 5 + d +]]"));
-    Assert.Equal("[[2 negate 3 5 + + a b c d]]", interpreter.Reorder("[[2 a negate 3 b c 5 + d +]]".ToStack()).ToRepr());
-    Assert.Equal("[[] d c b a 6]", strict.Run("[[2 negate 3 5 + + a b c d]]".ToStack()).ToRepr());
-    // Can't run the original with the strict interpreter.
-    Assert.Throws<InvalidCastException>(() => strict.Run("[[2 a negate 3 b c 5 + d +]]".ToStack()));
-  }
-
-  [Fact]
-  public void testMoreReordering2() {
-    var strict = new Interpreter(true);
-    // The non-strict interpreter moves around arguments such that they will continue to work.
-    Assert.Equal("[[] d c b a 6]", Run("[[2 a negate 3 b c 5 + d + +]]"));
-    Assert.Equal("[[2 negate 3 5 + + a b c d]]", interpreter.Reorder("[[2 a negate 3 b c 5 + d + +]]".ToStack()).ToRepr());
-    // The same output is produced.
-    Assert.Equal("[[] d c b a 6]", strict.Run("[[2 negate 3 5 + + a b c d]]".ToStack()).ToRepr());
-    // Can't run the original with the strict interpreter.
-    Assert.Throws<InvalidCastException>(() => strict.Run("[[2 a negate 3 b c 5 + d + +]]".ToStack()));
-    Assert.Throws<InvalidOperationException>(() => strict.Run("[[2 +]]".ToStack()));
-    Assert.Throws<InvalidOperationException>(() => strict.Run("[[+]]".ToStack()));
-  }
-
-  [Fact]
-  public void testMoreReordering4() {
-    var strict = new Interpreter(true);
-    // The non-strict interpreter moves around arguments such that they will continue to work.
-    Assert.Equal("[[] d c b a 3]", Run("[[2 a negate 3 pop b c 5 + d + +]]"));
-    Assert.Equal("[[2 negate 5 + a 3 pop b c d]]", interpreter.Reorder("[[2 a negate 3 pop b c 5 + d + +]]".ToStack()).ToRepr());
-    // The same output is produced.
-    Assert.Equal("[[] d c b a 3]", strict.Run("[[2 negate 5 + a 3 pop b c d]]".ToStack()).ToRepr());
-    // Can't run the original with the strict interpreter.
-    Assert.Throws<InvalidCastException>(() => strict.Run("[[2 a negate 3 pop b c 5 + d + +]]".ToStack()));
-    Assert.Throws<InvalidOperationException>(() => strict.Run("[[2 +]]".ToStack()));
-    Assert.Throws<InvalidOperationException>(() => strict.Run("[[+]]".ToStack()));
-  }
-
-  [Fact]
-  public void testMoreReordering3() {
-    var e = EvalStream("[[2 a ! a]]").GetEnumerator();
-    e.MoveNext();
-    Assert.Equal("[[a ! a] 2]", e.Current);
-    e.MoveNext();
-    Assert.Equal("[[! a] a 2]", e.Current);
-    e.MoveNext();
-    Assert.Equal("[[a]]", e.Current);
-    e.MoveNext();
-    Assert.Equal("[[] 2]", e.Current);
-
-    // The symbol a is set as an instruction. We need a new interpreter to not
-    // be polluted by it.
-    interpreter = new Interpreter();
-    e = EvalStream("[[2 a 3 ! a]]").GetEnumerator();
-    Assert.True(e.MoveNext());
-    Assert.Equal("[[a 3 ! a] 2]", e.Current);
-    e.MoveNext();
-    Assert.Equal("[[3 ! a] a 2]", e.Current);
-    e.MoveNext();
-    Assert.Equal("[[! a] 3 a 2]", e.Current);
-    e.MoveNext();
-    Assert.Equal("[[! 3 a] a 2]", e.Current);
-    e.MoveNext();
-    Assert.Equal("[[3 a]]", e.Current);
-    e.MoveNext();
-    Assert.Equal("[[a] 3]", e.Current);
-    e.MoveNext();
-    Assert.Equal("[[] 2 3]", e.Current);
-    Assert.False(e.MoveNext());
-
-    interpreter = new Interpreter();
-    var e2 = interpreter.EvalStream("[[! a] 3 a 2]".ToStack(),
-                                    Interpreter.IsHalted,
-                                    interpreter.ReorderPre)
-      // .Select(s => interpreter.StackToString(s, new [] { interpreter.reorderInstructions }))
-      .Select(s => interpreter.StackToString(s))
-      .GetEnumerator();
-    Assert.True(e2.MoveNext());
-    Assert.Equal("[[! 3 a] a 2]", e2.Current);
-    Assert.True(e2.MoveNext());
-    Assert.Equal("[[3 a] R[2 a !]]", e2.Current);
-    Assert.True(e2.MoveNext());
-    Assert.Equal("[[a] 3 R[2 a !]]", e2.Current);
-
-    Assert.Equal("[[2 a ! 3 a]]", Reorder("[[2 a 3 ! a]]"));
-
-  }
-
-  [Fact]
-  public void TestWeirdStore() {
-    var s = "[a 2]".ToStack();
-    Assert.Equal(new Symbol("a"), s.Peek());
-    var i = interpreter.reorderInstructions["!"];
-    // Assert.Equal("[C[! 2] a]", i.Apply(s).ToRepr());
-    Assert.Equal("[R[2 a !]]", i.Apply(s).ToRepr());
-
-    s = "[a 2]".ToStack();
-    i = interpreter.reorderInstructions["!int"];
-    Assert.Equal("[R[2 a !int]]", i.Apply(s).ToRepr());
-  }
-
   [Fact]
   public void TestPivotString() {
     var e2 = interpreter.EvalStream("[[1 1 +]]".ToStack()).Select(x => x.ToPivot()).GetEnumerator();
@@ -665,6 +530,7 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestTypeCheckWithReorder() {
+    interpreter = reorderInterpreter;
     var s = "[[1 1 +]]".ToStack();
     var typedS = s.Map(o => o.GetType());
     Assert.Equal("[[int int Symbol]]", typedS.ToRepr());
@@ -675,16 +541,14 @@ public class InterpreterTests : InterpreterTestUtil {
           return o.GetType();
       });
     Assert.Equal("[[int int +]]", typedS2.ToRepr());
-    interpreter.reorderInstructions["+"] = new ReorderInstruction("+",
-                                                             new [] { typeof(int), typeof(int) },
-                                                                  new [] { typeof(int) })
+    interpreter.instructions["+"] = new ReorderInstruction("+",
+                                                           new [] { typeof(int), typeof(int) },
+                                                           new [] { typeof(int) })
       { getType = o => o is Type t ? t : o.GetType(),
         putType = t => t,
         leaveReorderItems = false };
     var e2 = interpreter
-      .EvalStream(typedS2,
-                  Interpreter.IsHalted,
-                  interpreter.ReorderPre)
+      .EvalStream(typedS2)
       .Select(x => x.ToPivot())
       .GetEnumerator();
     Assert.True(e2.MoveNext());
@@ -698,6 +562,7 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestTypeCheckWithoutReorder() {
+    interpreter = reorderInterpreter;
     var s = "[[1 1 +]]".ToStack();
     var typedS = s.Map(o => o.GetType());
     Assert.Equal("[[int int Symbol]]", typedS.ToRepr());
@@ -708,16 +573,14 @@ public class InterpreterTests : InterpreterTestUtil {
           return o.GetType();
       });
     Assert.Equal("[[int int +]]", typedS2.ToRepr());
-    interpreter.reorderInstructions["+"] = new TypeCheckInstruction("+",
-                                                                    new [] { typeof(int), typeof(int) },
-                                                                    new [] { typeof(int) })
+    interpreter.instructions["+"] = new TypeCheckInstruction("+",
+                                                             new [] { typeof(int), typeof(int) },
+                                                             new [] { typeof(int) })
     { getType = o => o is Type t ? t : o.GetType(),
       putType = t => t,
       leaveReorderItems = false };
     var e2 = interpreter
-      .EvalStream(typedS2,
-                  Interpreter.IsHalted,
-                  interpreter.ReorderPre)
+      .EvalStream(typedS2)
       .Select(x => x.ToPivot())
       .GetEnumerator();
     Assert.True(e2.MoveNext());
@@ -731,13 +594,14 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestTypeCheckNoReorderUnify() {
+    interpreter = strictInterpreter;
     var s = "[[1 1 true if]]".ToStack();
     var typedS = s.Map(o => o.GetType());
     Assert.Equal("[[int int bool Symbol]]", typedS.ToRepr());
     var typedS2 = s.Map(o => o is Symbol ? o : o.GetType());
     Assert.Equal("[[int int bool if]]", typedS2.ToRepr());
     // var a = new Variable("a");
-    interpreter.reorderInstructions["if"]
+    interpreter.instructions["if"]
       = new TypeCheckInstruction2("if",
                                   "[bool 'a 'a]",
                                   "['a]")
@@ -748,9 +612,7 @@ public class InterpreterTests : InterpreterTestUtil {
       leaveReorderItems = false };
 
     var e2 = interpreter
-      .EvalStream(typedS2,
-                  Interpreter.IsHalted,
-                  interpreter.ReorderPre)
+      .EvalStream(typedS2)
       .Select(x => x.ToPivot())
       .GetEnumerator();
     Assert.True(e2.MoveNext());
@@ -766,9 +628,7 @@ public class InterpreterTests : InterpreterTestUtil {
     s = "[[1 'c' true if]]".ToStack();
     typedS2 = s.Map(o => o is Symbol ? o : o.GetType());
     e2 = interpreter
-      .EvalStream(typedS2,
-                  Interpreter.IsHalted,
-                  interpreter.ReorderPre)
+      .EvalStream(typedS2)
       .Select(x => x.ToPivot())
       .GetEnumerator();
     Assert.True(e2.MoveNext());
@@ -784,6 +644,7 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestTypeCheckRequiringReorder() {
+    interpreter = strictInterpreter;
     var s = "[[1 1 a +]]".ToStack();
     var typedS = s.Map(o => o.GetType());
     Assert.Equal("[[int int Symbol Symbol]]", typedS.ToRepr());
@@ -794,16 +655,14 @@ public class InterpreterTests : InterpreterTestUtil {
           return o.GetType();
       });
     Assert.Equal("[[int int a +]]", typedS2.ToRepr());
-    interpreter.reorderInstructions["+"] = new ReorderInstruction("+",
-                                                                  new [] { typeof(int), typeof(int) },
-                                                                  new [] { typeof(int) })
+    interpreter.instructions["+"] = new ReorderInstruction("+",
+                                                           new [] { typeof(int), typeof(int) },
+                                                           new [] { typeof(int) })
       { getType = o => o is Type t ? t : o.GetType(),
         putType = t => t,
         leaveReorderItems = false };
     var e2 = interpreter
-      .EvalStream(typedS2,
-                  Interpreter.IsHalted,
-                  interpreter.ReorderPre)
+      .EvalStream(typedS2)
       .Select(x => x.ToPivot())
       .GetEnumerator();
     Assert.True(e2.MoveNext());
@@ -823,6 +682,7 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestTypeCheckingWithIncorrectTypes() {
+    interpreter = strictInterpreter;
     var s = "[[1 1 a +]]".ToStack();
     var typedS = s.Map(o => o.GetType());
     Assert.Equal("[[int int Symbol Symbol]]", typedS.ToRepr());
@@ -836,16 +696,14 @@ public class InterpreterTests : InterpreterTestUtil {
           return o.GetType();
       });
     Assert.Equal("[[int int a +]]", typedS2.ToRepr());
-    interpreter.reorderInstructions["+"] = new TypeCheckInstruction("+",
-                                                                    new [] { typeof(int), typeof(int) },
-                                                                    new [] { typeof(int) })
+    interpreter.instructions["+"] = new TypeCheckInstruction("+",
+                                                             new [] { typeof(int), typeof(int) },
+                                                             new [] { typeof(int) })
     { getType = o => o is Type t ? t : o.GetType(),
       putType = t => t,
       leaveReorderItems = false };
     var e2 = interpreter
-      .EvalStream(typedS2,
-                  Interpreter.IsHalted,
-                  interpreter.ReorderPre)
+      .EvalStream(typedS2)
       .Select(x => x.ToPivot())
       .GetEnumerator();
     Assert.True(e2.MoveNext());
@@ -859,16 +717,16 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestDetermineInputAndOutput() {
-    var s = "[[if typeof(int)]]".ToStack();
+    interpreter = reorderInterpreter;
+    var s = "[[if typeof(int)]]";
     var _if
       = new DetermineTypesInstruction("if",
-                                  "[bool 'a 'a]",
-                                  "['a]")
+                                      "[bool 'a 'a]",
+                                      "['a]")
     { getType = o => o is Type t ? t : o.GetType() };
-    interpreter.reorderInstructions["if"] = _if;
+    interpreter.instructions["if"] = _if;
 
-    var s2 = interpreter.Run(s, Interpreter.IsHalted, interpreter.ReorderPre).ToRepr();
-    Assert.Equal("[[] int 'a0 ['a0 'a0 bool]]", s2);
+    Assert.Equal("[[] int 'a0 ['a0 'a0 bool]]", Run(s));
   }
 
   [Fact]
@@ -884,10 +742,10 @@ public class InterpreterTests : InterpreterTestUtil {
                                   "[int int]",
                                   "[int]")
       { getType = o => o is Type t ? t : o.GetType() };
-    interpreter.reorderInstructions["if"] = _if;
-    interpreter.reorderInstructions["+"] = add;
+    interpreter.instructions["if"] = _if;
+    interpreter.instructions["+"] = add;
 
-    var s2 = interpreter.Run(s, Interpreter.IsHalted, interpreter.ReorderPre);
+    var s2 = interpreter.Run(s);
     Assert.Equal("[[] char int { a0 -> int } ['a0 'a0 bool]]", s2.ToRepr());
     s2.Pop();
     var (consumes, produces) = DetermineTypesInstruction.ConsumesAndProduces(s2);
@@ -897,15 +755,16 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestTypeCheckDup() {
-    var s = "[[typeof(int) dup]]".ToStack();
+    interpreter = cleanInterpreter;
+    var s = "[[typeof(int) dup]]";
     var dup
       = new DetermineTypesInstruction("dup",
                                   "['a]",
                                   "['a 'a]")
       { getType = o => o is Type t ? t : o.GetType() };
-    interpreter.reorderInstructions["dup"] = dup;
-    var s2 = interpreter.Run(s, Interpreter.IsHalted, interpreter.ReorderPre);
-    Assert.Equal("[[] 'a0 'a0 { a0 -> int }]", s2.ToRepr());
+    interpreter.instructions["dup"] = dup;
+    Assert.Equal("[[] 'a0 'a0 { a0 -> int }]", Run(s));
+    var s2 = lastRun;
     s2.Pop();
     var (consumes, produces) = DetermineTypesInstruction.ConsumesAndProduces(s2);
     Assert.Equal("[]", consumes.ToRepr());
@@ -914,15 +773,16 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestTypeCheckDupDup() {
-    var s = "[[typeof(int) dup typeof(char) dup]]".ToStack();
+    interpreter = cleanInterpreter;
+    var s = "[[typeof(int) dup typeof(char) dup]]";
     var dup
       = new DetermineTypesInstruction("dup",
                                   "['a]",
                                   "['a 'a]")
       { getType = o => o is Type t ? t : o.GetType() };
-    interpreter.reorderInstructions["dup"] = dup;
-    var s2 = interpreter.Run(s, Interpreter.IsHalted, interpreter.ReorderPre);
-    Assert.Equal("[[] 'a1 'a1 { a1 -> char } 'a0 'a0 { a0 -> int }]", s2.ToRepr());
+    interpreter.instructions["dup"] = dup;
+    Assert.Equal("[[] 'a1 'a1 { a1 -> char } 'a0 'a0 { a0 -> int }]", Run(s));
+    var s2 = lastRun;
     s2.Pop();
     var (consumes, produces) = DetermineTypesInstruction.ConsumesAndProduces(s2);
     Assert.Equal("[]", consumes.ToRepr());
@@ -931,15 +791,16 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestTypeCheckDupDupWithVars() {
-    var s = "[[dup typeof(char) dup]]".ToStack();
+    interpreter = cleanInterpreter;
+    var s = "[[dup typeof(char) dup]]";
     var dup
       = new DetermineTypesInstruction("dup",
                                   "['a]",
                                   "['a 'a]")
       { getType = o => o is Type t ? t : o.GetType() };
-    interpreter.reorderInstructions["dup"] = dup;
-    var s2 = interpreter.Run(s, Interpreter.IsHalted, interpreter.ReorderPre);
-    Assert.Equal("[[] 'a1 'a1 { a1 -> char } 'a0 'a0 ['a0]]", s2.ToRepr());
+    interpreter.instructions["dup"] = dup;
+    Assert.Equal("[[] 'a1 'a1 { a1 -> char } 'a0 'a0 ['a0]]", Run(s));
+    var s2 = lastRun;
     s2.Pop();
     var (consumes, produces) = DetermineTypesInstruction.ConsumesAndProduces(s2);
     Assert.Equal("['a0]", consumes.ToRepr());
@@ -948,15 +809,16 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestTypeCheckDupDupWithVars2() {
-    var s = "[[dup typeof(char) dup]]".ToStack();
+    interpreter = cleanInterpreter;
+    var s = "[[dup typeof(char) dup]]";
     var dup
       = new DetermineTypesInstruction("dup",
                                   "['a]",
                                   "['a 'a]")
       { getType = o => o is Type t ? t : o.GetType() };
-    interpreter.reorderInstructions["dup"] = dup;
-    var s2 = interpreter.Run(s, Interpreter.IsHalted, interpreter.ReorderPre);
-    Assert.Equal("[[] 'a1 'a1 { a1 -> char } 'a0 'a0 ['a0]]", s2.ToRepr());
+    interpreter.instructions["dup"] = dup;
+    Assert.Equal("[[] 'a1 'a1 { a1 -> char } 'a0 'a0 ['a0]]", Run(s));
+    var s2 = lastRun;
     s2.Pop();
     var (consumes, produces) = DetermineTypesInstruction.ConsumesAndProduces(s2);
     Assert.Equal("['a0]", consumes.ToRepr());

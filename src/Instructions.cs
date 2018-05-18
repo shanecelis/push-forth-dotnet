@@ -9,6 +9,7 @@ namespace SeawispHunter.PushForth {
 using TypeOrVar = OneOf<Type, Variable>;
 
 public interface Instruction {
+  // string name { get; }
   Stack Apply(Stack stack);
 }
 
@@ -266,7 +267,7 @@ public class ReorderInstruction : TypedInstruction {
 }
 
 public class DeferInstruction : TypedInstruction {
-  string name;
+  internal string name;
   internal IEnumerable<Type> _inputTypes = Type.EmptyTypes;
   internal IEnumerable<Type> _outputTypes = Type.EmptyTypes;
   public IEnumerable<Type> inputTypes => _inputTypes;

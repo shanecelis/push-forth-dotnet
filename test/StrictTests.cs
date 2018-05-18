@@ -7,9 +7,9 @@ namespace test
 {
 public class StrictTests
 {
-  Interpreter interpreter;
+  StrictInterpreter interpreter;
   public StrictTests() {
-    interpreter = new Interpreter(true);
+    interpreter = new StrictInterpreter();
   }
 
   [Fact]

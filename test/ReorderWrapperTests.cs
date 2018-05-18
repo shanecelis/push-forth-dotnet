@@ -10,23 +10,23 @@ namespace SeawispHunter.PushForth {
 
 public class ReorderWrapperTests : InterpreterTestUtil {
 
-  Interpreter strictInterpreter;
-  Interpreter nonstrictInterpreter;
-  Interpreter reorderInterpreter;
+  new Interpreter strictInterpreter;
+  new Interpreter nonstrictInterpreter;
+  new Interpreter reorderInterpreter;
   public ReorderWrapperTests() {
     strictInterpreter = new Interpreter();
     strictInterpreter.instructions.Clear();
-    strictInterpreter.instructions["+"] = StrictInstruction.Binary((int a, int b) => a + b);
+    strictInterpreter.instructions["+"] = StrictInstruction.factory.Binary((int a, int b) => a + b);
 
     nonstrictInterpreter = new Interpreter();
     nonstrictInterpreter.instructions.Clear();
     nonstrictInterpreter.instructions["+"] =
-      new ReorderWrapper("+", StrictInstruction.Binary((int a, int b) => a + b));
+      new ReorderWrapper("+", StrictInstruction.factory.Binary((int a, int b) => a + b));
 
     reorderInterpreter = new Interpreter();
     reorderInterpreter.instructions.Clear();
     reorderInterpreter.instructions["+"] =
-      new ReorderWrapper("+", new DeferInstruction("+", StrictInstruction.Binary((int a, int b) => a + b)));
+      new ReorderWrapper("+", new DeferInstruction("+", StrictInstruction.factory.Binary((int a, int b) => a + b)));
   }
 
   [Fact]
@@ -38,11 +38,22 @@ public class ReorderWrapperTests : InterpreterTestUtil {
   }
 
   [Fact]
-  public void TestReorderInstruction() {
+  public void TestNonStrictInstruction() {
     interpreter = nonstrictInterpreter;
     Assert.Equal("[[] 10]", Run("[[2 3 5 + +]]"));
     Assert.Equal("[[] a 10]", Run("[[2 3 a 5 + +]]"));
     Assert.Equal("[[] 8]", Run("[[3 5 + +]]"));
+  }
+
+  [Fact]
+  public void TestReorderInstruction() {
+    interpreter = reorderInterpreter;
+    Assert.Equal("[[] R<int>[2 R<int>[3 5 +] +]]", Run("[[2 3 5 + +]]"));
+    Assert.Equal("[[2 3 5 + +]]", ReorderInterpreter.ReorderPost(lastRun).ToRepr());
+    Assert.Equal("[[] a R<int>[2 R<int>[3 5 +] +]]", Run("[[2 3 a 5 + +]]"));
+    Assert.Equal("[[2 3 5 + + a]]", ReorderInterpreter.RunReorderPost(lastRun).ToRepr());
+    Assert.Equal("[[] R<int>[3 5 +]]", Run("[[3 5 + +]]"));
+    Assert.Equal("[[3 5 +]]", ReorderInterpreter.RunReorderPost(lastRun).ToRepr());
   }
 
   // [Fact]

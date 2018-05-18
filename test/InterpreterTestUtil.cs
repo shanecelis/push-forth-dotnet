@@ -8,28 +8,39 @@ using SeawispHunter.PushForth;
 namespace SeawispHunter.PushForth {
 
 public class InterpreterTestUtil {
-  protected Interpreter interpreter;
+  protected StrictInterpreter interpreter;
+  protected Interpreter nonstrictInterpreter;
+  protected StrictInterpreter strictInterpreter;
+  protected ReorderInterpreter reorderInterpreter;
+  protected StrictInterpreter cleanInterpreter;
+  protected Stack lastRun;
+  protected Stack lastEval;
   public InterpreterTestUtil() {
-    interpreter = new Interpreter(false);
+    nonstrictInterpreter = new Interpreter();
+    strictInterpreter = new StrictInterpreter();
+    reorderInterpreter = new ReorderInterpreter();
+    cleanInterpreter = new StrictInterpreter();
+    cleanInterpreter.instructions.Clear();
+    interpreter = nonstrictInterpreter;
     UniqueVariable.Clear();
   }
   public string Run(string code) {
     var d0 = Interpreter.ParseString(code);
-    var d1 = interpreter.Run(d0);
+    var d1 = lastRun = interpreter.Run(d0);
     // Assert.Equal(Interpreter.ParseString("[[[1 +] [[1 +] while] i] 0]"), d1);
     return interpreter.StackToString(d1);
   }
 
   public string Reorder(string code) {
     var d0 = Interpreter.ParseString(code);
-    var d1 = interpreter.Reorder(d0);
+    var d1 = reorderInterpreter.Reorder(d0);
     // Assert.Equal(Interpreter.ParseString("[[[1 +] [[1 +] while] i] 0]"), d1);
     return interpreter.StackToString(d1);
   }
 
   public string Eval(string code) {
     var d0 = Interpreter.ParseString(code);
-    var d1 = interpreter.Eval(d0);
+    var d1 = lastEval = interpreter.Eval(d0);
     // Assert.Equal(Interpreter.ParseString("[[[1 +] [[1 +] while] i] 0]"), d1);
     return interpreter.StackToString(d1);
   }

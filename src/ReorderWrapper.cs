@@ -37,7 +37,10 @@ public class ReorderWrapper : TypedInstruction {
     //   stack.Push(passed);
     var code = new Stack();
     code.Push(o);
-    code.Push(new Symbol(name));
+    if (name != null)
+      code.Push(new Symbol(name));
+    else
+      code.Push(this);
     stack.Push(new Continuation(code));
     return stack;
   }
@@ -80,6 +83,62 @@ public class ReorderWrapper : TypedInstruction {
   public override string ToString() {
     return "[" + string.Join(" ", inputTypes.Select(t => t.PrettyName())) + "] -> "
       + "[" + string.Join(" ", outputTypes.Select(t => t.PrettyName())) + "]";
+  }
+
+
+  class ReorderInstructionFactory : FuncFactory<TypedInstruction> {
+    public FuncFactory<TypedInstruction> innerFactory;
+    public ReorderInstructionFactory(FuncFactory<TypedInstruction> innerFactory) {
+      this.innerFactory = innerFactory;
+    }
+    public TypedInstruction Nullary<X>(Func <X> func) {
+      return new ReorderWrapper(null, innerFactory.Nullary(func));
+    }
+
+    public TypedInstruction Unary<X,Y>(Func <X,Y> func) {
+      return new ReorderWrapper(null, innerFactory.Unary(func));
+    }
+
+    public TypedInstruction Binary<X,Y,Z>(Func <X,Y,Z> func) {
+      return new ReorderWrapper(null, innerFactory.Binary(func));
+    }
+    public TypedInstruction Trinary<X,Y,Z,W>(Func <X,Y,Z,W> func) {
+      return new ReorderWrapper(null, innerFactory.Trinary(func));
+    }
+
+    public TypedInstruction Nullary(Action func) {
+      return new ReorderWrapper(null, innerFactory.Nullary(func));
+    }
+
+    public TypedInstruction Unary<X>(Action<X> func) {
+      return new ReorderWrapper(null, innerFactory.Unary(func));
+    }
+
+    public TypedInstruction Binary<X,Y>(Action<X,Y> func) {
+      return new ReorderWrapper(null, innerFactory.Binary(func));
+    }
+    public TypedInstruction Trinary<X,Y,Z>(Action<X,Y,Z> func) {
+      return new ReorderWrapper(null, innerFactory.Trinary(func));
+    }
+
+    public TypedInstruction Nullary(Action<Stack> func) {
+      return new ReorderWrapper(null, innerFactory.Nullary(func));
+    }
+
+    public TypedInstruction Unary<X>(Action<Stack,X> func) {
+      return new ReorderWrapper(null, innerFactory.Unary(func));
+    }
+
+    public TypedInstruction Binary<X,Y>(Action<Stack,X,Y> func) {
+      return new ReorderWrapper(null, innerFactory.Binary(func));
+    }
+    public TypedInstruction Trinary<X,Y,Z>(Action<Stack,X,Y,Z> func) {
+      return new ReorderWrapper(null, innerFactory.Trinary(func));
+    }
+  }
+
+  public static FuncFactory<TypedInstruction> GetFactory(FuncFactory<TypedInstruction> innerFactory) {
+    return new ReorderInstructionFactory(innerFactory);
   }
 }
 
