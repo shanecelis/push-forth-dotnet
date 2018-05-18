@@ -397,6 +397,11 @@ public static class PushForthExtensions {
     return e.Cast<object>().First();
   }
 
+  // public static Stack Cons(this Stack s, object o) {
+  //   s.Push(o);
+  //   return s;
+  // }
+
   public static IEnumerable Cdr(this IEnumerable e) {
     return e.Cast<object>().Skip(1).CastBack();
   }
