@@ -7,10 +7,6 @@ using System.Reflection;
 using System.Reflection.Emit;
 
 namespace SeawispHunter.PushForth {
-// public abstract class InstructionCompiler : Instruction {
-//   public ILStack ilStack;
-//   public abstract Stack Apply(Stack stack);
-// }
 
 public class CompilationUnit : IReprType {
   Action<ILStack> _emitter;

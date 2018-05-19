@@ -8,10 +8,10 @@ using System.Reflection.Emit;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
-namespace test
-{
-public class CompilerTests
-{
+namespace test {
+
+public class CompilerTests {
+
   Compiler compiler = new Compiler();
   [Fact]
   public void TestCompiling() {

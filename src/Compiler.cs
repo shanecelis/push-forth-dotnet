@@ -28,6 +28,7 @@ public class Compiler : StrictInterpreter {
         ilStack.Pop();
       },
       stack => stack.Peek().GetReprType());
+
     instructions["dup"] = new InstructionCompiler(1, ilStack => {
         // XXX This probably doesn't work well with stacks.
         ilStack.il.Emit(OpCodes.Dup);
@@ -36,8 +37,10 @@ public class Compiler : StrictInterpreter {
         ilStack.types.Push(ilStack.types.Peek());
       },
       stack => stack.Peek().GetReprType());
+
     foreach(var method in typeof(CompilerFunctions).GetMethods())
       instructions[method.Name.ToLower()] = new InstructionCompiler(method);
+
     instructions["swap"] = new InstructionCompiler(2, ilStack => {
         var t1 = ilStack.GetTemp(ilStack.types.Peek());
         ilStack.il.Emit(OpCodes.Stloc, t1.LocalIndex);

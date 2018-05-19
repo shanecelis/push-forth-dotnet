@@ -5,6 +5,10 @@
     with types which we can compile.
   - [X] Compiler
   - [X] Compiler->Stack
+  - [ ] Polymorphic instructions + for int, double, and string
+  - [ ] Make Compiler and Interpreter have the same instructions
+  - [ ] Run a bytecode interpreter (for iOS)
+  - [ ] Make compiler use instruction factory.
 * Features
   - Stack Interpolation "[3 8 {null}]"?
     

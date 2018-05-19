@@ -224,7 +224,8 @@ public class StrictInterpreter : Interpreter {
 public class NonstrictInterpreter : StrictInterpreter {
 
   public NonstrictInterpreter() {
-    this.instructionFactory = ReorderWrapper.GetFactory(StrictInstruction.factory);
+    this.instructionFactory
+      = ReorderWrapper.GetFactory(StrictInstruction.factory);
     isStrict = false;
   }
 }
