@@ -3,13 +3,12 @@ using System.Collections;
 using Xunit;
 using SeawispHunter.PushForth;
 
-namespace test
-{
-public class StrictTests
-{
-  StrictInterpreter interpreter;
+namespace test {
+
+public class StrictTests : InterpreterTestUtil {
+
   public StrictTests() {
-    interpreter = new StrictInterpreter();
+    interpreter = strictInterpreter;
   }
 
   [Fact]
@@ -332,13 +331,6 @@ public class StrictTests
     var d1 = interpreter.Run(d0);
     // Assert.Equal("[[[1 +] [[1 +] while] i] 0]".ToStack(), d1);
     Assert.Equal("[[] 5]", interpreter.StackToString(d1));
-  }
-
-  public string Run(string code) {
-    var d0 = code.ToStack();
-    var d1 = interpreter.Run(d0);
-  // Assert.Equal("[[[1 +] [[1 +] while] i] 0]".ToStack(), d1);
-    return interpreter.StackToString(d1);
   }
 
   [Fact]

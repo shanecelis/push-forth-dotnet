@@ -115,7 +115,6 @@ public class InterpreterTests : InterpreterTestUtil {
     code.Push(new Symbol("add"));
     Assert.Equal("[add a]".ToStack(), code);
 
-    var interpreter = new Interpreter();
     var d0 = "[[2 1 a add]]".ToStack();
     var d1 = interpreter.Eval(d0);
     Assert.Equal("[[1 a add] 2]".ToStack(), d1);
@@ -153,7 +152,6 @@ public class InterpreterTests : InterpreterTestUtil {
   [Fact]
   public void TestSkippingSecondArgWithResolution()
   {
-    var interpreter = new Interpreter();
     var d0 = "[[2 a 1 add]]".ToStack();
     var d1 = interpreter.Eval(d0);
     Assert.Equal("[[a 1 add] 2]".ToStack(), d1);

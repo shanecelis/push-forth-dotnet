@@ -25,6 +25,34 @@ public class InterpreterTestUtil {
     typeInterpreter = new TypeInterpreter();
     cleanInterpreter.instructions.Clear();
     interpreter = nonstrictInterpreter;
+
+    // With InstructionFunc you have to do all your own error handling.
+    interpreter.instructions["add"]
+      = strictInterpreter.instructions["add"]
+      = new InstructionFunc(stack => {
+        if (stack.Count < 2)
+          return stack;
+        object a, b;
+        a = stack.Pop();
+        if (! (a is int)) {
+          var code = new Stack();
+          code.Push(a);
+          code.Push(new Symbol("add"));
+          stack.Push(new Continuation(code));
+          return stack;
+        }
+        b = stack.Pop();
+        if (! (b is int)) {
+          var code = new Stack();
+          code.Push(b);
+          code.Push(new Symbol("add"));
+          stack.Push(a);
+          stack.Push(new Continuation(code));
+          return stack;
+        }
+        stack.Push((int) a + (int) b);
+        return stack;
+      });
   }
   public string Run(string code) {
     var d0 = code.ToStack();

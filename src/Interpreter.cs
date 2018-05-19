@@ -144,31 +144,6 @@ public class StrictInterpreter {
     AddInstruction("-", (int a, int b) => a - b);
     AddInstruction("+", (int a, int b) => a + b);
     AddInstruction("negate", (int a) => -a);
-    // With InstructionFunc you have to do all your own error handling.
-    instructions["add"] = new InstructionFunc(stack => {
-        if (stack.Count < 2)
-          return stack;
-        object a, b;
-        a = stack.Pop();
-        if (! (a is int)) {
-          var code = new Stack();
-          code.Push(a);
-          code.Push(new Symbol("add"));
-          stack.Push(new Continuation(code));
-          return stack;
-        }
-        b = stack.Pop();
-        if (! (b is int)) {
-          var code = new Stack();
-          code.Push(b);
-          code.Push(new Symbol("add"));
-          stack.Push(a);
-          stack.Push(new Continuation(code));
-          return stack;
-        }
-        stack.Push((int) a + (int) b);
-        return stack;
-      });
     // instructions["while"] = new InstructionFunc(stack => {
     //     if (stack.Count >= 3) {
     //       object x = stack.Pop();
