@@ -13,6 +13,7 @@ public class InterpreterTestUtil {
   protected StrictInterpreter strictInterpreter;
   protected ReorderInterpreter reorderInterpreter;
   protected StrictInterpreter cleanInterpreter;
+  protected TypeInterpreter typeInterpreter;
   protected Stack lastRun;
   protected Stack lastEval;
   public InterpreterTestUtil() {
@@ -21,6 +22,7 @@ public class InterpreterTestUtil {
     strictInterpreter = new StrictInterpreter();
     reorderInterpreter = new ReorderInterpreter();
     cleanInterpreter = new StrictInterpreter();
+    typeInterpreter = new TypeInterpreter();
     cleanInterpreter.instructions.Clear();
     interpreter = nonstrictInterpreter;
   }

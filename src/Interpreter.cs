@@ -59,8 +59,8 @@ public class StrictInterpreter {
   }
 
   public Dictionary<string, Instruction> _instructions = null;
-  // XXX a FuncFactory<TypedInstruction> can't convert to a TypedInstructionFactory but
-  // it can go the other way.
+  // XXX a FuncFactory<TypedInstruction> can't convert to a
+  // TypedInstructionFactory but it can go the other way.
   public FuncFactory<TypedInstruction> instructionFactory = StrictInstruction.factory;
 
   public StrictInterpreter() { }

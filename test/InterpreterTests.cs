@@ -784,8 +784,7 @@ public class InterpreterTests : InterpreterTestUtil {
     interpreter = reorderInterpreter;
     var s = "[[if typeof(int)]]";
     var _if
-      = new DetermineTypesInstruction("if",
-                                      "[bool 'a 'a]",
+      = new DetermineTypesInstruction("[bool 'a 'a]",
                                       "['a]")
     { getType = o => o is Type t ? t : o.GetType() };
     interpreter.instructions["if"] = _if;
@@ -798,13 +797,11 @@ public class InterpreterTests : InterpreterTestUtil {
     UniqueVariable.Clear();
     var s = "[[if typeof(int) + typeof(char)]]".ToStack();
     var _if
-      = new DetermineTypesInstruction("if",
-                                  "[bool 'a 'a]",
+      = new DetermineTypesInstruction("[bool 'a 'a]",
                                   "['a]")
       { getType = o => o is Type t ? t : o.GetType() };
     var add
-      = new DetermineTypesInstruction("+",
-                                  "[int int]",
+      = new DetermineTypesInstruction("[int int]",
                                   "[int]")
       { getType = o => o is Type t ? t : o.GetType() };
     interpreter.instructions["if"] = _if;
@@ -813,7 +810,7 @@ public class InterpreterTests : InterpreterTestUtil {
     var s2 = interpreter.Run(s);
     Assert.Equal("[[] char int { a0 -> int } ['a0 'a0 bool]]", s2.ToRepr());
     s2.Pop();
-    var (consumes, produces) = DetermineTypesInstruction.ConsumesAndProduces(s2);
+    var (consumes, produces) = TypeInterpreter.ConsumesAndProduces(s2);
     Assert.Equal("[bool int int]", consumes.ToRepr());
     Assert.Equal("[int char]", produces.ToRepr());
   }
@@ -824,15 +821,14 @@ public class InterpreterTests : InterpreterTestUtil {
     UniqueVariable.Clear();
     var s = "[[typeof(int) dup]]";
     var dup
-      = new DetermineTypesInstruction("dup",
-                                  "['a]",
-                                  "['a 'a]")
+      = new DetermineTypesInstruction("['a]",
+                                      "['a 'a]")
       { getType = o => o is Type t ? t : o.GetType() };
     interpreter.instructions["dup"] = dup;
     Assert.Equal("[[] 'a0 'a0 { a0 -> int }]", Run(s));
     var s2 = lastRun;
     s2.Pop();
-    var (consumes, produces) = DetermineTypesInstruction.ConsumesAndProduces(s2);
+    var (consumes, produces) = TypeInterpreter.ConsumesAndProduces(s2);
     Assert.Equal("[]", consumes.ToRepr());
     Assert.Equal("[int int]", produces.ToRepr());
   }
@@ -843,15 +839,14 @@ public class InterpreterTests : InterpreterTestUtil {
     UniqueVariable.Clear();
     var s = "[[typeof(int) dup typeof(char) dup]]";
     var dup
-      = new DetermineTypesInstruction("dup",
-                                  "['a]",
-                                  "['a 'a]")
+      = new DetermineTypesInstruction("['a]",
+                                      "['a 'a]")
       { getType = o => o is Type t ? t : o.GetType() };
     interpreter.instructions["dup"] = dup;
     Assert.Equal("[[] 'a1 'a1 { a1 -> char } 'a0 'a0 { a0 -> int }]", Run(s));
     var s2 = lastRun;
     s2.Pop();
-    var (consumes, produces) = DetermineTypesInstruction.ConsumesAndProduces(s2);
+    var (consumes, produces) = TypeInterpreter.ConsumesAndProduces(s2);
     Assert.Equal("[]", consumes.ToRepr());
     Assert.Equal("[int int char char]", produces.ToRepr());
   }
@@ -862,15 +857,14 @@ public class InterpreterTests : InterpreterTestUtil {
     UniqueVariable.Clear();
     var s = "[[dup typeof(char) dup]]";
     var dup
-      = new DetermineTypesInstruction("dup",
-                                  "['a]",
-                                  "['a 'a]")
+      = new DetermineTypesInstruction("['a]",
+                                      "['a 'a]")
       { getType = o => o is Type t ? t : o.GetType() };
     interpreter.instructions["dup"] = dup;
     Assert.Equal("[[] 'a1 'a1 { a1 -> char } 'a0 'a0 ['a0]]", Run(s));
     var s2 = lastRun;
     s2.Pop();
-    var (consumes, produces) = DetermineTypesInstruction.ConsumesAndProduces(s2);
+    var (consumes, produces) = TypeInterpreter.ConsumesAndProduces(s2);
     Assert.Equal("['a0]", consumes.ToRepr());
     Assert.Equal("['a0 'a0 char char]", produces.ToRepr());
   }
@@ -881,15 +875,14 @@ public class InterpreterTests : InterpreterTestUtil {
     UniqueVariable.Clear();
     var s = "[[dup typeof(char) dup]]";
     var dup
-      = new DetermineTypesInstruction("dup",
-                                      "['a]",
+      = new DetermineTypesInstruction("['a]",
                                       "['a 'a]")
       { getType = o => o is Type t ? t : o.GetType() };
     interpreter.instructions["dup"] = dup;
     Assert.Equal("[[] 'a1 'a1 { a1 -> char } 'a0 'a0 ['a0]]", Run(s));
     var s2 = lastRun;
     s2.Pop();
-    var (consumes, produces) = DetermineTypesInstruction.ConsumesAndProduces(s2);
+    var (consumes, produces) = TypeInterpreter.ConsumesAndProduces(s2);
     Assert.Equal("['a0]", consumes.ToRepr());
     Assert.Equal("['a0 'a0 char char]", produces.ToRepr());
   }

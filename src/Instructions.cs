@@ -40,18 +40,6 @@ public class InstructionFunc : Instruction {
   }
 }
 
-// XXX This can probably be removed in favor of StrictInstruction.
-public class TypeCheckInstruction : ReorderInstruction {
-  public TypeCheckInstruction(string name,
-                              IEnumerable<Type> consumes,
-                              IEnumerable<Type> produces)
-    : base(name, consumes, produces) { }
-
-  public override Stack TypeMismatch(Stack stack, ICollection passedTypes, object o, Type consume) {
-    throw new Exception($"Type check instruction {name} expected type {consume} but got {o}");
-  }
-}
-
 public class ReorderInstruction : ReorderWrapper {
 
   public bool leaveReorderItems = true;
@@ -81,7 +69,17 @@ public class ReorderInstruction : ReorderWrapper {
       = new InstructionFunc(stack =>
                             this.instruction.Apply(stack));
   }
+}
 
+public class TypeCheckInstruction : ReorderInstruction {
+  public TypeCheckInstruction(string name,
+                              IEnumerable<Type> consumes,
+                              IEnumerable<Type> produces)
+    : base(name, consumes, produces) { }
+
+  public override Stack TypeMismatch(Stack stack, ICollection passedTypes, object o, Type consume) {
+    throw new Exception($"Type check instruction {name} expected type {consume} but got {o}");
+  }
 }
 
 }

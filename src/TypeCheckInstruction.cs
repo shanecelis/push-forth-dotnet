@@ -103,23 +103,22 @@ public class DetermineTypesInstruction : TypedInstruction {
   public IEnumerable<Type> outputTypes => produces;
   public readonly IEnumerable<Type> consumes;
   public readonly IEnumerable<Type> produces;
-  public readonly string name;
   public Func<object, Type> getType = o => o is IReprType d ? d.type : o.GetType();
 
-  public DetermineTypesInstruction(string name,
-                               IEnumerable<Type> consumes,
-                               IEnumerable<Type> produces) {
-    this.name = name;
+  public DetermineTypesInstruction(IEnumerable<Type> consumes,
+                                   IEnumerable<Type> produces) {
+    // this.name = name;
     this.consumes = consumes;
     this.produces = produces;
   }
 
-  public DetermineTypesInstruction(string name,
-                               string consumes,
-                               string produces)
-    : this(name,
-           StackParser.ParseTypeSignature3(consumes),
+  public DetermineTypesInstruction(string consumes,
+                                   string produces)
+    : this(StackParser.ParseTypeSignature3(consumes),
            StackParser.ParseTypeSignature3(produces)) { }
+
+  public DetermineTypesInstruction(TypedInstruction instruction)
+    : this(instruction.inputTypes, instruction.outputTypes) { }
 
   public Stack Apply(Stack stack) {
     // var consumeStack = (Stack) stack.Pop();
@@ -145,7 +144,7 @@ public class DetermineTypesInstruction : TypedInstruction {
             var w2 = uniqVars.GetOrCreate(w, x => x.MakeUnique());
             stack.Push(new Dictionary<string, object>() { { w2.name, type } });
           } else {
-            throw new Exception($"Type check instruction {name} expected type {type} but got {o}");
+            throw new Exception($"Type check instruction expected type {type} but got {o}");
           }
         // } else if (consume is Variable v) {
         } else {
@@ -204,29 +203,6 @@ public class DetermineTypesInstruction : TypedInstruction {
     }
     // stack.Push(produceStack);
     return stack;
-  }
-
-  /* Take the output from a bunch of TypeCheckInstruction3s and create a list of
-     what the program consumes and what it produces.
-   */
-  public static (Stack, Stack) ConsumesAndProduces(Stack stack) {
-    var consumeStack = new Stack();
-    var producesStack = new Stack();
-    var bindings = new Dictionary<string, object>();
-    while (stack.Any()) {
-      object o = stack.Pop();
-      if (o is Stack consumes) {
-        consumeStack = Interpreter.Append(consumes, consumeStack);
-      } else if (o is Dictionary<string, object> d) {
-        foreach(var kv in d)
-          bindings.Add(kv.Key, kv.Value);
-      } else {
-        producesStack.Push(o);
-      }
-    }
-    consumeStack = ((IEnumerable) Unifier.Substitute(bindings, consumeStack)).ToStack();
-    producesStack = ((IEnumerable) Unifier.Substitute(bindings, producesStack)).ToStack();
-    return (consumeStack, new Stack(producesStack));
   }
 
   private static string CellToString(object o) {
