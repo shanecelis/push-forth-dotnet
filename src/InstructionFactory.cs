@@ -1,9 +1,20 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace SeawispHunter.PushForth {
 
 public interface FuncFactory<out T> {
+  // These are just naked stack handlers.
+  // Hmm... These are the only things I really need.
+  T Operation(Func<Stack, Stack> func,
+              IEnumerable<Type> inputTypes,
+              IEnumerable<Type> outputTypes);
+
+  T Operation(Action<Stack> action,
+              IEnumerable<Type> inputTypes,
+              IEnumerable<Type> outputTypes);
+
   T Nullary<X>(Func<X> func);
   T Unary<X,Y>(Func<X,Y> func);
   T Binary<X,Y,Z>(Func<X,Y,Z> func);
@@ -32,6 +43,15 @@ public class FuncFactoryAdapter<S,T> : FuncFactory<T> {
     this.factory = factory;
     this.converter = converter;
   }
+
+  public T Operation(Func<Stack,Stack> func,
+                     IEnumerable<Type> inputTypes,
+                     IEnumerable<Type> outputTypes)
+    => converter(factory.Operation(func, inputTypes, outputTypes));
+  public T Operation(Action<Stack> action,
+                     IEnumerable<Type> inputTypes,
+                     IEnumerable<Type> outputTypes)
+    => converter(factory.Operation(action, inputTypes, outputTypes));
 
   public T Nullary<X>(Func<X> func) => converter(factory.Nullary(func));
   public T Unary<X,Y>(Func<X,Y> func) => converter(factory.Unary(func));

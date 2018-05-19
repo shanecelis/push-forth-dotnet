@@ -66,8 +66,10 @@ public class ReorderWrapper : TypedInstruction {
       object o = stack.Pop();
       var t = getType(o);
       // if (t == consume) {
-      if (consume == typeof(Variable)) {
+      if (Variable.IsVariableType(consume)) {
         // XXX What is going on here?
+        // We accept it. But we should track that it now means this type
+        // and fail it it changes.
         acceptedArguments.Push(o);
       } else if (consume.IsAssignableFrom(t)) {
         acceptedArguments.Push(o);
@@ -93,6 +95,22 @@ public class ReorderWrapper : TypedInstruction {
     public FuncFactory<TypedInstruction> innerFactory;
     public ReorderInstructionFactory(FuncFactory<TypedInstruction> innerFactory) {
       this.innerFactory = innerFactory;
+    }
+
+    public TypedInstruction Operation(Func<Stack, Stack> func,
+                                      IEnumerable<Type> inputTypes,
+                                      IEnumerable<Type> outputTypes) {
+      return new ReorderWrapper(null, innerFactory.Operation(func,
+                                                             inputTypes,
+                                                             outputTypes));
+    }
+
+    public TypedInstruction Operation(Action<Stack> action,
+                                      IEnumerable<Type> inputTypes,
+                                      IEnumerable<Type> outputTypes) {
+      return new ReorderWrapper(null, innerFactory.Operation(action,
+                                                             inputTypes,
+                                                             outputTypes));
     }
     public TypedInstruction Nullary<X>(Func <X> func) {
       return new ReorderWrapper(null, innerFactory.Nullary(func));

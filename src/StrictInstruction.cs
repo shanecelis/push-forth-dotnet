@@ -28,6 +28,25 @@ public class StrictInstruction : TypedInstruction {
   }
 
   class StrictInstructionFactory : FuncFactory<TypedInstruction> {
+
+    public TypedInstruction Operation(Func <Stack, Stack> func,
+                                      IEnumerable<Type> inputTypes,
+                                      IEnumerable<Type> outputTypes) {
+      return new StrictInstruction((stack) => {
+          var result = func(stack);
+          // We're dropping the result.  Hope it didn't have anything.
+          // and it's just stack is being mutated.
+        }) { _inputTypes = inputTypes, _outputTypes = outputTypes };
+    }
+
+    public TypedInstruction Operation(Action<Stack> action,
+                                      IEnumerable<Type> inputTypes,
+                                      IEnumerable<Type> outputTypes) {
+      return new StrictInstruction((stack) => {
+          action(stack);
+        }) { _inputTypes = inputTypes, _outputTypes = outputTypes };
+    }
+
     public TypedInstruction Nullary<X>(Func <X> func) {
       return new StrictInstruction((stack) => {
           stack.Push(func());

@@ -104,14 +104,16 @@ public class StrictInterpreter {
           stack.Pop();
         return stack;
       });
-    instructions["pop"] = new InstructionFunc(stack => {
+    instructions["pop"] = instructionFactory.Operation(stack => {
         if (isStrict || stack.Any())
           stack.Pop();
-      });
-    instructions["dup"] = new InstructionFunc(stack => {
+      }, new Type[] { typeof(Variable.A) }, Type.EmptyTypes);
+    instructions["dup"] = instructionFactory.Operation(stack => {
         if (isStrict || stack.Any())
           stack.Push(Duplicate(stack.Peek()));
-      });
+      },
+      new [] { typeof(Variable.A) },
+      new [] { typeof(Variable.A), typeof(Variable.A) });
     instructions["swap"] = new InstructionFunc(stack => {
         if (isStrict || stack.Count >= 2) {
           var a = stack.Pop();

@@ -7,9 +7,17 @@ namespace SeawispHunter.PushForth {
 
 public class TypeInterpreter : StrictInterpreter {
 
-  public TypeInterpreter() {
+  public TypeInterpreter(bool useNakedTypes = true) {
+    if (useNakedTypes) {
+      this.instructionFactory
+        = StrictInstruction.factory
+        .Compose(i => (TypedInstruction) new DetermineTypesInstruction(i)
+            { getType = o => o is Type t ? t : o.GetType() });
+    } else {
     this.instructionFactory
-      = StrictInstruction.factory.Compose(i => (TypedInstruction) new DetermineTypesInstruction(i));
+      = StrictInstruction.factory
+      .Compose(i => (TypedInstruction) new DetermineTypesInstruction(i));
+    }
   }
 
   /** Take the output from a bunch of DetermineTypeInstructions and create a
