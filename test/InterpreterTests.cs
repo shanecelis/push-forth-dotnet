@@ -630,6 +630,40 @@ public class InterpreterTests : InterpreterTestUtil {
   }
 
   [Fact]
+  public void TestTypeCheckWithoutReorder3() {
+    interpreter = cleanInterpreter;
+    var s = "[[1 1.0 +]]".ToStack();
+    var typedS = s.Map(o => o.GetType());
+    Assert.Equal("[[int double Symbol]]", typedS.ToRepr());
+    var typedS2 = s.Map(o => {
+        if (o is Symbol)
+          return o;
+        else
+          return o.GetType();
+      });
+    Assert.Equal("[[int double +]]", typedS2.ToRepr());
+    interpreter.instructions["+"] = new TypeCheckInstruction("+",
+                                                             "['a 'a]",
+                                                             "['a]")
+                                                             // new [] { typeof(int), typeof(int) },
+                                                             // new [] { typeof(int) })
+    { getType = o => o is Type t ? t : o.GetType(),
+      putType = t => t,
+      leaveReorderItems = false };
+    var e2 = interpreter
+      .EvalStream(typedS2)
+      .Select(x => x.ToPivot())
+      .GetEnumerator();
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[+ double • int]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[+ • double int]", e2.Current);
+    Assert.Throws<Exception>(() => e2.MoveNext());
+    // Assert.Equal("[• int]", e2.Current);
+    // Assert.False(e2.MoveNext());
+  }
+
+  [Fact]
   public void TestTypeCheckNoReorderUnify() {
     interpreter = strictInterpreter;
     var s = "[[1 1 true if]]".ToStack();
@@ -639,9 +673,9 @@ public class InterpreterTests : InterpreterTestUtil {
     Assert.Equal("[[int int bool if]]", typedS2.ToRepr());
     // var a = new Variable("a");
     interpreter.instructions["if"]
-      = new TypeCheckInstruction2("if",
-                                  "[bool 'a 'a]",
-                                  "['a]")
+      = new TypeCheckInstruction("if",
+                                 "[bool 'a 'a]",
+                                 "['a]")
                                   // new object[] { typeof(bool), a, a },
                                   // new TypeOrVariable[] { a })
     { getType = o => o is Type t ? t : o.GetType(),

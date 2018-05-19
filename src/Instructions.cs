@@ -69,6 +69,33 @@ public class ReorderInstruction : ReorderWrapper {
       = new InstructionFunc(stack =>
                             this.instruction.Apply(stack));
   }
+
+  public override Stack Apply(Stack stack) {
+    stack = base.Apply(stack);
+    if (outputTypes.Any(t => Variable.IsVariableType(t))) {
+      var temp = new Stack();
+      int count = outputTypes.Count();
+      for (int i = 0; i < count; i++) {
+        object o = stack.Pop();
+        if (o is Type t && Variable.IsVariableType(t)) {
+
+          var v = Variable.Instantiate(t);
+          if (lastBinding.TryGetValue(v.name, out Type vType)) {
+            temp.Push(vType);
+          } else {
+            // No idea what the type should be.
+            temp.Push(o);
+          }
+        } else {
+          temp.Push(o);
+        }
+      }
+
+      for (int j = 0; j < count; j++)
+        stack.Push(temp.Pop());
+    }
+    return stack;
+  }
 }
 
 public class TypeCheckInstruction : ReorderInstruction {
@@ -76,6 +103,11 @@ public class TypeCheckInstruction : ReorderInstruction {
                               IEnumerable<Type> consumes,
                               IEnumerable<Type> produces)
     : base(name, consumes, produces) { }
+
+  public TypeCheckInstruction(string name,
+                              string consumes,
+                              string produces)
+    : base(name, StackParser.ParseTypeSignature3(consumes), StackParser.ParseTypeSignature3(produces)) { }
 
   public override Stack TypeMismatch(Stack stack, ICollection passedTypes, object o, Type consume) {
     throw new Exception($"Type check instruction {name} expected type {consume} but got {o}");

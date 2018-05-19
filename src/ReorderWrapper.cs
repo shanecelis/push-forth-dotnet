@@ -16,6 +16,7 @@ public class ReorderWrapper : TypedInstruction {
   public Func<object, Type> getType = o => o is IReprType d ? d.type : o.GetType();
   public Func<Type, object> putType = o => new Dummy(o);
   protected Instruction innerInstruction;
+  protected Dictionary<string, Type> lastBinding = null;
   public ReorderWrapper(string name,
                         TypedInstruction innerInstruction)
     : this(name,
@@ -55,8 +56,9 @@ public class ReorderWrapper : TypedInstruction {
     return stack;
   }
 
-  public Stack Apply(Stack stack) {
+  public virtual Stack Apply(Stack stack) {
     var acceptedArguments = new Stack();
+    var binding = lastBinding = new Dictionary<string, Type>();
     foreach(Type consume in inputTypes) {
       if (! stack.Any()) {
         // Not enough elements.
@@ -65,16 +67,25 @@ public class ReorderWrapper : TypedInstruction {
 
       object o = stack.Pop();
       var t = getType(o);
+      Type consumeType = consume;
       // if (t == consume) {
       if (Variable.IsVariableType(consume)) {
         // XXX What is going on here?
         // We accept it. But we should track that it now means this type
         // and fail it it changes.
-        acceptedArguments.Push(o);
-      } else if (consume.IsAssignableFrom(t)) {
+        var v = Variable.Instantiate(consume);
+        if (binding.TryGetValue(v.name, out Type vType)) {
+          consumeType = vType;
+        } else {
+          binding.Add(v.name, t);
+          consumeType = t;
+        }
+      }
+
+      if (consumeType.IsAssignableFrom(t)) {
         acceptedArguments.Push(o);
       } else {
-        return TypeMismatch(stack, acceptedArguments, o, consume);
+        return TypeMismatch(stack, acceptedArguments, o, consumeType);
       }
     }
 
