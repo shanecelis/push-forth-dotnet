@@ -443,5 +443,13 @@ public static class PushForthExtensions {
         dict.Add(key, val = func(key));
     return val;
   }
+
+  public static object Duplicate(this object o) {
+    if (o is Stack s) {
+      return s.Clone();
+    } else {
+      return o;
+    }
+  }
 }
 }

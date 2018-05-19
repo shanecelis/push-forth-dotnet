@@ -43,7 +43,6 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void Test1() {
-    var interpreter = new Interpreter();
     var c = new Stack();
     c.Push(new Symbol("+"));
     c.Push(1);
@@ -65,9 +64,7 @@ public class InterpreterTests : InterpreterTestUtil {
   }
 
   [Fact]
-  public void TestMissing()
-  {
-    var interpreter = new Interpreter();
+  public void TestMissing() {
     var d0 = "[[+] 1]".ToStack();
     var d1 = interpreter.Eval(d0);
     Assert.Equal("[[] 1]".ToStack(), d1);
@@ -81,7 +78,6 @@ public class InterpreterTests : InterpreterTestUtil {
     code.Push(new Symbol("+"));
     Assert.Equal("[+ a]".ToStack(), code);
 
-    var interpreter = new Interpreter();
     var d0 = "[[2 1 a +]]".ToStack();
     var d1 = interpreter.Eval(d0);
     Assert.Equal("[[1 a +] 2]".ToStack(), d1);
@@ -133,7 +129,6 @@ public class InterpreterTests : InterpreterTestUtil {
   [Fact]
   public void TestSkippingSecondArg()
   {
-    var interpreter = new Interpreter();
     var d0 = "[[2 a 1 +]]".ToStack();
     var d1 = interpreter.Eval(d0);
     Assert.Equal("[[a 1 +] 2]".ToStack(), d1);
@@ -169,7 +164,6 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestArgumentOrder() {
-    var interpreter = new Interpreter();
     var d0 = "[[5 4 minus]]".ToStack();
     var d1 = interpreter.Eval(d0);
     var d2 = interpreter.Eval(d1);
@@ -237,7 +231,6 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestDup() {
-    var interpreter = new Interpreter();
     var d0 = "[[dup] 5]".ToStack();
     var d1 = interpreter.Eval(d0);
     Assert.Equal("[[] 5 5]".ToStack(), d1);
@@ -245,7 +238,6 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestDupNoData() {
-    var interpreter = new Interpreter();
     var d0 = "[[dup]]".ToStack();
     var d1 = interpreter.Eval(d0);
     Assert.Equal("[[]]".ToStack(), d1);
@@ -253,7 +245,6 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestSwap() {
-    var interpreter = new Interpreter();
     var d0 = "[[swap] 1 2]".ToStack();
     var d1 = interpreter.Eval(d0);
     Assert.Equal("[[] 2 1]".ToStack(), d1);
@@ -261,7 +252,6 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestSwapLessData() {
-    var interpreter = new Interpreter();
     var d0 = "[[swap] 2]".ToStack();
     var d1 = interpreter.Eval(d0);
     Assert.Equal("[[] 2]".ToStack(), d1);
@@ -269,7 +259,6 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestICombinatorWithBadArgument() {
-    var interpreter = new Interpreter();
     var d0 = "[[i] 2]".ToStack();
     var d1 = interpreter.Eval(d0);
     Assert.Equal(interpreter.ParseWithResolution("[[i 2]]"), d1);
@@ -277,7 +266,6 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestICombinatorWithStack() {
-    var interpreter = new Interpreter();
     var d0 = "[[i] [1 2 +]]".ToStack();
     var d1 = interpreter.Eval(d0);
     // Assert.Equal("[[1 2 +]]".ToStack(), d1);
@@ -289,7 +277,6 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestCar() {
-    var interpreter = new Interpreter();
     var d0 = "[[car] [2]]".ToStack();
     var d1 = interpreter.Eval(d0);
     Assert.Equal("[[] 2]".ToStack(), d1);
@@ -299,7 +286,6 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestCdr() {
-    var interpreter = new Interpreter();
     var d0 = "[[cdr] [2 5]]".ToStack();
     var d1 = interpreter.Eval(d0);
     Assert.Equal("[[] [5]]".ToStack(), d1);
@@ -307,7 +293,6 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestContinuationProblem() {
-    var interpreter = new Interpreter();
     var d0 = "[[pop] 1 [2 5]]".ToStack();
     var d1 = interpreter.Eval(d0);
     Assert.Equal("[[] [2 5]]".ToStack(), d1);
@@ -315,7 +300,6 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestCat() {
-    var interpreter = new Interpreter();
     var d0 = "[[cat] 1 2]]".ToStack();
     var d1 = interpreter.Eval(d0);
     Assert.Equal("[[] [1 2]]".ToStack(), d1);
@@ -323,7 +307,6 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestSplit() {
-    var interpreter = new Interpreter();
     var d0 = "[[split] [1 2]]]".ToStack();
     var d1 = interpreter.Eval(d0);
     Assert.Equal("[[] 1 2]".ToStack(), d1);
@@ -331,7 +314,6 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestSplitMissingArg() {
-    var interpreter = new Interpreter();
     var d0 = "[[split] 0 [1 2]]]".ToStack();
     var d1 = interpreter.Eval(d0);
     var d2 = interpreter.Eval(d1);
@@ -341,7 +323,6 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestUnit() {
-    var interpreter = new Interpreter();
     var d0 = "[[unit] 0 [1 2]]]".ToStack();
     var d1 = interpreter.Eval(d0);
     Assert.Equal("[[] [0] [1 2]]".ToStack(), d1);
@@ -349,7 +330,6 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestCons() {
-    var interpreter = new Interpreter();
     var d0 = "[[cons] 0 [1 2]]]".ToStack();
     var d1 = interpreter.Eval(d0);
     Assert.Equal("[[] [0 1 2]]".ToStack(), d1);
@@ -357,7 +337,6 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestStackToString() {
-    var interpreter = new Interpreter();
     var d0 = "[[cons] 0 [1 2]]]".ToStack();
     Assert.Equal("[[cons] 0 [1 2]]", interpreter.StackToString(d0));
     Assert.Equal("[[cons] 0 [1 2]]", interpreter.StackToString(d0));
@@ -392,7 +371,6 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestWhile2() {
-    var interpreter = new Interpreter();
     var d0 = "[[while2] [1 + dup 5 >] true 0]".ToStack();
     var d1 = interpreter.Run(d0);
     // Assert.Equal("[[[1 +] [[1 +] while] i] 0]".ToStack(), d1);
@@ -401,7 +379,6 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestWhile3() {
-    var interpreter = new Interpreter();
     var d0 = "[[while3] [1 + dup 5 >] true 0]".ToStack();
     var d1 = interpreter.Run(d0);
     // Assert.Equal("[[[1 +] [[1 +] while] i] 0]".ToStack(), d1);
@@ -432,7 +409,6 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestWhile2False() {
-    var interpreter = new Interpreter();
     var d0 = "[[while2] [1 + dup 5 >] false 0]".ToStack();
     var d1 = interpreter.Run(d0);
     // Assert.Equal("[[[1 +] [[1 +] while] i] 0]".ToStack(), d1);

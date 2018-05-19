@@ -8,20 +8,20 @@ using SeawispHunter.PushForth;
 namespace SeawispHunter.PushForth {
 
 public class InterpreterTestUtil {
-  protected StrictInterpreter interpreter;
-  protected Interpreter nonstrictInterpreter;
+  protected Interpreter interpreter;
+  protected NonstrictInterpreter nonstrictInterpreter;
   protected StrictInterpreter strictInterpreter;
   protected ReorderInterpreter reorderInterpreter;
-  protected StrictInterpreter cleanInterpreter;
+  protected Interpreter cleanInterpreter;
   protected TypeInterpreter typeInterpreter;
   protected Stack lastRun;
   protected Stack lastEval;
   public InterpreterTestUtil() {
     // Maybe I should do these lazily.
-    nonstrictInterpreter = new Interpreter();
+    nonstrictInterpreter = new NonstrictInterpreter();
     strictInterpreter = new StrictInterpreter();
     reorderInterpreter = new ReorderInterpreter();
-    cleanInterpreter = new StrictInterpreter();
+    cleanInterpreter = new Interpreter();
     typeInterpreter = new TypeInterpreter();
     cleanInterpreter.instructions.Clear();
     interpreter = nonstrictInterpreter;
