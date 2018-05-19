@@ -370,10 +370,10 @@ public static class PushForthExtensions {
   public static string ToReprQuasiDynamic(this object v) {
     if (v is Stack s)
       return s.ToRepr();
-    else if (v is IEnumerable e)
-      return e.ToRepr();
     else if (v is IDictionary d)
       return d.ToRepr();
+    else if (v is IEnumerable e)
+      return e.ToRepr();
     else if (v is Type t)
       return t.PrettyName();
     else

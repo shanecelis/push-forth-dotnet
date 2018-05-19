@@ -129,6 +129,7 @@ public class DetermineTypesInstruction : TypedInstruction {
     // XXX I don't really do anything with passedTypes anymore.
     var passedTypes = new Queue();
     var uniqVars = new Dictionary<Variable, Variable>();
+    var bindings = new Dictionary<string, object>();
 
     foreach(Type consume in consumes) {
       if (produceStack.Any()) {
@@ -142,7 +143,8 @@ public class DetermineTypesInstruction : TypedInstruction {
             passedTypes.Enqueue(o);
           } else if (o is Variable w) {
             var w2 = uniqVars.GetOrCreate(w, x => x.MakeUnique());
-            stack.Push(new Dictionary<string, object>() { { w2.name, type } });
+            bindings.Add(w2.name, type);
+            // stack.Push(new Dictionary<string, object>() { { w2.name, type } });
           } else {
             throw new Exception($"Type check instruction expected type {type} but got {o}");
           }
@@ -153,7 +155,8 @@ public class DetermineTypesInstruction : TypedInstruction {
             // var v = (Variable) consume;
           // It's a variable.
             var v2 = uniqVars.GetOrCreate(v, x => x.MakeUnique());
-            stack.Push(new Dictionary<string, object>() { { v2.name, t } });
+            // stack.Push(new Dictionary<string, object>() { { v2.name, t } });
+            bindings.Add(v2.name, t);
           // if (bindings.TryGetValue(v.name, out Type vtype)) {
           //   if (vtype.IsAssignableFrom(t)) {
           //     passedTypes.Enqueue(o);
@@ -181,6 +184,8 @@ public class DetermineTypesInstruction : TypedInstruction {
         }
       }
     }
+    if (bindings.Any())
+      stack.Push(bindings);
     if (consumeStack.Any())
       stack.Push(consumeStack);
     // Everything checks out. Add the types we produced.

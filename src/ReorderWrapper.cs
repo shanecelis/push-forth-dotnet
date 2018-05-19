@@ -90,7 +90,6 @@ public class ReorderWrapper : TypedInstruction {
       + "[" + string.Join(" ", outputTypes.Select(t => t.PrettyName())) + "]";
   }
 
-
   class ReorderInstructionFactory : FuncFactory<TypedInstruction> {
     public FuncFactory<TypedInstruction> innerFactory;
     public ReorderInstructionFactory(FuncFactory<TypedInstruction> innerFactory) {
