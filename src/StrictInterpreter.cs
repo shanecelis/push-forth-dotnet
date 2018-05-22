@@ -218,6 +218,20 @@ public class StrictInterpreter : Interpreter {
           }
         } while (z);
       });
+
+    /*
+      [[do-times] 2 [1 +] 0] -> [[1 + 1 [1 +] do-times]]
+     */
+    AddInstruction("do-times", (Stack stack, int count, Stack body) => {
+        if (count > 0) {
+          var code = new Stack();
+          code.Push(new Symbol("do-times"));
+          code.Push(count - 1);
+          code.Push(body);
+          code = Interpreter.Append(body, code);
+          stack.Push(new Continuation(code));
+        }
+      });
   }
 }
 

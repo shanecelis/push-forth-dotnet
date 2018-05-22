@@ -75,6 +75,10 @@ public class Interpreter {
     AddInstruction(name, instructionFactory.Unary(func));
   }
 
+  public void AddInstruction<X>(string name, Action<X> func) {
+    AddInstruction(name, instructionFactory.Unary(func));
+  }
+
   public void AddInstruction<X,Y>(string name, Func<X,Y> func) {
     AddInstruction(name, instructionFactory.Unary(func));
   }
@@ -87,11 +91,19 @@ public class Interpreter {
     AddInstruction(name, instructionFactory.Binary(func));
   }
 
+  public void AddInstruction<X,Y>(string name, Action<X,Y> func) {
+    AddInstruction(name, instructionFactory.Binary(func));
+  }
+
   public void AddInstruction<X,Y,Z,W>(string name, Func<X,Y,Z,W> func) {
     AddInstruction(name, instructionFactory.Trinary(func));
   }
 
   public void AddInstruction<X,Y,Z>(string name, Action<Stack,X,Y,Z> func) {
+    AddInstruction(name, instructionFactory.Trinary(func));
+  }
+
+  public void AddInstruction<X,Y,Z>(string name, Action<X,Y,Z> func) {
     AddInstruction(name, instructionFactory.Trinary(func));
   }
 

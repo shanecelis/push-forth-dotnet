@@ -786,6 +786,14 @@ public class InterpreterTests : InterpreterTestUtil {
     Assert.Throws<Exception>(() => e2.MoveNext());
   }
 
+  [Fact]
+  public void TestDoTimes() {
+    interpreter = strictInterpreter;
+    Assert.Equal("[[] 0]", Run("[[[1 +] 0 do-times] 0]"));
+    Assert.Equal("[[] 1]", Run("[[[1 +] 1 do-times] 0]"));
+    Assert.Equal("[[] 5]", Run("[[[1 +] 5 do-times] 0]"));
+  }
+
 }
 
 }

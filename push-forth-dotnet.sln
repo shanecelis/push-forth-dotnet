@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "src", "src\src.csproj", "{7E54123F-4470-4C4E-B50A-DA82D0982959}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test", "test\test.csproj", "{3FE69518-FC4F-42A9-830D-8B22A17F63C4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeawispHunter.PushForth", "src\SeawispHunter.PushForth.csproj", "{4FC274A2-4A3C-4E51-B306-5AD07A26FCAE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -44,5 +44,17 @@ Global
 		{3FE69518-FC4F-42A9-830D-8B22A17F63C4}.Release|x64.Build.0 = Release|x64
 		{3FE69518-FC4F-42A9-830D-8B22A17F63C4}.Release|x86.ActiveCfg = Release|x86
 		{3FE69518-FC4F-42A9-830D-8B22A17F63C4}.Release|x86.Build.0 = Release|x86
+		{4FC274A2-4A3C-4E51-B306-5AD07A26FCAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4FC274A2-4A3C-4E51-B306-5AD07A26FCAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4FC274A2-4A3C-4E51-B306-5AD07A26FCAE}.Debug|x64.ActiveCfg = Debug|x64
+		{4FC274A2-4A3C-4E51-B306-5AD07A26FCAE}.Debug|x64.Build.0 = Debug|x64
+		{4FC274A2-4A3C-4E51-B306-5AD07A26FCAE}.Debug|x86.ActiveCfg = Debug|x86
+		{4FC274A2-4A3C-4E51-B306-5AD07A26FCAE}.Debug|x86.Build.0 = Debug|x86
+		{4FC274A2-4A3C-4E51-B306-5AD07A26FCAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4FC274A2-4A3C-4E51-B306-5AD07A26FCAE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4FC274A2-4A3C-4E51-B306-5AD07A26FCAE}.Release|x64.ActiveCfg = Release|x64
+		{4FC274A2-4A3C-4E51-B306-5AD07A26FCAE}.Release|x64.Build.0 = Release|x64
+		{4FC274A2-4A3C-4E51-B306-5AD07A26FCAE}.Release|x86.ActiveCfg = Release|x86
+		{4FC274A2-4A3C-4E51-B306-5AD07A26FCAE}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 EndGlobal
