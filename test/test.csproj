@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\SeawispHunter.PushForth.csproj" />
+    <ProjectReference Include="..\src\PushForth.csproj" />
   </ItemGroup>
 
 </Project>

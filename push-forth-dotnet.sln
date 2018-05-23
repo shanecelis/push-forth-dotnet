@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test", "test\test.csproj", "{3FE69518-FC4F-42A9-830D-8B22A17F63C4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeawispHunter.PushForth", "src\SeawispHunter.PushForth.csproj", "{4FC274A2-4A3C-4E51-B306-5AD07A26FCAE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PushForth", "src\PushForth.csproj", "{4FC274A2-4A3C-4E51-B306-5AD07A26FCAE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
