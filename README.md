@@ -127,15 +127,15 @@ This demonstrates that one can think of a compiler as an interpreter but with a 
 
 Since the compiler is an interpreter, it may be easy to implement a mixed-mode compiler that will interpret everything available to it at compile-time.  It's like having an C++'s `constexpr` but automatic.  For evolving programs that may provide a worthwhile heuristic to consider: How much code does anything with data coming in?
 
-* Conventional Interpretation
+#### Conventional Interpretation
 ```
     [[1 1 +]] -> [[] 2]
 ```
-* Conventional Compilation
+#### Conventional Compilation
 ```
     [[1 1 +]] -> [[] CompilationUnit("ldc.i4 1; ldc.i4 1; add")]
 ```
-* Mixed Interpretation and Compilation
+#### Mixed Interpretation and Compilation
 ```
     [[1 1 +]] -> [[] 2] -> [[] CompilationUnit("ldc.i4 2")]
 ```
