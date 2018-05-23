@@ -794,6 +794,19 @@ public class InterpreterTests : InterpreterTestUtil {
     Assert.Equal("[[] 5]", Run("[[[1 +] 5 do-times] 0]"));
   }
 
+  [Fact]
+  public void TestStackBehavior() {
+    var s = @"[a b c]".ToStack();
+    // Assert.Equal("a", s.Peek());
+    Assert.Equal(new Symbol("a"), s.Peek());
+    Assert.Equal("[a b c]", s.ToRepr());
+    Assert.Equal(new Symbol("a"), s.Pop());
+    // Assert.Equal("a", s.Pop());
+    Assert.Equal("[b c]", s.ToRepr());
+    s.Push(new Symbol("z"));
+    Assert.Equal("[z b c]", s.ToRepr());
+  }
+
 }
 
 }
