@@ -24,6 +24,7 @@ This example works like this.  The evaluator pops "1" off the code stack.  "1" i
 
 In general there is a stack which holds the code and the data.  The top item of the stack is another stack of code.  The rest of the stack is the data.  The evaluator pops off the code stack, then it pops an item off the code stack.  If it's an instruction, it's executed---pulling its arguments from the data stack and pushing its results to the data stack.  If it's not an instruction, it's pushed onto the data stack so it can be used as an argument.  Finally the code stack is pushed back onto the data stack.  Thus one step of evaluation is completed.
 
+
 This form of `[[code stack] data stack]` has some nice properties.
 
 * The entire state of a program can be captured by its stack.  Therefore, it's easy to suspend and resume computations.
@@ -49,6 +50,17 @@ This form of `[[code stack] data stack]` has some nice properties.
 ```
     [[[eval2 dup car empty? not] do-while] [[1 2 -]]] -> [[] [[] -1]]
 ```
+
+Example
+-------
+
+To run the one plus two program, here's how one would set it up.
+
+    Stack program = "[[1 2 +]]".ToStack();
+    var interpreter = new NonstrictInterpreter();
+    program = interpreter.Eval(program); // [[2 +] 1]
+    Stack result = interpreter.Run(program); // [[] 3]
+    Console.WriteLine(result.ToRepr()); // Prints "[[] 3]" 
 
 Interpreters
 ------------
@@ -105,7 +117,6 @@ Dependencies
 * [Sprache](https://github.com/sprache/Sprache) is used for parsing.
 * [xUnit](https://xunit.github.io/docs/getting-started-dotnet-core.html) is used for unit tests.
 * [OneOf](https://github.com/mcintyre321/OneOf) is used for discriminated unions (sum types).  (May have fallen out of use, actually.)
-* netstandard2.0
 
 References
 ----------
