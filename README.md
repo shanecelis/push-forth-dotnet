@@ -32,23 +32,21 @@ This form of `[[code stack] data stack]` has some nice properties.
 * There's no return stack as in Forth.
 
 * It's easy to embed and evaluate other programs within it.
-
 ```
-    [[eval eval eval] [[1 1 +]]]
-    [[eval eval] [[1 +] 1]]
-    [[eval] [[+] 1 1]]
-    [[] [[] 2]]
+[[eval eval eval] [[1 1 +]]]
+[[eval eval] [[1 +] 1]]
+[[eval] [[+] 1 1]]
+[[] [[] 2]]
 ```
 
 * One can write a push-forth interpreter in push-forth.
 ```
-    [[[eval dup car empty? not] do-while] [[1 2 -]]] -> [[] [[] 1]]
+[[[eval dup car empty? not] do-while] [[1 2 -]]] -> [[] [[] 1]]
 ```
 
 * One can write other interpreters in push-forth.
-
 ```
-    [[[eval2 dup car empty? not] do-while] [[1 2 -]]] -> [[] [[] -1]]
+[[[eval2 dup car empty? not] do-while] [[1 2 -]]] -> [[] [[] -1]]
 ```
 
 Building
@@ -142,7 +140,7 @@ Since the compiler is an interpreter, it may be easy to implement a mixed-mode c
     [[1 1 +]] -> [[] 2] -> [[] CompilationUnit("ldc.i4 2")]
 ```
 
-If there is an external argument "x", the mixed-mode compiler cannot "precompute" its value.
+  If there is an external argument "x", the mixed-mode compiler cannot "precompute" its value.
 
     [[1 1 + x +]] -> [[] [2 x +]] -> [[] CompilationUnit("ldc.i4 2; ldarg.0; add")]
 
@@ -154,7 +152,7 @@ Dependencies
 * [Sprache](https://github.com/sprache/Sprache) is used for parsing.
 * [xUnit](https://xunit.github.io/docs/getting-started-dotnet-core.html) is used for unit tests.
 * [OneOf](https://github.com/mcintyre321/OneOf) is used for discriminated unions (sum types).  (May have fallen out of use, actually.)
-* [dotnet toolchain](https://docs.microsoft.com/en-us/dotnet/core/tools/?tabs=netcore2x)
+* [dotnet toolchain](https://docs.microsoft.com/en-us/dotnet/core/tools/?tabs=netcore2x) is used to build and test.
 
 License
 -------
