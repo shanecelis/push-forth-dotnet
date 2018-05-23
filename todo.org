@@ -1,6 +1,5 @@
 * TODO
   - [ ] Predicates
-
     Predicates are out. They can't be cleanly compiled. Let's just stick
     with types which we can compile.
   - [X] Compiler
