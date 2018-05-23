@@ -28,21 +28,34 @@ This form of `[[code stack] data stack]` has some nice properties.
 
 * The entire state of a program can be captured by its stack.  Therefore, it's easy to suspend and resume computations.
 
-* This form makes it easy to embed and evaluate other programs within it.
+* There's no return stack as in Forth.
 
+* It's easy to embed and evaluate other programs within it.
+
+```
     [[eval eval eval] [[1 1 +]]]
     [[eval eval] [[1 +] 1]]
     [[eval] [[+] 1 1]]
     [[] [[] 2]]
+```
 
-* There's no return stack as in Forth.
+* One can write a push-forth interpreter in push-forth.
+```
+    [[[eval dup car empty? not] do-while] [[1 2 -]]] -> [[] [[] 1]]
+```
+
+* One can write other interpreters in push-forth.
+
+```
+    [[[eval2 dup car empty? not] do-while] [[1 2 -]]] -> [[] [[] -1]]
+```
 
 Interpreters
 ------------
 
 There are actually a handful of interpreters in this project.  Most differ only based on their instructions.
 
-The class `Interpreter` is the base class.  It defines the evaluator but does not define any instructions.  It's referred to as the "clean" interpreter within the unit tests.
+The class `Interpreter` is the base interpreter.  It defines the evaluator but does not define any instructions.  It's referred to as the "clean" interpreter within the unit tests.
 
 The `NonstrictInterpreter` is an interpreter that most closely matches Keijzer's description.  Its instructions will be applied most forgivingly such that errors caused by too few arguments on the stack will turn into noops, and wrongly typed arguments will be skipped.
 

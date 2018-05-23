@@ -807,6 +807,11 @@ public class InterpreterTests : InterpreterTestUtil {
     Assert.Equal("[z b c]", s.ToRepr());
   }
 
+  [Fact]
+  public void TestMinus() {
+    Assert.Equal("[[] -1]", Run("[[1 2 -]]"));
+  }
+
 }
 
 }
