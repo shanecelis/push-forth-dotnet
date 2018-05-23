@@ -117,6 +117,12 @@ Dependencies
 * [Sprache](https://github.com/sprache/Sprache) is used for parsing.
 * [xUnit](https://xunit.github.io/docs/getting-started-dotnet-core.html) is used for unit tests.
 * [OneOf](https://github.com/mcintyre321/OneOf) is used for discriminated unions (sum types).  (May have fallen out of use, actually.)
+* [dotnet toolchain](https://docs.microsoft.com/en-us/dotnet/core/tools/?tabs=netcore2x)
+
+License
+-------
+
+This code is licensed under the [MIT License](https://opensource.org/licenses/MIT).
 
 References
 ----------
