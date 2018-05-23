@@ -51,8 +51,13 @@ This form of `[[code stack] data stack]` has some nice properties.
     [[[eval2 dup car empty? not] do-while] [[1 2 -]]] -> [[] [[] -1]]
 ```
 
-Example
--------
+Building
+--------
+
+This project uses the dotnet toolchain.  To build the library run `dotnet build` at the command line.  To run the unit tests, run `dotnet test`.
+
+Example Code
+------------
 
 To run the one plus two program, here's how one would set it up.
 
@@ -61,6 +66,30 @@ To run the one plus two program, here's how one would set it up.
     program = interpreter.Eval(program); // [[2 +] 1]
     Stack result = interpreter.Run(program); // [[] 3]
     Console.WriteLine(result.ToRepr()); // Prints "[[] 3]" 
+    
+REPL
+----
+
+There is a small Read Eval Print Loop (REPL) program one can use to play with the push-forth.  Here's an example of a session:
+
+    $ cd push-forth-dotnet/repl
+    $ dotnet run
+    Welcome to push-forth!
+    > 1
+    [[1]]
+    [[] 1]
+    > 2
+    [[2] 1]
+    [[] 2 1]
+    > +
+    [[+] 2 1]
+    [[] 3]
+    > 1 2 -
+    [[1 2 -] 3]
+    [[2 -] 1 3]
+    [[-] 2 1 3]
+    [[] 1 3]
+
 
 Interpreters
 ------------
@@ -101,15 +130,23 @@ This demonstrates that one can think of a compiler as an interpreter but with a 
 Since the compiler is an interpreter, it may be easy to implement a mixed-mode compiler that will interpret everything available to it at compile-time.  It's like having an C++'s `constexpr` but automatic.  For evolving programs that may provide a worthwhile heuristic to consider: How much code does anything with data coming in?
 
 * Conventional Interpretation
+```
     [[1 1 +]] -> [[] 2]
+```
 * Conventional Compilation
+```
     [[1 1 +]] -> [[] CompilationUnit("ldc.i4 1; ldc.i4 1; add")]
+```
 * Mixed Interpretation and Compilation
+```
     [[1 1 +]] -> [[] 2] -> [[] CompilationUnit("ldc.i4 2")]
+```
 
 If there is an external argument "x", the mixed-mode compiler cannot "precompute" its value.
 
     [[1 1 + x +]] -> [[] [2 x +]] -> [[] CompilationUnit("ldc.i4 2; ldarg.0; add")]
+
+See the `todo.org` file for more details.
 
 Dependencies
 ------------
