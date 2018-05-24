@@ -100,24 +100,32 @@ The `NonstrictInterpreter` is an interpreter that most closely matches Keijzer's
 
 The `StrictInterpreter` is not forgiving.  If there are wrongly typed arguments, exceptions are thrown.  If there are too few arguments, exceptions are thrown.  This interpreter is not intended for genetic programming.
 
-The `ReorderInterpreter` is a special case that takes a program and applies the forgiving approaches of the `NonstrictInterpreter` to produce a new program which may be executed by the `StrictInterpreter`.  This "reordering" is put to good use by La Cava, Helmuth, and Spector in their [2015 paper](https://dl.acm.org/citation.cfm?id=2754763).
+The `ReorderInterpreter` is a special case that takes a program and applies the forgiving approaches of the `NonstrictInterpreter` to produce a new program which may be executed by the `StrictInterpreter`.  This kind of "reordering" is put to good use by La Cava, Helmuth, and Spector in their [2015 paper](https://dl.acm.org/citation.cfm?id=2754763).
 
 Lastly the `TypeInterpreter` takes a program and returns the types it requires as inputs and the types it produces as outputs.
 
 ### Instructions Note
 
-Although the instructions differ between each of these interpreters, they are not wholesale re-implementations.  For instance, the `NonstrictInterpreter` uses the same instructions as the `StrictInterpreter` except they are wrapped with the `ReorderWrapper` class.  It handles too few or wrongly typed arguments in general.
+Although the instructions differ between each of these interpreters, they are not wholesale re-implementations.  For instance, the `NonstrictInterpreter` uses the same instructions as the `StrictInterpreter` except they are wrapped with the `ReorderWrapper` class, which handles too few or wrongly typed arguments in general.
 
 Compiler
 --------
 
 An additional interpreter is called `Compiler`.  It takes a program and generates Intermediate Language (IL) byte-code.  Since the IL virtual machine is stack-based, it can mirror many of push-forth's operations directly as IL instructions.
 
-The compiler only accepts strict programs, so one can use the `ReorderInterpreter` to take a nonstrict program and make it a strict program.
+The compiler only accepts strict programs, but the `ReorderInterpreter` can turn a non-strict program into a strict program.
+
+### Conjecture
+
+Any non-strict program can be made strict by reordering arguments and dropping of instructions.
+
+It may be possible that there is a program where reordering arguments dynamically is required to evaluate it.  If anyone can find such a counter example program, please do.
+
+This reordering can also be used as an optimization
 
 ### Implementation Note
 
-The compiler actually uses the regular push-forth evaluator, but its instructions differ.  It produces `CompilationUnit` objects on the data stack.  Once the program is finished being interpreted, the `CompilationUnit`s left on the data stack are fed an `ILGenerator` to produce IL.
+The compiler uses the same push-forth evaluator, but its instructions differ and constitute a wholesale reimplementation.  It produces `CompilationUnit` objects on the data stack.  Once the program is finished being interpreted, the `CompilationUnit`s left on the data stack are fed an `ILGenerator` to produce IL.
 
     [[1 1 +]] -> [[] CompilationUnit("ldc.i4 1; ldc.i4 1; add")]
 

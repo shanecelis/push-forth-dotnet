@@ -67,8 +67,12 @@ public class InterpreterVsCompiler {
     }
   }
   public InterpreterVsCompiler() {
-    interpreter = new Interpreter();
+    interpreter = new NonstrictInterpreter();
     compiler = new Compiler();
+    // compiledProgram = compiler.Compile(programString.ToStack());
+  }
+  [GlobalSetup]
+  public void GlobalSetup() {
     compiledProgram = compiler.Compile(programString.ToStack());
   }
   Stack Copy(Stack s) {

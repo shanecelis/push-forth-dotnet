@@ -192,7 +192,8 @@ public class Compiler : StrictInterpreter {
     var dynMeth = new DynamicMethod("Program", // + Regex.Replace(s, @"[^0-9]+", ""),
                                     typeof(Stack),
                                     new Type[] {},
-                                    typeof(Compiler).Module);
+                                    typeof(Compiler).Module,
+                                    true);
     ILGenerator il = dynMeth.GetILGenerator(256);
     var ils = new ILStack(il);
     Compile(program, ils, new [] { instructions });
@@ -295,53 +296,6 @@ public class Compiler : StrictInterpreter {
     il.Emit(OpCodes.Ret);
     return (Func<T>) dynMeth.CreateDelegate(typeof(Func<T>));
   }
-
-  // public static bool IsConstant(dynamic e) {
-    
-  // }
-
-//   // https://stackoverflow.com/questions/1396558/how-can-i-implement-the-unification-algorithm-in-a-language-like-java-or-c
-// public static Dictionary<string, object> Unify(dynamic e1, dynamic e2)
-// {
-//     if ((IsConstant(e1) && IsConstant(e2)))
-//     {
-//         if (e1 == e2)
-//             return new Dictionary<string,object>();
-//         throw new Exception("Unification failed");
-//     }
-
-//     if (e1 is string)
-//     {
-//         if (e2 is List && Occurs(e1, e2))
-//             throw new Exception("Cyclical binding");
-//         return new Dictionary<string, object>() { { e1, e2 } };
-//     }
-
-//     if (e2 is string)
-//     {
-//         if (e1 is List && Occurs(e2, e1))
-//             throw new Exception("Cyclical binding");
-//         return new Dictionary<string, object>() { { e2, e1 } };
-//     }
-
-//     if (!(e1 is List) || !(e2 is List))
-//         throw new Exception("Expected either list, string, or constant arguments");
-
-//     if (e1.IsEmpty || e2.IsEmpty)
-//     {
-//         if (!e1.IsEmpty || !e2.IsEmpty)
-//             throw new Exception("Lists are not the same length");
-
-//         return new Dictionary<string, object>(); 
-//     }
-
-//     var b1 = Unify(e1.Head, e2.Head);
-//     var b2 = Unify(Substitute(b1, e1.Tail), Substitute(b1, e2.Tail));
-
-//     foreach (var kv in b2)
-//         b1.Add(kv.Key, kv.Value);
-//     return b1;
-// }
 
 }
 
