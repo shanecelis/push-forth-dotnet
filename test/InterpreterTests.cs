@@ -403,7 +403,7 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestWhile4Post() {
-    Assert.Equal("[[] 2 5]", Run("[[while4 2] [1 + dup 5 >] 0]"));
+    Assert.Equal("[[] 2 5]", Run("[[do-while2 2] [1 + dup 5 >] 0]"));
   }
 
   [Fact]
@@ -429,7 +429,7 @@ public class InterpreterTests : InterpreterTestUtil {
   [Fact]
   public void TestRun() {
     interpreter = strictInterpreter;
-    var d0 = "[[while] [cdr swap 1 + swap] [1 2] 0]".ToStack();
+    var d0 = "[[while-original] [cdr swap 1 + swap] [1 2] 0]".ToStack();
     var d1 = interpreter.Run(d0);
     Assert.Equal("[[] 2]", interpreter.StackToString(d1));
   }
@@ -437,21 +437,21 @@ public class InterpreterTests : InterpreterTestUtil {
   [Fact]
   public void TestWhileRun() {
     interpreter = strictInterpreter;
-    var e2 = interpreter.EvalStream("[[while] [cdr swap 1 + swap] [1 2] 0]".ToStack()).Select(x => interpreter.StackToString(x)).GetEnumerator();
+    var e2 = interpreter.EvalStream("[[while-original] [cdr swap 1 + swap] [1 2] 0]".ToStack()).Select(x => interpreter.StackToString(x)).GetEnumerator();
     Assert.True(e2.MoveNext());
-    Assert.Equal("[[cdr swap 1 + swap [[cdr swap 1 + swap] while] i] [1 2] 0]", e2.Current);
-    Assert.True(e2.MoveNext());
-    Assert.True(e2.MoveNext());
+    Assert.Equal("[[cdr swap 1 + swap [[cdr swap 1 + swap] while-original] i] [1 2] 0]", e2.Current);
     Assert.True(e2.MoveNext());
     Assert.True(e2.MoveNext());
     Assert.True(e2.MoveNext());
-    Assert.Equal("[[[[cdr swap 1 + swap] while] i] [2] 1]", e2.Current);
     Assert.True(e2.MoveNext());
-    Assert.Equal("[[i] [[cdr swap 1 + swap] while] [2] 1]", e2.Current);
     Assert.True(e2.MoveNext());
-    Assert.Equal("[[[cdr swap 1 + swap] while] [2] 1]", e2.Current);
+    Assert.Equal("[[[[cdr swap 1 + swap] while-original] i] [2] 1]", e2.Current);
     Assert.True(e2.MoveNext());
-    Assert.Equal("[[while] [cdr swap 1 + swap] [2] 1]", e2.Current);
+    Assert.Equal("[[i] [[cdr swap 1 + swap] while-original] [2] 1]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[[[cdr swap 1 + swap] while-original] [2] 1]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[[while-original] [cdr swap 1 + swap] [2] 1]", e2.Current);
 
     Assert.True(e2.MoveNext());
     Assert.True(e2.MoveNext());
@@ -462,7 +462,7 @@ public class InterpreterTests : InterpreterTestUtil {
     Assert.True(e2.MoveNext());
     Assert.True(e2.MoveNext());
     Assert.True(e2.MoveNext());
-    Assert.Equal("[[while] [cdr swap 1 + swap] [] 2]", e2.Current);
+    Assert.Equal("[[while-original] [cdr swap 1 + swap] [] 2]", e2.Current);
     Assert.True(e2.MoveNext());
     Assert.Equal("[[] 2]", e2.Current);
     Assert.False(e2.MoveNext());

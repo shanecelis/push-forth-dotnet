@@ -94,7 +94,7 @@ public class InterpreterTestUtil {
 
   public bool IsHalted(string program) {
     var d0 = program.ToStack();
-    var d1 = Interpreter.IsHalted(d0);
+    var d1 = d0.IsHalted();
     return d1;
   }
 }

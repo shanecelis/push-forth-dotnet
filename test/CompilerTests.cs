@@ -477,15 +477,15 @@ public class CompilerTests {
   public void TestGreaterThan() {
     Func<Stack> h;
     h = compiler.Compile("[[>] 1 2 3]]".ToStack());
-    Assert.Equal("[[] True 3]", h().ToRepr());
+    Assert.Equal("[[] true 3]", h().ToRepr());
 
     // http://galileo.phys.virginia.edu/classes/551.jvn.fall01/primer.htm#stacks
     // All right. This is how Forths do it.
     h = compiler.Compile("[[2 3 >]]]".ToStack());
-    Assert.Equal("[[] False]", h().ToRepr());
+    Assert.Equal("[[] false]", h().ToRepr());
 
     h = compiler.Compile("[[2 3 <]]]".ToStack());
-    Assert.Equal("[[] True]", h().ToRepr());
+    Assert.Equal("[[] true]", h().ToRepr());
 
     Assert.Throws<Exception>(() => compiler.Compile("[[a 3 <]]]".ToStack()));
     Assert.Throws<Exception>(() => compiler.Compile("[[3 <]]]".ToStack()));

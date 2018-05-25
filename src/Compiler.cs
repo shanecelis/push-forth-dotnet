@@ -18,7 +18,12 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text.RegularExpressions;
+using System.Security;
 
+// https://stackoverflow.com/questions/13431573/dynamicmethod-is-much-slower-than-compiled-il-function
+// [assembly: AllowPartiallyTrustedCallers]
+// [assembly: SecurityTransparent]
+// [assembly: SecurityRules(SecurityRuleSet.Level2,SkipVerificationInFullTrust=true)]
 // https://social.msdn.microsoft.com/Forums/vstudio/en-US/c79fe8b3-4444-4173-a582-fb2f0ad979a5/systemsecurityverificationexception-operation-could-destabilize-the-runtime-during-code-coverage?forum=clr
 // using System.Security;
 // [assembly: SecurityRules(SecurityRuleSet.Level1, SkipVerificationInFullTrust = true)]
@@ -169,7 +174,7 @@ public class Compiler : StrictInterpreter {
             IEnumerable<Dictionary<string, Instruction>> instructionSets) {
     object code;
     Stack data;
-    while (! Interpreter.IsHalted(program)) {
+    while (! program.IsHalted()) {
       program = Interpreter.Eval(program, instructionSets);
     }
     // Console.WriteLine("Compiled Program " + program.ToRepr());

@@ -13,6 +13,7 @@
 */
 using System.Collections;
 using System.Security.Cryptography;
+using System.Security.Permissions;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 using PushForth;
@@ -44,7 +45,8 @@ public class InterpreterVsCompiler {
 
   public string _programString = "[[]]";
   // public string programString = "[[2 1 +]]";
-  [Params("[[]]", "[[2 1 +]]", "[[2 1 + 2 5 + *]]")]
+  // [Params("[[]]", "[[2 1 +]]", "[[2 1 + 2 5 + *]]")]
+  [Params("[[]]")]
   public string programString {
     get => _programString;
     set {
@@ -80,13 +82,13 @@ public class InterpreterVsCompiler {
     var code = (Stack) s.Peek();
     return new Stack(new [] { code.Clone() });
   }
-  [Benchmark]
+  // [Benchmark]
   public Stack Parse() => programString.ToStack();
 
-  [Benchmark]
+  // [Benchmark]
   public string ToRepr() => program.ToRepr();
 
-  [Benchmark]
+  // [Benchmark]
   public Stack CopyProgram() => Copy(program);
 
   [Benchmark]
@@ -103,7 +105,18 @@ public class InterpreterVsCompiler {
     return f();
   }
 
-  [Benchmark]
+  // [Benchmark]
+  // public Stack CompileAndRunWithPermission() {
+  //   // This'll take more work.
+  //   // https://docs.microsoft.com/en-us/dotnet/framework/reflection-and-codedom/walkthrough-emitting-code-in-partial-trust-scenarios
+  //   var perm = new ReflectionPermission(ReflectionPermissionFlag.MemberAccess);
+  //   perm.Demand();
+  //   perm.Assert();
+  //   var f = compiler.Compile(Copy(program));
+  //   return f();
+  // }
+
+  // [Benchmark]
   public Stack Run() {
     return compiledProgram();
   }

@@ -100,6 +100,14 @@ public class StrictInterpreter : Interpreter {
     AddInstruction("minus", (int a, int b) => a - b);
     AddInstruction("-", (int a, int b) => a - b);
     AddInstruction("+", (int a, int b) => a + b);
+    AddInstruction("*", (int a, int b) => a * b);
+    AddInstruction("/", (int a, int b) => a / b);
+
+    AddInstruction("or", (bool a, bool b) => a || b);
+    AddInstruction("and", (bool a, bool b) => a && b);
+    AddInstruction("not", (bool a) => ! a);
+
+    AddInstruction("empty?", (Stack s) => s.Count == 0);
     AddInstruction("negate", (int a) => -a);
     // instructions["while"] = new InstructionFunc(stack => {
     //     if (stack.Count >= 3) {
@@ -123,13 +131,13 @@ public class StrictInterpreter : Interpreter {
     //     }
     //     return stack;
     //   });
-    AddInstruction("while", (Stack stack, Stack x, Stack z) => {
+    AddInstruction("while-original", (Stack stack, Stack x, Stack z) => {
         if (z.Any()) {
           var code = new Stack();
           code.Push(instructions["i"]);
           // code.Push(new Symbol("i"));
           var subcode = new Stack();
-          subcode.Push(instructions["while"]);
+          subcode.Push(instructions["while-original"]);
           // subcode.Push(new Symbol("while"));
           subcode.Push(x);
           code.Push(subcode);
@@ -196,7 +204,25 @@ public class StrictInterpreter : Interpreter {
         }
       });
 
-    AddInstruction("while4", (Stack stack, Stack x) => {
+
+    AddInstruction("while", (Stack stack, Stack x, bool z) => {
+        if (z) {
+          var code = new Stack();
+          // code.Push(instructions["i"]);
+          code.Push(new Symbol("i"));
+          var subcode = new Stack();
+          // subcode.Push(instructions["while"]);
+          subcode.Push(new Symbol("while"));
+          subcode.Push(x);
+          code.Push(subcode);
+          code = Append(x, code);
+          // code.Push(x);
+          stack.Push(new Continuation(code));
+        }
+      });
+
+
+    AddInstruction("do-while2", (Stack stack, Stack x) => {
         // Let's do it again but with no code re-writing to make it compilable.
         bool z;
         do {

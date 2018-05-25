@@ -41,13 +41,26 @@ This form of `[[code stack] data stack]` has some nice properties.
 
 * One can write a push-forth interpreter in push-forth.
 ```
-[[[eval dup car empty? not] do-while] [[1 2 -]]] -> [[] [[] 1]]
+[[true [eval dup car empty? not] while] [[1 2 -]]] -> [[] [[] 1]]
 ```
 
 * One can write other interpreters in push-forth.
 ```
-[[[eval2 dup car empty? not] do-while] [[1 2 -]]] -> [[] [[] -1]]
+[[true [alt-eval dup car empty? not] while] [[1 2 -]]] -> [[] [[] -1]]
 ```
+
+Notable Omissions
+-----------------
+
+There are few deviations from Keijzer's description. 
+
+### Generalized argument predicates are not supported
+
+Instead of just relying on types, one could use a predicate to enforce type-safety or whatever other constraints.  This is easier done in an interpreter than in a compiler.  At compile-time we know what the types are.  To make the interpreter and compiler compatible, this feature was dropped from the interpreter.
+
+### Polymorphic instructions not implemented yet
+
+Polymorphic instructions, i.e., a "+" instruction that can add integers, floating-point numbers, or strings have not been implemented yet.
 
 Building
 --------

@@ -62,16 +62,8 @@ public static class PushForthExtensions {
       object x = s.Pop();
       if (x is Stack substack)
         ToReprHelper(substack, sb);
-      // else if (x is Instruction i)
-      //   sb.Append(instructions.First(kv => kv.Value == i).Key);
-      else if (x is Type t)
-        sb.Append(t.PrettyName());
-      else if (x is IDictionary d)
-        sb.Append(d.ToRepr());
-      else if (x is string str)
-        sb.Append($"\"{str}\"");
       else
-        sb.Append(x.ToString());
+        sb.Append(x.ToReprQuasiDynamic());
       if (s.Any())
         sb.Append(" ");
     }
@@ -91,14 +83,8 @@ public static class PushForthExtensions {
         ToReprHelper(substack, sb);
       // else if (x is Instruction i)
       //   sb.Append(instructions.First(kv => kv.Value == i).Key);
-      else if (x is Type t)
-        sb.Append(t.PrettyName());
-      else if (x is IDictionary d)
-        sb.Append(d.ToRepr());
-      else if (x is string str)
-        sb.Append($"\"{str}\"");
       else
-        sb.Append(x.ToString());
+        sb.Append(x.ToReprQuasiDynamic());
       sb.Append(" ");
     }
     sb.Append("• ");
@@ -112,14 +98,8 @@ public static class PushForthExtensions {
         ToReprHelper(substack, sb);
       // else if (x is Instruction i)
       //   sb.Append(instructions.First(kv => kv.Value == i).Key);
-      else if (x is Type t)
-        sb.Append(t.PrettyName());
-      else if (x is IDictionary d)
-        sb.Append(d.ToRepr());
-      else if (x is string str)
-        sb.Append($"\"{str}\"");
       else
-        sb.Append(x.ToString());
+        sb.Append(x.ToReprQuasiDynamic());
       if (s.Any())
         sb.Append(" ");
     }
@@ -365,12 +345,6 @@ public static class PushForthExtensions {
       // sb.Append(v.ToRepr());
       object v = kv.Value;
       sb.Append(v.ToReprQuasiDynamic());
-      // if (v is Stack s)
-      //   sb.Append(s.ToRepr());
-      // else if (v is Dictionary<K,V> d)
-      //   sb.Append(d.ToRepr());
-      // else
-      //   sb.Append(v.ToString());
       sb.Append(",");
     }
     if (sb.Length > 1)
@@ -384,13 +358,19 @@ public static class PushForthExtensions {
       return s.ToRepr();
     else if (v is IDictionary d)
       return d.ToRepr();
+    else if (v is string str)
+      return str.ToRepr();
     else if (v is IEnumerable e)
       return e.ToRepr();
     else if (v is Type t)
       return t.PrettyName();
+    else if (v is bool b)
+      return b ? "true" : "false";
     else
       return v.ToString();
   }
+
+  public static string ToRepr(this string str) => $"\"{str}\"";
 
   public static string ToRepr(this IEnumerable e) {
     var sb = new StringBuilder();
@@ -461,6 +441,17 @@ public static class PushForthExtensions {
       return s.Clone();
     } else {
       return o;
+    }
+  }
+
+  public static bool IsHalted(this Stack s) {
+    if (! s.Any())
+      return false;
+    var x = s.Peek();
+    if (x is Stack code) {
+      return ! code.Any();
+    } else {
+      return false;
     }
   }
 }

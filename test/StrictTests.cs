@@ -369,7 +369,7 @@ public class StrictTests : InterpreterTestUtil {
 
   [Fact]
   public void TestRun() {
-    var d0 = "[[while] [cdr swap 1 + swap] [[]] 0]".ToStack();
+    var d0 = "[[while-original] [cdr swap 1 + swap] [[]] 0]".ToStack();
     var d1 = interpreter.Run(d0);
     Assert.Equal("[[] 1]", interpreter.StackToString(d1));
   }

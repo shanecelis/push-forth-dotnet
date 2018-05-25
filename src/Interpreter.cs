@@ -149,7 +149,7 @@ public class Interpreter {
   }
 
   public IEnumerable<Stack> EvalStream(Stack stack) {
-    while (! IsHalted(stack)) {
+    while (! stack.IsHalted()) {
       stack = Eval(stack);
       yield return stack;
     }
@@ -216,24 +216,13 @@ public class Interpreter {
     }
   }
 
-  public static bool IsHalted(Stack s) {
-    if (! s.Any())
-      return false;
-    var x = s.Peek();
-    if (x is Stack code) {
-      return ! code.Any();
-    } else {
-      return false;
-    }
-  }
-
   public Stack Run(Stack s, int maxSteps = -1) {
     int steps = 0;
     if (maxSteps < 0) {
-      while (! IsHalted(s))
+      while (! s.IsHalted())
         s = Eval(s);
     } else {
-      while (! IsHalted(s) && steps++ < maxSteps)
+      while (! s.IsHalted() && steps++ < maxSteps)
         s = Eval(s);
     }
     return s;
