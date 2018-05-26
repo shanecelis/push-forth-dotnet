@@ -41,15 +41,15 @@ This form of `[[code stack] data stack]` has some nice properties.
 
 * One can write a push-forth interpreter in push-forth.
 ```
-[[true [eval dup car empty? not] while] [[1 2 -]]] -> [[] [[] 1]]
+[[true [eval dup car empty? not] while] [[1 2 -]]] -> [[] [[] -1]]
 ```
 
 * One can write other interpreters in push-forth.
 ```
-[[true [alt-eval dup car empty? not] while] [[1 2 -]]] -> [[] [[] -1]]
+[[true [alt-eval dup car empty? not] while] [[1 2 -]]] -> [[] [[] 1]]
 ```
 
-Notable Omissions
+Notable Deviations
 -----------------
 
 There are few deviations from Keijzer's description. 
@@ -58,9 +58,29 @@ There are few deviations from Keijzer's description.
 
 Instead of just relying on types, one could use a predicate to enforce type-safety or whatever other constraints.  This is easier done in an interpreter than in a compiler.  At compile-time we know what the types are.  To make the interpreter and compiler compatible, this feature was dropped from the interpreter.
 
-### Polymorphic instructions not implemented yet
+### Polymorphic instructions not fully implemented yet
 
 Polymorphic instructions, i.e., a "+" instruction that can add integers, floating-point numbers, or strings have not been implemented yet.
+
+### Argument order
+
+Suppose there is a binary-arity function `F(x, y)` that is bound to the instruction `f` in PushForth.  One has to choose whether `[[a b f]]` will evaluate as `F(a, b)` or `F(b, a)`.  There is no _right_ choice.  It is a matter of convention.  This implementation has chosen `F(a, b)`, deviating from Keijzer's presentation but embracing the convention set forth by [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)), [Push3](http://faculty.hampshire.edu/lspector/push3-description.html), and many other stack-based languages.
+
+#### Pivot Notation
+
+<img src="http://www.sciweavers.org/tex2img.php?eq=%5B%5Bc_1%20%5Cldots%20c_n%5D%7E%20d_1%20%5Cldots%20d_m%5D%20%26%5Cequiv%20%5Bc_n%20%5Cldots%20c_1%20%5Ccdot%20d_1%20%5Cldots%20d_m%5D&bc=White&fc=Black&im=jpg&fs=12&ff=arev&edit=0" align="center" border="0" alt="[[c_1 \ldots c_n]~ d_1 \ldots d_m] &\equiv [c_n \ldots c_1 \cdot d_1 \ldots d_m]" width="369" height="18" />
+
+Keijzer's pivot notation emphasizes the order of that data stack, which can make the postfix notation look natural.  For example the program `[+ • "Hello " "World!]` produces `[• "Hello World!"]`.  Without pivot notation the code looks like this `[["World!" "Hello " +]]`, which seems less natural.
+
+Still the pivot notation offers an interesting way of viewing the code and data stack.  However, perhaps if it reversed the order of the data stack instead of the code stack, it may offer a compelling notation that helped illustrate execution.
+
+    [• 1 2 -]
+    [1 • 2 -]
+    [1 2 • -]
+    [-1 •]
+    
+One reason to prefer reversing the data stack is it can be considered an artifact of execution.  One would never "see" the data stack while programming Forth only the code stack.  This is less important for a genetic programming language since it's not intended to be written by hand.  However, there is an argument to be made for readability since one may want to analyze a program found by a genetic algorithm.
+
 
 Building
 --------
