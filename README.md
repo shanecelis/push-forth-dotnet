@@ -71,11 +71,9 @@ Suppose there is a binary-arity function `F(x, y)` that is bound to the instruct
 
 Keijzer's pivot notation emphasizes the order of the data stack.  For example the program `[+ • "Hello " "World!]` evaluates to `[• "Hello World!"]`.  Without pivot notation the code looks less natural `[["World!" "Hello " +]]`.  However, this emphasis of the data stack requires breaking the argument order convention.  The pivot travels left to right and [it can cause confusion](https://github.com/Vaguery/pushforth-ruby).
 
-Still the pivot notation offers an interesting way of viewing the code and data stack.  However, perhaps if it reversed the order of the data stack instead of the code stack, it may offer a compelling notation that helped illustrate execution.
+Still the pivot notation offers an interesting way of viewing the code and data stack.  However, perhaps if it reversed the order of the data stack instead of the code stack, it may offer a compelling notation that helped illustrate execution.  Let's introduce a different pivot character for clarity: a '▢' instead of a '•'.
 
 <img src="http://www.sciweavers.org/tex2img.php?eq=%5B%5Bc_1%20%5Cldots%20c_n%5D%7E%20d_1%20%5Cldots%20d_m%5D%20%26%5Cequiv%26%20%5Bd_m%20%5Cldots%20d_1%20%7E%5CBox%7E%20%20c_1%20%5Cldots%20c_m%5D%20%5C%5C%0A%5Cbig%5B%5Cbig%5B%5Cbig%5D%20d_1%20%5Cldots%20d_m%20%5Cbig%5D%20%26%5Cequiv%26%20%5Bd_m%20%5Cldots%20d_1%7E%5CBox%5D%20%0A&bc=White&fc=Black&im=png&fs=12&ff=arev&edit=0" align="center" border="0" alt="[[c_1 \ldots c_n]~ d_1 \ldots d_m] &\equiv& [d_m \ldots d_1 ~\Box~  c_1 \ldots c_m] \\\big[\big[\big] d_1 \ldots d_m \big] &\equiv& [d_m \ldots d_1~\Box] " width="394" height="43" />
-
-<img src="http://www.sciweavers.org/tex2img.php?eq=%5B%5Bc_1%20%5Cldots%20c_n%5D%7E%20d_1%20%5Cldots%20d_m%5D%20%26%5Cequiv%26%20%5Bd_m%20%5Cldots%20d_1%20%5Ccdot%20c_1%20%5Cldots%20c_m%5D%20%5C%5C%0A%5Cbig%5B%5Cbig%5B%5Cbig%5D%20d_1%20%5Cldots%20d_m%20%5Cbig%5D%20%26%5Cequiv%26%20%5Bd_m%20%5Cldots%20d_1%20%5Ccdot%5D%20%0A&bc=White&fc=Black&im=png&fs=12&ff=arev&edit=0" align="center" border="0" alt="[[c_1 \ldots c_n]~ d_1 \ldots d_m] &\equiv& [d_m \ldots d_1 \cdot c_1 \ldots c_m] \\\big[\big[\big] d_1 \ldots d_m \big] &\equiv& [d_m \ldots d_1 \cdot] " width="383" height="43" />
 
     [▢ 1 2 -]
     [1 ▢ 2 -]
@@ -84,8 +82,7 @@ Still the pivot notation offers an interesting way of viewing the code and data 
 
 Here the pivot travels left-to-right. The data stack is reversed.  The code stack order is preserved.  And the argument order convention is respected.
 
-One reason to prefer reversing the data stack is it can be considered an artifact of execution.  One would never "see" the data stack while programming Forth only the code stack.  This is less important for a genetic programming language since it's not intended to be written by hand.  However, there is an argument to be made for readability since one may want to analyze a program found by a genetic algorithm.
-
+One reason to prefer reversing the data stack is it can be considered an artifact of execution.  One would never "see" the data stack while programming Forth, only the code stack.  This is less important for a genetic programming language since it's not intended to be written by hand.  However, there is an argument to be made for readability since one may want to analyze a program found by a genetic algorithm.
 
 Building
 --------
