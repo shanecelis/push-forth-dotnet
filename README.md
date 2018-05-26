@@ -49,42 +49,6 @@ This form of `[[code stack] data stack]` has some nice properties.
 [[true [alt-eval dup car empty? not] while] [[1 2 -]]] -> [[] [[] 1]]
 ```
 
-Notable Deviations
------------------
-
-There are few deviations from Keijzer's description. 
-
-### Generalized argument predicates are not supported
-
-Instead of just relying on types, one could use a predicate to enforce type-safety or whatever other constraints.  This is easier done in an interpreter than in a compiler.  At compile-time we know what the types are.  To make the interpreter and compiler compatible, this feature was dropped from the interpreter.
-
-### Polymorphic instructions not fully implemented yet
-
-Polymorphic instructions, i.e., a "+" instruction that can add integers, floating-point numbers, or strings have not been implemented yet.
-
-### Argument order
-
-Suppose there is a binary-arity function `F(x, y)` that is bound to the instruction `f` in PushForth.  One has to choose whether `[[a b f]]` will evaluate as `F(a, b)` or `F(b, a)`.  There is no _right_ choice.  It is a matter of convention.  This implementation has chosen `F(a, b)` deviating from Keijzer's presentation but embracing the convention set forth by [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)), [Push3](http://faculty.hampshire.edu/lspector/push3-description.html), and many other stack-based languages.
-
-#### Pivot Notation Revisited
-
-![pivot-notation](doc/pivot-notation.tex.png)
-
-Keijzer's pivot notation emphasizes the order of the data stack.  For example the program `[+ • "Hello " "World!]` evaluates to `[• "Hello World!"]`.  Without pivot notation the code looks less natural `[["World!" "Hello " +]]`.  However, this emphasis of the data stack requires breaking the prevailing argument order convention.  The pivot travels left to right and [it can cause confusion](https://github.com/Vaguery/pushforth-ruby).
-
-Still the pivot notation offers an interesting way of viewing the code and data stack.  Perhaps if it reversed the order of the data stack instead of the code stack, it may offer a compelling notation to illustrate execution.  Let's introduce a different pivot character for clarity, '⬦' instead of '•'.
-
-![revised pivot notation](doc/revised-pivot-notation.tex.png)
-
-    [⬦ 1 2 -]
-    [1 ⬦ 2 -]
-    [1 2 ⬦ -]
-    [-1 ⬦]
-
-Here the pivot travels left-to-right. The data stack is reversed.  The code stack order is preserved.  And the argument order convention is respected.
-
-One reason to prefer reversing the data stack is it can be considered an artifact of execution.  One would never "see" the data stack while programming Forth, only the code stack.  This is less important for a genetic programming language since it's not intended to be written by hand.  However, there is an argument to be made for readability since one may want to analyze a program found by a genetic algorithm.
-
 Building
 --------
 
@@ -166,6 +130,42 @@ The compiler uses the same push-forth evaluator, but its instructions differ and
     [[1 1 +]] -> [[] CompilationUnit("ldc.i4 1; ldc.i4 1; add")]
 
 This demonstrates that one can think of a compiler as an interpreter but with a different data type.
+
+Notable Deviations
+-----------------
+
+There are few deviations from Keijzer's description. 
+
+### Generalized argument predicates are not supported
+
+Instead of just relying on types, one could use a predicate to enforce type-safety or whatever other constraints.  This is easier done in an interpreter than in a compiler.  At compile-time we know what the types are.  To make the interpreter and compiler compatible, this feature was dropped from the interpreter.
+
+### Polymorphic instructions not fully implemented yet
+
+Polymorphic instructions, i.e., a "+" instruction that can add integers, floating-point numbers, or strings have not been implemented yet.
+
+### Argument order
+
+Suppose there is a binary-arity function `F(x, y)` that is bound to the instruction `f` in PushForth.  One has to choose whether `[[a b f]]` will evaluate as `F(a, b)` or `F(b, a)`.  There is no _right_ choice.  It is a matter of convention.  This implementation has chosen `F(a, b)` deviating from Keijzer's presentation but embracing the convention set forth by [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)), [Push3](http://faculty.hampshire.edu/lspector/push3-description.html), and many other stack-based languages.
+
+#### Pivot Notation Revisited
+
+![pivot-notation](doc/pivot-notation.tex.png)
+
+Keijzer's pivot notation emphasizes the order of the data stack.  For example the program `[+ • "Hello " "World!]` evaluates to `[• "Hello World!"]`.  Without pivot notation the code looks less natural `[["World!" "Hello " +]]`.  However, this emphasis of the data stack requires breaking the prevailing argument order convention.  The pivot travels left to right and [it can cause confusion](https://github.com/Vaguery/pushforth-ruby).
+
+Still the pivot notation offers an interesting way of viewing the code and data stack.  Perhaps if it reversed the order of the data stack instead of the code stack, it may offer a compelling notation to illustrate execution.  Let's introduce a different pivot character for clarity, '⬦' instead of '•'.
+
+![revised pivot notation](doc/revised-pivot-notation.tex.png)
+
+    [⬦ 1 2 -]
+    [1 ⬦ 2 -]
+    [1 2 ⬦ -]
+    [-1 ⬦]
+
+Here the pivot travels left-to-right. The data stack is reversed.  The code stack order is preserved.  And the argument order convention is respected.
+
+One reason to prefer reversing the data stack is it can be considered an artifact of execution.  One would never "see" the data stack while programming Forth, only the code stack.  This is less important for a genetic programming language since it's not intended to be written by hand.  However, there is an argument to be made for readability since one may want to analyze a program found by a genetic algorithm.
 
 ### Future Improvements
 
