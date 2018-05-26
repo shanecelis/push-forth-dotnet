@@ -376,5 +376,10 @@ public class StrictTests : InterpreterTestUtil {
     var d0 = "[typeof(int)]".ToStack();
     Assert.Equal(typeof(int), d0.Peek());
   }
+
+  [Fact]
+  public void TestPushForthInterpreterFromREADME() {
+    Assert.Equal("[[] [[] -1]]", Run("[[true [eval dup car empty? not] while] [[1 2 -]]]"));
+  }
 }
 }

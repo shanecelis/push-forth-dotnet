@@ -204,8 +204,7 @@ public class StrictInterpreter : Interpreter {
         }
       });
 
-
-    AddInstruction("while", (Stack stack, Stack x, bool z) => {
+    AddInstruction("while", (Stack stack, bool z, Stack x) => {
         if (z) {
           var code = new Stack();
           // code.Push(instructions["i"]);
@@ -220,7 +219,6 @@ public class StrictInterpreter : Interpreter {
           stack.Push(new Continuation(code));
         }
       });
-
 
     AddInstruction("do-while2", (Stack stack, Stack x) => {
         // Let's do it again but with no code re-writing to make it compilable.
