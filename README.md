@@ -146,13 +146,13 @@ Polymorphic instructions, i.e., a "+" instruction that can add integers, floatin
 
 ### Argument order
 
-Suppose there is a binary-arity function `F(x, y)` that is bound to the instruction `f` in PushForth.  One has to choose whether `[[a b f]]` will evaluate as `F(a, b)` or `F(b, a)`.  There is no _right_ choice.  It is a matter of convention.  This implementation has chosen `F(a, b)` deviating from Keijzer's presentation but embracing the convention set forth by [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)), [Push3](http://faculty.hampshire.edu/lspector/push3-description.html), and many other stack-based languages.
+Suppose there is a binary-arity function `F(x, y)` that is bound to the instruction `f` in push-forth.  One has to choose whether `[[a b f]]` will evaluate as `F(a, b)` or `F(b, a)`.  There is no _right_ choice.  It is a matter of convention.  This implementation has chosen `F(a, b)` deviating from Keijzer's presentation but embracing the convention set forth by [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)), [Push3](http://faculty.hampshire.edu/lspector/push3-description.html), and many other stack-based languages.
 
 #### Pivot Notation Revisited
 
 ![pivot-notation](doc/pivot-notation.tex.png)
 
-Keijzer's pivot notation emphasizes the order of the data stack.  For example the program `[+ • "Hello " "World!]` evaluates to `[• "Hello World!"]`.  Without pivot notation the code looks less natural `[["World!" "Hello " +]]`.  However, this emphasis of the data stack requires breaking the prevailing argument order convention.  The pivot travels left to right and [it can cause confusion](https://github.com/Vaguery/pushforth-ruby).
+Keijzer's pivot notation emphasizes the order of the data stack.  For example the program `[+ • "Hello " "World!]` evaluates to `[• "Hello World!"]`.  Without pivot notation the code looks less natural `[["World!" "Hello " +]]`.  However, this emphasis of the data stack requires breaking the prevailing argument order convention.  The pivot travels left to right and [it can cause confusion](https://github.com/Vaguery/pushforth-ruby#adaptations-and-interpretations).
 
 Still the pivot notation offers an interesting way of viewing the code and data stack.  Perhaps if it reversed the order of the data stack instead of the code stack, it may offer a compelling notation to illustrate execution.  Let's introduce a different pivot character for clarity, '⬦' instead of '•'.
 
