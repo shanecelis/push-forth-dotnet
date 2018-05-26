@@ -29,11 +29,11 @@ public class ReorderInterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void testMoreReordering3() {
-    var e = EvalStream("[[2 a ! a]]").GetEnumerator();
+    var e = EvalStream("[[a 2 ! a]]").GetEnumerator();
     e.MoveNext();
-    Assert.Equal("[[a ! a] 2]", e.Current);
+    Assert.Equal("[[2 ! a] a]", e.Current);
     e.MoveNext();
-    Assert.Equal("[[! a] a 2]", e.Current);
+    Assert.Equal("[[! a] 2 a]", e.Current);
     e.MoveNext();
     Assert.Equal("[[a]]", e.Current);
     e.MoveNext();
@@ -52,47 +52,44 @@ public class ReorderInterpreterTests : InterpreterTestUtil {
     e.MoveNext();
     Assert.Equal("[[! a] 3 a 2]", e.Current);
     e.MoveNext();
-    Assert.Equal("[[! 3 a] a 2]", e.Current);
+    Assert.Equal("[[a] 2]", e.Current);
     e.MoveNext();
-    Assert.Equal("[[3 a]]", e.Current);
-    e.MoveNext();
-    Assert.Equal("[[a] 3]", e.Current);
-    e.MoveNext();
-    Assert.Equal("[[] 2 3]", e.Current);
+    Assert.Equal("[[] 3 2]", e.Current);
+    // e.MoveNext();
+    // Assert.Equal("[[a] 3]", e.Current);
+    // e.MoveNext();
+    // Assert.Equal("[[] 2 3]", e.Current);
     Assert.False(e.MoveNext());
   }
 
   [Fact]
   public void testMoreReordering3b() {
-    var e2 = reorderInterpreter.EvalStream("[[! a] 3 a 2]".ToStack())
-                                    // Interpreter.IsHalted,
-                                    // interpreter.ReorderPre)
-      // .Select(s => interpreter.StackToString(s, new [] { interpreter.reorderInstructions }))
+    var e2 = reorderInterpreter.EvalStream("[[! a] 3 2 a]".ToStack())
       .Select(s => reorderInterpreter.StackToString(s))
       .GetEnumerator();
     Assert.True(e2.MoveNext());
-    Assert.Equal("[[! 3 a] a 2]", e2.Current);
+    Assert.Equal("[[! 2 a] 3 a]", e2.Current);
     Assert.True(e2.MoveNext());
-    Assert.Equal("[[3 a] R[2 a !]]", e2.Current);
+    Assert.Equal("[[2 a] R[a 3 !]]", e2.Current);
     Assert.True(e2.MoveNext());
-    Assert.Equal("[[a] 3 R[2 a !]]", e2.Current);
+    Assert.Equal("[[a] 2 R[a 3 !]]", e2.Current);
 
-    Assert.Equal("[[2 a ! 3 a]]", Reorder("[[2 a 3 ! a]]"));
+    Assert.Equal("[[a 3 ! 2 a]]", Reorder("[[a 2 3 ! a]]"));
 
   }
 
   [Fact]
   public void TestWeirdStore() {
     interpreter = reorderInterpreter;
-    var s = "[a 2]".ToStack();
-    Assert.Equal(new Symbol("a"), s.Peek());
+    var s = "[2 a]".ToStack();
+    // Assert.Equal(new Symbol("a"), s.Peek());
     var i = interpreter.instructions["!"];
     // Assert.Equal("[C[! 2] a]", i.Apply(s).ToRepr());
-    Assert.Equal("[R[2 a !]]", i.Apply(s).ToRepr());
+    Assert.Equal("[R[a 2 !]]", i.Apply(s).ToRepr());
 
-    s = "[a 2]".ToStack();
+    s = "[2 a]".ToStack();
     i = interpreter.instructions["!int"];
-    Assert.Equal("[R[2 a !int]]", i.Apply(s).ToRepr());
+    Assert.Equal("[R[a 2 !int]]", i.Apply(s).ToRepr());
   }
 
   [Fact]

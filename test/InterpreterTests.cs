@@ -183,7 +183,9 @@ public class InterpreterTests : InterpreterTestUtil {
     // (5 4 integer.-) => (1)
     // Not sure how I feel about it.  Feels weird.
     // I'm going to do it differently.
-    Assert.Equal("[[] -1]".ToStack(), d3);
+    // Assert.Equal("[[] -1]".ToStack(), d3);
+    // Push3 and Forth and IL. Let's go with the convention.
+    Assert.Equal("[[] 1]".ToStack(), d3);
   }
 
   [Fact]
@@ -341,15 +343,14 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestCons() {
-    var d0 = "[[cons] 0 [1 2]]]".ToStack();
-    var d1 = interpreter.Eval(d0);
+    var d0 = "[[0 [1 2] cons]]]".ToStack();
+    var d1 = interpreter.Run(d0);
     Assert.Equal("[[] [0 1 2]]".ToStack(), d1);
   }
 
   [Fact]
   public void TestStackToString() {
     var d0 = "[[cons] 0 [1 2]]]".ToStack();
-    Assert.Equal("[[cons] 0 [1 2]]", interpreter.StackToString(d0));
     Assert.Equal("[[cons] 0 [1 2]]", interpreter.StackToString(d0));
   }
 
@@ -380,30 +381,25 @@ public class InterpreterTests : InterpreterTestUtil {
   //   Assert.Equal("[[] [1 +] 1]", interpreter.StackToString(d7));
   // }
 
-  [Fact]
-  public void TestWhile2() {
-    var d0 = "[[while2] [1 + dup 5 >] true 0]".ToStack();
-    var d1 = interpreter.Run(d0);
-    // Assert.Equal("[[[1 +] [[1 +] while] i] 0]".ToStack(), d1);
-    Assert.Equal("[[] 5]", interpreter.StackToString(d1));
-  }
+  // [Fact]
+  // public void TestWhile2() {
+  //   interpreter = strictInterpreter;
+  //   Assert.Equal("[[] 5]", Run("[[[1 + dup 5 <] true 0 while2]]"));
+  // }
 
   [Fact]
   public void TestWhile3() {
-    var d0 = "[[while3] [1 + dup 5 >] true 0]".ToStack();
-    var d1 = interpreter.Run(d0);
-    // Assert.Equal("[[[1 +] [[1 +] while] i] 0]".ToStack(), d1);
-    Assert.Equal("[[] 5]", interpreter.StackToString(d1));
+    Assert.Equal("[[] 5]", Run("[[true [1 + dup 5 <] while3] 0]"));
   }
 
   [Fact]
   public void TestWhile3Post() {
-    Assert.Equal("[[] 2 5]", Run("[[while3 2] [1 + dup 5 >] true 0]"));
+    Assert.Equal("[[] 2 5]", Run("[[while3 2] [1 + dup 5 <] true 0]"));
   }
 
   [Fact]
   public void TestWhile4Post() {
-    Assert.Equal("[[] 2 5]", Run("[[do-while2 2] [1 + dup 5 >] 0]"));
+    Assert.Equal("[[] 2 5]", Run("[[do-while2 2] [1 + dup 5 <] 0]"));
   }
 
   [Fact]
@@ -418,18 +414,18 @@ public class InterpreterTests : InterpreterTestUtil {
     Assert.Equal("[[] 0]", Run("[[if] false [1] [0 0 +]]"));
   }
 
-  [Fact]
-  public void TestWhile2False() {
-    var d0 = "[[while2] [1 + dup 5 >] false 0]".ToStack();
-    var d1 = interpreter.Run(d0);
-    // Assert.Equal("[[[1 +] [[1 +] while] i] 0]".ToStack(), d1);
-    Assert.Equal("[[] 0]", interpreter.StackToString(d1));
-  }
+  // [Fact]
+  // public void TestWhile2False() {
+  //   var d0 = "[[while2] 0 false [1 + dup 5 >]]".ToStack();
+  //   var d1 = interpreter.Run(d0);
+  //   // Assert.Equal("[[[1 +] [[1 +] while] i] 0]".ToStack(), d1);
+  //   Assert.Equal("[[] 0]", interpreter.StackToString(d1));
+  // }
 
   [Fact]
   public void TestRun() {
     interpreter = strictInterpreter;
-    var d0 = "[[while-original] [cdr swap 1 + swap] [1 2] 0]".ToStack();
+    var d0 = "[[0 [1 2] [cdr swap 1 + swap] while-original]]".ToStack();
     var d1 = interpreter.Run(d0);
     Assert.Equal("[[] 2]", interpreter.StackToString(d1));
   }
@@ -437,7 +433,8 @@ public class InterpreterTests : InterpreterTestUtil {
   [Fact]
   public void TestWhileRun() {
     interpreter = strictInterpreter;
-    var e2 = interpreter.EvalStream("[[while-original] [cdr swap 1 + swap] [1 2] 0]".ToStack()).Select(x => interpreter.StackToString(x)).GetEnumerator();
+    var e2 = EvalStream("[[while-original] [cdr swap 1 + swap] [1 2] 0]")
+      .GetEnumerator();
     Assert.True(e2.MoveNext());
     Assert.Equal("[[cdr swap 1 + swap [[cdr swap 1 + swap] while-original] i] [1 2] 0]", e2.Current);
     Assert.True(e2.MoveNext());
@@ -677,7 +674,7 @@ public class InterpreterTests : InterpreterTestUtil {
   [Fact]
   public void TestTypeCheckNoReorderUnify() {
     interpreter = strictInterpreter;
-    var s = "[[1 1 true if]]".ToStack();
+    var s = "[[2 1 true if]]".ToStack();
     var typedS = s.Map(o => o.GetType());
     Assert.Equal("[[int int bool Symbol]]", typedS.ToRepr());
     var typedS2 = s.Map(o => o is Symbol ? o : o.GetType());
@@ -685,7 +682,7 @@ public class InterpreterTests : InterpreterTestUtil {
     // var a = new Variable("a");
     interpreter.instructions["if"]
       = new TypeCheckInstruction("if",
-                                 "[bool 'a 'a]",
+                                 "['a 'a bool]",
                                  "['a]")
                                   // new object[] { typeof(bool), a, a },
                                   // new TypeOrVariable[] { a })
@@ -820,7 +817,7 @@ public class InterpreterTests : InterpreterTestUtil {
 
   [Fact]
   public void TestMinus() {
-    Assert.Equal("[[] 1]", Run("[[1 2 -]]"));
+    Assert.Equal("[[] -1]", Run("[[1 2 -]]"));
   }
 
 }

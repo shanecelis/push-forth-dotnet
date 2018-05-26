@@ -38,7 +38,7 @@ public class StrictInterpreter : Interpreter {
     AddInstruction("!", (Stack stack, Symbol s, object x) => {
         AddInstruction(s.name, () => x);
       });
-    AddInstruction("if", (Stack stack, bool condition, Stack consequent, Stack otherwise)=> {
+    AddInstruction("if", (Stack stack, Stack otherwise, Stack consequent, bool condition)=> {
         if (condition)
           stack.Push(new Continuation(consequent));
         else
@@ -84,8 +84,8 @@ public class StrictInterpreter : Interpreter {
     AddInstruction("cons", (object a, Stack b) => Cons(a, b));
     AddInstruction("cat", (object a, object b) => {
         var s = new Stack();
-        s.Push(b);
         s.Push(a);
+        s.Push(b);
         return s;
       });
     AddInstruction("split", (Stack stack, Stack s) => {
@@ -131,7 +131,7 @@ public class StrictInterpreter : Interpreter {
     //     }
     //     return stack;
     //   });
-    AddInstruction("while-original", (Stack stack, Stack x, Stack z) => {
+    AddInstruction("while-original", (Stack stack, Stack z, Stack x) => {
         if (z.Any()) {
           var code = new Stack();
           code.Push(instructions["i"]);
@@ -139,10 +139,10 @@ public class StrictInterpreter : Interpreter {
           var subcode = new Stack();
           subcode.Push(instructions["while-original"]);
           // subcode.Push(new Symbol("while"));
-          subcode.Push(x);
           code.Push(subcode);
           code = Append(x, code);
           // code.Push(x);
+          subcode.Push(x);
           stack.Push(z);
           stack.Push(new Continuation(code));
         }
@@ -151,26 +151,26 @@ public class StrictInterpreter : Interpreter {
     AddInstruction("==", (int a, int b) => a == b);
     AddInstruction("<", (int a, int b) => a < b);
     AddInstruction(">", (int a, int b) => a > b);
-    AddInstruction("while2", (Stack stack, Stack x, bool z, object y) => {
-        if (! z) {
-          stack.Push(y);
-        } else {
-          var code = new Stack();
-          code.Push(instructions["i"]);
-          // code.Push(new Symbol("i"));
-          var subcode = new Stack();
-          subcode.Push(instructions["while2"]);
-          // subcode.Push(new Symbol("while"));
-          subcode.Push(x);
-          code.Push(subcode);
-          code = Append(x, code);
-          // code.Push(x);
-          stack.Push(y);
-          stack.Push(new Continuation(code));
-        }
-      });
+    // AddInstruction("while2", (Stack stack, Stack x, bool z, object y) => {
+    //     if (! z) {
+    //       stack.Push(y);
+    //     } else {
+    //       var code = new Stack();
+    //       code.Push(instructions["i"]);
+    //       // code.Push(new Symbol("i"));
+    //       var subcode = new Stack();
+    //       subcode.Push(instructions["while2"]);
+    //       // subcode.Push(new Symbol("while"));
+    //       subcode.Push(x);
+    //       code.Push(subcode);
+    //       code = Append(x, code);
+    //       // code.Push(x);
+    //       stack.Push(y);
+    //       stack.Push(new Continuation(code));
+    //     }
+    //   });
 
-    AddInstruction("while3", (Stack stack, Stack x, bool z) => {
+    AddInstruction("while3", (Stack stack, bool z, Stack x) => {
         // Let's do it again but with no code re-writing to make it compilable.
         while (z) {
           // Must make a copy of the code x, as the Stack is destroyed when
@@ -260,7 +260,7 @@ public class StrictInterpreter : Interpreter {
     /*
       [[do-times] 2 [1 +] 0] -> [[1 + 1 [1 +] do-times]]
      */
-    AddInstruction("do-times", (Stack stack, int count, Stack body) => {
+    AddInstruction("do-times", (Stack stack, Stack body, int count) => {
         if (count > 0) {
           var code = new Stack();
           code.Push(new Symbol("do-times"));

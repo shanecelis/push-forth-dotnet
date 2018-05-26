@@ -151,11 +151,9 @@ public class StrictTests : InterpreterTestUtil {
     var d1 = interpreter.Eval(d0);
     var d2 = interpreter.Eval(d1);
     var d3 = interpreter.Eval(d2);
-    // This is how Push3 does it.
+    // This is how Push3, Forth, and IL does it.
     // (5 4 integer.-) => (1)
-    // Not sure how I feel about it.  Feels weird.
-    // I'm going to do it differently.
-    Assert.Equal("[[] -1]".ToStack(), d3);
+    Assert.Equal("[[] 1]".ToStack(), d3);
   }
 
   [Fact]
@@ -298,8 +296,8 @@ public class StrictTests : InterpreterTestUtil {
 
   [Fact]
   public void TestCons() {
-    var d0 = "[[cons] 0 [1 2]]]".ToStack();
-    var d1 = interpreter.Eval(d0);
+    var d0 = "[[0 [1 2] cons]]".ToStack();
+    var d1 = interpreter.Run(d0);
     Assert.Equal("[[] [0 1 2]]".ToStack(), d1);
   }
 
@@ -338,16 +336,8 @@ public class StrictTests : InterpreterTestUtil {
   // }
 
   [Fact]
-  public void TestWhile2() {
-    var d0 = "[[while2] [1 + dup 5 >] true 0]".ToStack();
-    var d1 = interpreter.Run(d0);
-    // Assert.Equal("[[[1 +] [[1 +] while] i] 0]".ToStack(), d1);
-    Assert.Equal("[[] 5]", interpreter.StackToString(d1));
-  }
-
-  [Fact]
   public void TestWhile3() {
-    var d0 = "[[while3] [1 + dup 5 >] true 0]".ToStack();
+    var d0 = "[[while3] [1 + dup 5 <] true 0]".ToStack();
     var d1 = interpreter.Run(d0);
     // Assert.Equal("[[[1 +] [[1 +] while] i] 0]".ToStack(), d1);
     Assert.Equal("[[] 5]", interpreter.StackToString(d1));
@@ -355,17 +345,17 @@ public class StrictTests : InterpreterTestUtil {
 
   [Fact]
   public void TestWhile3Post() {
-    Assert.Equal("[[] 2 5]", Run("[[while3 2] [1 + dup 5 >] true 0]"));
-    Assert.Throws<InvalidCastException>(() => Run("[[while3 2] [1 + dup 5 >] blah true 0]"));
+    Assert.Equal("[[] 2 5]", Run("[[true [1 + dup 5 <] while3 2] 0]"));
+    Assert.Throws<InvalidCastException>(() => Run("[[while3 2] [1 + dup 5 <] blah true 0]"));
   }
 
-  [Fact]
-  public void TestWhile2False() {
-    var d0 = "[[while2] [1 + dup 5 >] false 0]".ToStack();
-    var d1 = interpreter.Run(d0);
-    // Assert.Equal("[[[1 +] [[1 +] while] i] 0]".ToStack(), d1);
-    Assert.Equal("[[] 0]", interpreter.StackToString(d1));
-  }
+  // [Fact]
+  // public void TestWhile2False() {
+  //   var d0 = "[[while2] [1 + dup 5 >] false 0]".ToStack();
+  //   var d1 = interpreter.Run(d0);
+  //   // Assert.Equal("[[[1 +] [[1 +] while] i] 0]".ToStack(), d1);
+  //   Assert.Equal("[[] 0]", interpreter.StackToString(d1));
+  // }
 
   [Fact]
   public void TestRun() {

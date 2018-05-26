@@ -71,7 +71,7 @@ public class ReorderWrapper : TypedInstruction {
   public virtual Stack Apply(Stack stack) {
     var acceptedArguments = new Stack();
     var binding = lastBinding = new Dictionary<string, Type>();
-    foreach(Type consume in inputTypes) {
+    foreach(Type consume in inputTypes.Reverse()) {
       if (! stack.Any()) {
         // Not enough elements.
         return NotEnoughElements(stack, acceptedArguments);

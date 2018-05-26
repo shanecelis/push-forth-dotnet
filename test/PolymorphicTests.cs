@@ -32,9 +32,9 @@ public class PolymorphicTests : InterpreterTestUtil{
     Assert.Equal("[[] 3]", Run("[[1 2 +]]"));
     Assert.Equal("[[] 3.5]", Run("[[1f 2.5f +]]"));
     // Assert.Equal(@"[[] ""helloworld""]", Run(@"[[""hello"" ""world"" +]]"));
-    Assert.Equal(@"[[] worldhello]", Run(@"[[""hello"" ""world"" +]]"));
+    Assert.Equal(@"[[] helloworld]", Run(@"[[""hello"" ""world"" +]]"));
     lastRun.Pop();
-    Assert.Equal("worldhello", lastRun.Pop());
+    Assert.Equal("helloworld", lastRun.Pop());
 
     Assert.Throws<Exception>(() => Run("[[1 2.5f +]]"));
 

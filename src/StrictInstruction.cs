@@ -74,13 +74,18 @@ public class StrictInstruction : TypedInstruction {
 
     public TypedInstruction Binary<X,Y,Z>(Func <X,Y,Z> func) {
       return new StrictInstruction((stack) => {
-          stack.Push(func((X) stack.Pop(), (Y) stack.Pop()));
+          var y = (Y) stack.Pop();
+          var x = (X) stack.Pop();
+          stack.Push(func(x, y));
         }) { _inputTypes = new [] { typeof(X), typeof(Y) },
         _outputTypes = new [] { typeof(Z) } };
     }
     public TypedInstruction Trinary<X,Y,Z,W>(Func <X,Y,Z,W> func) {
       return new StrictInstruction((stack) => {
-          stack.Push(func((X) stack.Pop(), (Y) stack.Pop(), (Z) stack.Pop()));
+          var z = (Z) stack.Pop();
+          var y = (Y) stack.Pop();
+          var x = (X) stack.Pop();
+          stack.Push(func(x, y, z));
         }) { _inputTypes = new [] { typeof(X), typeof(Y), typeof(Z) },
         _outputTypes = new [] { typeof(W) } };
     }
@@ -99,12 +104,17 @@ public class StrictInstruction : TypedInstruction {
 
     public TypedInstruction Binary<X,Y>(Action<X,Y> func) {
       return new StrictInstruction((stack) => {
-          func((X) stack.Pop(), (Y) stack.Pop());
+          var y = (Y) stack.Pop();
+          var x = (X) stack.Pop();
+          func(x, y);
         }) { _inputTypes = new [] { typeof(X), typeof(Y) } };
     }
     public TypedInstruction Trinary<X,Y,Z>(Action<X,Y,Z> func) {
       return new StrictInstruction((stack) => {
-          func((X) stack.Pop(), (Y) stack.Pop(), (Z) stack.Pop());
+          var z = (Z) stack.Pop();
+          var y = (Y) stack.Pop();
+          var x = (X) stack.Pop();
+          func(x, y, z);
         }) { _inputTypes = new [] { typeof(X), typeof(Y), typeof(Z) } };
     }
 
@@ -122,12 +132,17 @@ public class StrictInstruction : TypedInstruction {
 
     public TypedInstruction Binary<X,Y>(Action<Stack, X,Y> func) {
       return new StrictInstruction((stack) => {
-          func(stack, (X) stack.Pop(), (Y) stack.Pop());
+          var y = (Y) stack.Pop();
+          var x = (X) stack.Pop();
+          func(stack, x, y);
         }) { _inputTypes = new [] { typeof(X), typeof(Y) } };
     }
     public TypedInstruction Trinary<X,Y,Z>(Action<Stack, X,Y,Z> func) {
       return new StrictInstruction((stack) => {
-          func(stack, (X) stack.Pop(), (Y) stack.Pop(), (Z) stack.Pop());
+          var z = (Z) stack.Pop();
+          var y = (Y) stack.Pop();
+          var x = (X) stack.Pop();
+          func(stack, x, y, z);
         }) { _inputTypes = new [] { typeof(X), typeof(Y), typeof(Z) } };
     }
   }
