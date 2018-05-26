@@ -66,19 +66,24 @@ Polymorphic instructions, i.e., a "+" instruction that can add integers, floatin
 
 Suppose there is a binary-arity function `F(x, y)` that is bound to the instruction `f` in PushForth.  One has to choose whether `[[a b f]]` will evaluate as `F(a, b)` or `F(b, a)`.  There is no _right_ choice.  It is a matter of convention.  This implementation has chosen `F(a, b)`, deviating from Keijzer's presentation but embracing the convention set forth by [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)), [Push3](http://faculty.hampshire.edu/lspector/push3-description.html), and many other stack-based languages.
 
-#### Pivot Notation
+#### Pivot Notation Revisited
+<img src="http://www.sciweavers.org/tex2img.php?eq=%5B%5Bc_1%20%5Cldots%20c_n%5D%7E%20d_1%20%5Cldots%20d_m%5D%20%26%5Cequiv%20%5Bc_n%20%5Cldots%20c_1%20%5Ccdot%20d_1%20%5Cldots%20d_m%5D&bc=White&fc=Black&im=png&fs=12&ff=arev&edit=0" align="center" border="0" alt="[[c_1 \ldots c_n]~ d_1 \ldots d_m] &\equiv [c_n \ldots c_1 \cdot d_1 \ldots d_m]" width="369" height="18" />
 
-<img src="http://www.sciweavers.org/tex2img.php?eq=%5B%5Bc_1%20%5Cldots%20c_n%5D%7E%20d_1%20%5Cldots%20d_m%5D%20%26%5Cequiv%20%5Bc_n%20%5Cldots%20c_1%20%5Ccdot%20d_1%20%5Cldots%20d_m%5D&bc=White&fc=Black&im=jpg&fs=12&ff=arev&edit=0" align="center" border="0" alt="[[c_1 \ldots c_n]~ d_1 \ldots d_m] &\equiv [c_n \ldots c_1 \cdot d_1 \ldots d_m]" width="369" height="18" />
-
-Keijzer's pivot notation emphasizes the order of that data stack, which can make the postfix notation look natural.  For example the program `[+ • "Hello " "World!]` produces `[• "Hello World!"]`.  Without pivot notation the code looks like this `[["World!" "Hello " +]]`, which seems less natural.
+Keijzer's pivot notation emphasizes the order of the data stack.  For example the program `[+ • "Hello " "World!]` evaluates to `[• "Hello World!"]`.  Without pivot notation the code looks less natural `[["World!" "Hello " +]]`.  However, this emphasis of the data stack requires breaking the argument order convention.  The pivot travels left to right and [it can cause confusion](https://github.com/Vaguery/pushforth-ruby).
 
 Still the pivot notation offers an interesting way of viewing the code and data stack.  However, perhaps if it reversed the order of the data stack instead of the code stack, it may offer a compelling notation that helped illustrate execution.
 
-    [• 1 2 -]
-    [1 • 2 -]
-    [1 2 • -]
-    [-1 •]
-    
+<img src="http://www.sciweavers.org/tex2img.php?eq=%5B%5Bc_1%20%5Cldots%20c_n%5D%7E%20d_1%20%5Cldots%20d_m%5D%20%26%5Cequiv%26%20%5Bd_m%20%5Cldots%20d_1%20%7E%5CBox%7E%20%20c_1%20%5Cldots%20c_m%5D%20%5C%5C%0A%5Cbig%5B%5Cbig%5B%5Cbig%5D%20d_1%20%5Cldots%20d_m%20%5Cbig%5D%20%26%5Cequiv%26%20%5Bd_m%20%5Cldots%20d_1%7E%5CBox%5D%20%0A&bc=White&fc=Black&im=png&fs=12&ff=arev&edit=0" align="center" border="0" alt="[[c_1 \ldots c_n]~ d_1 \ldots d_m] &\equiv& [d_m \ldots d_1 ~\Box~  c_1 \ldots c_m] \\\big[\big[\big] d_1 \ldots d_m \big] &\equiv& [d_m \ldots d_1~\Box] " width="394" height="43" />
+
+<img src="http://www.sciweavers.org/tex2img.php?eq=%5B%5Bc_1%20%5Cldots%20c_n%5D%7E%20d_1%20%5Cldots%20d_m%5D%20%26%5Cequiv%26%20%5Bd_m%20%5Cldots%20d_1%20%5Ccdot%20c_1%20%5Cldots%20c_m%5D%20%5C%5C%0A%5Cbig%5B%5Cbig%5B%5Cbig%5D%20d_1%20%5Cldots%20d_m%20%5Cbig%5D%20%26%5Cequiv%26%20%5Bd_m%20%5Cldots%20d_1%20%5Ccdot%5D%20%0A&bc=White&fc=Black&im=png&fs=12&ff=arev&edit=0" align="center" border="0" alt="[[c_1 \ldots c_n]~ d_1 \ldots d_m] &\equiv& [d_m \ldots d_1 \cdot c_1 \ldots c_m] \\\big[\big[\big] d_1 \ldots d_m \big] &\equiv& [d_m \ldots d_1 \cdot] " width="383" height="43" />
+
+    [▢ 1 2 -]
+    [1 ▢ 2 -]
+    [1 2 ▢ -]
+    [-1 ▢]
+
+Here the pivot travels left-to-right. The data stack is reversed.  The code stack order is preserved.  And the argument order convention is respected.
+
 One reason to prefer reversing the data stack is it can be considered an artifact of execution.  One would never "see" the data stack while programming Forth only the code stack.  This is less important for a genetic programming language since it's not intended to be written by hand.  However, there is an argument to be made for readability since one may want to analyze a program found by a genetic algorithm.
 
 
