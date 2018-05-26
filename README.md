@@ -67,12 +67,14 @@ Polymorphic instructions, i.e., a "+" instruction that can add integers, floatin
 Suppose there is a binary-arity function `F(x, y)` that is bound to the instruction `f` in PushForth.  One has to choose whether `[[a b f]]` will evaluate as `F(a, b)` or `F(b, a)`.  There is no _right_ choice.  It is a matter of convention.  This implementation has chosen `F(a, b)` deviating from Keijzer's presentation but embracing the convention set forth by [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)), [Push3](http://faculty.hampshire.edu/lspector/push3-description.html), and many other stack-based languages.
 
 #### Pivot Notation Revisited
-<img src="http://www.sciweavers.org/tex2img.php?eq=%5B%5Bc_1%20%5Cldots%20c_n%5D%7E%20d_1%20%5Cldots%20d_m%5D%20%26%5Cequiv%20%5Bc_n%20%5Cldots%20c_1%20%5Ccdot%20d_1%20%5Cldots%20d_m%5D&bc=White&fc=Black&im=png&fs=12&ff=arev&edit=0" align="center" border="0" alt="[[c_1 \ldots c_n]~ d_1 \ldots d_m] &\equiv [c_n \ldots c_1 \cdot d_1 \ldots d_m]" width="369" height="18" />
+
+![pivot-notation](doc/pivot-notation.tex.png)
 
 Keijzer's pivot notation emphasizes the order of the data stack.  For example the program `[+ • "Hello " "World!]` evaluates to `[• "Hello World!"]`.  Without pivot notation the code looks less natural `[["World!" "Hello " +]]`.  However, this emphasis of the data stack requires breaking the prevailing argument order convention.  The pivot travels left to right and [it can cause confusion](https://github.com/Vaguery/pushforth-ruby).
 
 Still the pivot notation offers an interesting way of viewing the code and data stack.  Perhaps if it reversed the order of the data stack instead of the code stack, it may offer a compelling notation to illustrate execution.  Let's introduce a different pivot character for clarity, '⬦' instead of '•'.
-<img src="http://www.sciweavers.org/tex2img.php?eq=%5B%5Bc_1%20%5Cldots%20c_n%5D%7E%20d_1%20%5Cldots%20d_m%5D%20%26%5Cequiv%26%20%5Bd_m%20%5Cldots%20d_1%20%7E%20%5CDiamond%20%7E%20%20c_1%20%5Cldots%20c_m%5D%20%5C%5C%0A%5Cbig%5B%5Cbig%5B%5Cbig%5D%20d_1%20%5Cldots%20d_m%20%5Cbig%5D%20%26%5Cequiv%26%20%5Bd_m%20%5Cldots%20d_1%7E%20%5CDiamond%20%5D%20&bc=White&fc=Black&im=png&fs=12&ff=arev&edit=0" align="center" border="0" alt="[[c_1 \ldots c_n]~ d_1 \ldots d_m] &\equiv& [d_m \ldots d_1 ~ \Diamond ~  c_1 \ldots c_m] \\\big[\big[\big] d_1 \ldots d_m \big] &\equiv& [d_m \ldots d_1~ \Diamond ] " width="393" height="43" />
+
+![revised pivot notation](doc/revised-pivot-notation.tex.png)
 
     [⬦ 1 2 -]
     [1 ⬦ 2 -]
