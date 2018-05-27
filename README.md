@@ -1,7 +1,7 @@
 Push-forth
 ==========
 
-Push-forth is a light-weight, strongly-typed, stack-based genetic programming language designed by Maaren Keijzer and detailed in his [2013 paper](https://www.lri.fr/~hansen/proceedings/2013/GECCO/companion/p1635.pdf).  This project is an implementation of a push-forth interpreter and a compiler for .NET by Shane Celis.
+Push-forth is a light-weight, strongly-typed, stack-based genetic programming language designed by Maarten Keijzer and detailed in his [2013 paper](https://www.lri.fr/~hansen/proceedings/2013/GECCO/companion/p1635.pdf).  This project is an implementation of a push-forth interpreter and a compiler for .NET by Shane Celis.
 
 Overview
 --------
@@ -165,7 +165,7 @@ Still the pivot notation offers an interesting way of viewing the code and data 
 
 Here the pivot travels left-to-right. The data stack is reversed.  The order of the code stack is preserved.  And the argument order convention is respected.  Perhaps we can call Keijzer's pivot notation a "data pivot" and this proposal a "code pivot".
 
-One reason to prefer reversing the data stack is it can be considered an artifact of execution.  One would never "see" the data stack while programming Forth, only the code stack.  This is less important for a genetic programming language since it's not intended to be written by hand.  However, there is an argument to be made for readability since one may want to analyze a program found by a genetic algorithm.  (The ability to take a non-strict program and make it strict certainly can help one analyze it.)
+One reason to prefer reversing the data stack is it can be considered an artifact of execution.  One would never "see" the data stack while programming Forth, only the code stack.  This is less important for a genetic programming language since it's not intended to be written by hand.  However, there is an argument to be made for readability since one may want to analyze a program found by a genetic algorithm.  (The ability to take a non-strict program and make it strict certainly can help one analyze it too.)
 
 ### Future Improvements
 
