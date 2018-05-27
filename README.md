@@ -129,7 +129,7 @@ The compiler uses the same push-forth evaluator, but its instructions differ and
 
     [[1 1 +]] -> [[] CompilationUnit("ldc.i4 1; ldc.i4 1; add")]
 
-This demonstrates that one can think of a compiler as an interpreter but with a different data type.
+It's helpful sometimes to think of [a compiler as an interpreter but with a different resulting data type](https://twitter.com/shanecelis/status/927748558790459397).
 
 Notable Deviations
 -----------------
@@ -152,9 +152,9 @@ Suppose there is a binary-arity function `F(x, y)` that is bound to the instruct
 
 ![pivot-notation](doc/pivot-notation.tex.png)
 
-Keijzer's pivot notation emphasizes the order of the data stack.  For example the program `[+ • "Hello " "World!]` evaluates to `[• "Hello World!"]`.  Without pivot notation the code looks less natural `[["World!" "Hello " +]]`.  However, this emphasis of the data stack requires breaking the prevailing argument order convention.  The pivot travels left to right and [it can cause confusion](https://github.com/Vaguery/pushforth-ruby#adaptations-and-interpretations).
+Keijzer's pivot notation emphasizes the order of the data stack.  For example the program `[+ • "Hello " "World!]` evaluates to `[• "Hello World!"]`.  Without pivot notation the code looks less natural `[["World!" "Hello " +]]`.  However, this emphasis of the data stack requires breaking the prevailing argument order convention.  In addition the pivot travels left to right which [can cause confusion](https://github.com/Vaguery/pushforth-ruby#adaptations-and-interpretations).
 
-Still the pivot notation offers an interesting way of viewing the code and data stack.  Perhaps if it reversed the order of the data stack instead of the code stack, it may offer a compelling notation to illustrate execution.  Let's introduce a different pivot character for clarity, '⬦' instead of '•'.
+Still the pivot notation offers an interesting way of viewing the code and data stack.  Perhaps if it preserved the order of the code stack instead of the data stack, it may offer a compelling notation to illustrate execution.  Let's introduce a different pivot character for clarity, '⬦' instead of '•'.
 
 ![revised pivot notation](doc/revised-pivot-notation.tex.png)
 
@@ -163,13 +163,13 @@ Still the pivot notation offers an interesting way of viewing the code and data 
     [1 2 ⬦ -]
     [-1 ⬦]
 
-Here the pivot travels left-to-right. The data stack is reversed.  The code stack order is preserved.  And the argument order convention is respected.
+Here the pivot travels left-to-right. The data stack is reversed.  The order of the code stack is preserved.  And the argument order convention is respected.  Perhaps we can call Keijzer's pivot notation a "data pivot" and this proposal a "code pivot".
 
-One reason to prefer reversing the data stack is it can be considered an artifact of execution.  One would never "see" the data stack while programming Forth, only the code stack.  This is less important for a genetic programming language since it's not intended to be written by hand.  However, there is an argument to be made for readability since one may want to analyze a program found by a genetic algorithm.
+One reason to prefer reversing the data stack is it can be considered an artifact of execution.  One would never "see" the data stack while programming Forth, only the code stack.  This is less important for a genetic programming language since it's not intended to be written by hand.  However, there is an argument to be made for readability since one may want to analyze a program found by a genetic algorithm.  (The ability to take a non-strict program and make it strict certainly can help one analyze it.)
 
 ### Future Improvements
 
-Since the compiler is an interpreter, it may be easy to implement a mixed-mode compiler that will interpret everything available to it at compile-time.  It's like having an C++'s `constexpr` but automatic.  For evolving programs that may provide a worthwhile heuristic to consider: How much code does anything with data coming in?
+Since the compiler is an interpreter, it may not be too difficult to implement a mixed-mode compiler that will interpret everything available to it at compile-time.  It's like having an C++'s `constexpr` but automatic.  For evolving programs that may provide a worthwhile heuristic to consider: How much code does any computation with input data versus what are effectively constants generated a runtime?
 
 #### Conventional Interpretation
 ```
