@@ -203,6 +203,15 @@ License
 
 This code is licensed under the [MIT License](https://opensource.org/licenses/MIT).
 
+Acknowledgments
+---------------
+
+Thanks to Keijzer for designing [push-forth](https://www.lri.fr/~hansen/proceedings/2013/GECCO/companion/p1635.pdf) and providing [source code](https://github.com/mkeijzer/push-forth) to inspect.  
+
+Thanks to [Lee Spector](https://twitter.com/leespector) et al for designing [Push3](http://faculty.hampshire.edu/lspector/push3-description.html); it introduced me to stack-based languages for genetic programming.  
+
+Thanks to [Bill Tozier](https://twitter.com/vaguery) for blazing a trail and providing a [push-forth ruby implementation](https://github.com/Vaguery/pushforth-ruby) to inspect.
+
 References
 ----------
 
