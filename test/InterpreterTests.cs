@@ -536,6 +536,19 @@ public class InterpreterTests : InterpreterTestUtil {
   }
 
   [Fact]
+  public void TestRevisedPivotString() {
+    var e2 = interpreter.EvalStream("[[1 1 +]]".ToStack()).Select(x => x.ToRevisedPivot()).GetEnumerator();
+    Assert.True(e2.MoveNext());
+    // Assert.Equal("[⬦ 1 1 +]", e2.Current);
+    Assert.Equal("[1 ⬦ 1 +]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[1 1 ⬦ +]", e2.Current);
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[2 ⬦]", e2.Current);
+    Assert.False(e2.MoveNext());
+  }
+
+  [Fact]
   public void TestParsePivot() {
     var s = "[[1 1 +]]".ToStack();
     Assert.Equal(s, StackParser.ParsePivot("[+ 1 1 •]"));

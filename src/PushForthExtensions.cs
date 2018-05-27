@@ -70,6 +70,40 @@ public static class PushForthExtensions {
     sb.Append("]");
   }
 
+  public static string ToRevisedPivot(this Stack s) {
+    var sb = new StringBuilder();
+    s = (Stack) s.Clone();
+    var code = (Stack) s.Pop();
+    var data = s;
+    sb.Append("[");
+
+    // Write the data stack backwards.
+    s = new Stack(s);
+    while (s.Any()) {
+      object x = s.Pop();
+      if (x is Stack substack)
+        ToReprHelper(substack, sb);
+      else
+        sb.Append(x.ToReprQuasiDynamic());
+      sb.Append(" ");
+    }
+    sb.Append("⬦ ");
+    s = code; // Write the code stack ordinarily.
+    foreach(var x in code.Cast<object>()) {
+    // while (s.Any()) {
+      // object x = s.Pop();
+      if (x is Stack substack)
+        ToReprHelper(substack, sb);
+      else
+        sb.Append(x.ToReprQuasiDynamic());
+      sb.Append(" ");
+    }
+
+    sb.Remove(sb.Length - 1, 1);
+    sb.Append("]");
+    return sb.ToString();
+  }
+
   public static string ToPivot(this Stack s) {
     var sb = new StringBuilder();
     s = (Stack) s.Clone();
@@ -81,8 +115,6 @@ public static class PushForthExtensions {
       object x = s.Pop();
       if (x is Stack substack)
         ToReprHelper(substack, sb);
-      // else if (x is Instruction i)
-      //   sb.Append(instructions.First(kv => kv.Value == i).Key);
       else
         sb.Append(x.ToReprQuasiDynamic());
       sb.Append(" ");
@@ -96,8 +128,6 @@ public static class PushForthExtensions {
       object x = s.Pop();
       if (x is Stack substack)
         ToReprHelper(substack, sb);
-      // else if (x is Instruction i)
-      //   sb.Append(instructions.First(kv => kv.Value == i).Key);
       else
         sb.Append(x.ToReprQuasiDynamic());
       if (s.Any())
