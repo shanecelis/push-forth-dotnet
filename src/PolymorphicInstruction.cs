@@ -23,14 +23,29 @@ namespace PushForth {
  */
 public class PolymorphicInstruction : Instruction {
   IEnumerable<TypedInstruction> instructions;
+  public bool tryBestFit = false;
   public PolymorphicInstruction(IEnumerable<TypedInstruction> instructions) {
     this.instructions = instructions;
+    CheckInstructions();
+  }
+
+  void CheckInstructions() {
+    var inputCount = instructions.First().inputTypes.Count();
+    var outputCount = instructions.First().outputTypes.Count();
+    foreach(var instruction in instructions.Skip(1)) {
+      if (inputCount != instruction.inputTypes.Count())
+        throw new Exception("Must have same number of inputTypes.");
+      if (outputCount != instruction.outputTypes.Count())
+        throw new Exception("Must have same number of outputTypes.");
+    }
   }
 
   public virtual Stack Apply(Stack stack) {
     var acceptedArguments = new Stack();
     var binding = new Dictionary<string, Type>();
     Instruction foundInstruction = null;
+    int[] acceptedArgumentsCount = new int[instructions.Count()];
+    int i = 0;
     foreach (var instruction in instructions) {
       acceptedArguments.Clear();
       binding.Clear();
@@ -60,6 +75,7 @@ public class PolymorphicInstruction : Instruction {
         }
 
         if (consumeType.IsAssignableFrom(t)) {
+          acceptedArgumentsCount[i]++;
           acceptedArguments.Push(o);
         } else {
           goto notFound;
@@ -69,12 +85,40 @@ public class PolymorphicInstruction : Instruction {
       foundInstruction = instruction;
     notFound:
       ;
+      i++;
     }
     // Then run the real instruction.
     if (foundInstruction != null)
       return foundInstruction.Apply(stack);
-    else
-      throw new Exception($"Unable to find an instruction that matches the types.");
+    else {
+      if (! tryBestFit)
+        throw new Exception($"Unable to find an instruction that matches the types.");
+      else {
+        var max = acceptedArgumentsCount.Max();
+        if (max == 0) {
+          // There is no best fit for this instruction. Let's just move the top
+          // argument away.
+          if (stack.Any()) {
+            var code = new Stack();
+            code.Push(stack.Pop());
+            code.Push(this);
+            stack.Push(new Continuation(code));
+            return stack;
+          } else {
+            // Drop the instruction.
+            return stack;
+          }
+        } else {
+          for (int j = 0; j < acceptedArgumentsCount.Length; j++) {
+            if (acceptedArgumentsCount[j] == max) {
+              var bestInstruction = instructions.ToArray()[j];
+              return bestInstruction.Apply(stack);
+            }
+          }
+          throw new Exception("Unable to find best fitting instruction.");
+        }
+      }
+    }
   }
 
 }

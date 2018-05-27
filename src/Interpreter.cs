@@ -260,8 +260,6 @@ public class Interpreter {
       object x = s.Pop();
       if (x is Stack substack)
         ToStringHelper(substack, sb, instructionSets);
-      else if (x is Type t)
-        sb.Append(t.PrettyName());
       else if (x is Instruction i)
         foreach(var _instructions in instructionSets) {
           var kv = _instructions.FirstOrDefault(_kv => _kv.Value == i);
@@ -270,10 +268,8 @@ public class Interpreter {
             break;
           }
         }
-      else if (x is IDictionary d)
-        sb.Append(d.ToRepr());
       else
-        sb.Append(x.ToString());
+        sb.Append(x.ToReprQuasiDynamic());
       if (s.Any())
         sb.Append(" ");
     }

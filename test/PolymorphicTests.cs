@@ -31,13 +31,39 @@ public class PolymorphicTests : InterpreterTestUtil{
     interpreter.AddInstruction("+", addPoly);
     Assert.Equal("[[] 3]", Run("[[1 2 +]]"));
     Assert.Equal("[[] 3.5]", Run("[[1f 2.5f +]]"));
-    // Assert.Equal(@"[[] ""helloworld""]", Run(@"[[""hello"" ""world"" +]]"));
-    Assert.Equal(@"[[] helloworld]", Run(@"[[""hello"" ""world"" +]]"));
+    Assert.Equal(@"[[] ""helloworld""]", Run(@"[[""hello"" ""world"" +]]"));
+    // Assert.Equal(@"[[] helloworld]", Run(@"[[""hello"" ""world"" +]]"));
     lastRun.Pop();
     Assert.Equal("helloworld", lastRun.Pop());
 
     Assert.Throws<Exception>(() => Run("[[1 2.5f +]]"));
+  }
 
+  [Fact]
+  public void TestPolymorphicBadInstructions() {
+    interpreter = reorderInterpreter;
+    var addInt = StrictInstruction.factory.Trinary((int a, int b, int dummy) => a + b);
+    var addFloat = StrictInstruction.factory.Binary((float a, float b) => a + b);
+    var addString = StrictInstruction.factory.Binary((string a, string b) => a + b);
+    Assert.Throws<Exception>(() => new PolymorphicInstruction(new [] { addInt, addFloat, addString }));
+  }
+
+  [Fact]
+  public void TestPolymorphicReorder() {
+    interpreter = reorderInterpreter;
+    var factory = ReorderWrapper.GetFactory(StrictInstruction.factory);
+    var addInt = factory.Binary((int a, int b) => a + b);
+    var addFloat = factory.Binary((float a, float b) => a + b);
+    var addString = factory.Binary((string a, string b) => a + b);
+
+    var addPoly
+      = new PolymorphicInstruction(new [] { addInt, addFloat, addString })
+      { tryBestFit = true };
+    interpreter.AddInstruction("+", addPoly);
+    Assert.Equal("[[] 1.1 5]", Run("[[3 1.1 2 +]]"));
+    Assert.Equal("[[] 1.1 2]", Run("[[1.1 2 +]]"));
+    Assert.Equal(@"[[] 2 1.1 ""hi there""]", Run(@"[[""hi "" 1.1 2 ""there"" +]]"));
+    Assert.Equal(@"[[] sym 2 1.1 ""hi there""]", Run(@"[[""hi "" 1.1 2 ""there"" sym +]]"));
   }
 }
 
