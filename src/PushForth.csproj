@@ -21,6 +21,12 @@
     <!-- <PackageReleaseNotes>Release</PackageReleaseNotes> -->
   </PropertyGroup>
 
+  <!-- <PropertyGroup> -->
+  <!--   <AssemblyOriginatorKeyFile>keypair.snk</AssemblyOriginatorKeyFile> -->
+  <!--   <SignAssembly>true</SignAssembly> -->
+  <!--   <PublicSign Condition="'$(OS)' != 'Windows_NT'">true</PublicSign> -->
+  <!-- </PropertyGroup> -->
+
   <ItemGroup>
     <PackageReference Include="Microsoft.CSharp" Version="4.4.1" />
     <PackageReference Include="OneOf" Version="2.1.124" />
@@ -29,6 +35,11 @@
     <PackageReference Include="System.Reflection.Emit" Version="4.3.0" />
     <PackageReference Include="System.Reflection.Emit.ILGeneration" Version="4.3.0" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.3.0" />
+  </ItemGroup>
+
+  <!-- https://github.com/TheAngryByrd/dotnet-mono -->
+  <ItemGroup>
+    <DotNetCliToolReference Include="dotnet-mono" Version="*" />
   </ItemGroup>
 
 </Project>

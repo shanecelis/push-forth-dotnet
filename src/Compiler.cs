@@ -168,7 +168,11 @@ public class Compiler : StrictInterpreter {
       });
   }
 
-  internal static Stack
+  public Stack Compile(Stack program, ILStack ils) {
+    return Compile(program, ils, new [] { instructions });
+  }
+
+  public static Stack
     Compile(Stack program,
             ILStack ils,
             IEnumerable<Dictionary<string, Instruction>> instructionSets) {
@@ -293,6 +297,17 @@ public class Compiler : StrictInterpreter {
     while (ils.types.Any()) {
       var t = ils.types.Peek();
       if (t == typeof(T)) {
+        if (ils.types.Count > 1) {
+          // We have to store it and pop the rest.
+          var temp = ils.GetTemp(typeof(T));
+          il.Emit(OpCodes.Stloc, temp);
+          ils.types.Pop();
+          while (ils.types.Any())
+            ils.Pop();
+          il.Emit(OpCodes.Ldloc, temp);
+        } else {
+          // We just have one item on the stack.  Let' s go!
+        }
         break;
       } else {
         ils.Pop();

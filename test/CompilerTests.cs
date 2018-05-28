@@ -461,6 +461,10 @@ public class CompilerTests {
     Assert.Equal(8, h());
     Assert.NotEqual(0, h());
 
+    h = compiler.Compile<int>("[[2 1 + 5 + 1]]".ToStack());
+    Assert.Equal(1, h());
+    Assert.NotEqual(0, h());
+
     Assert.Throws<Exception>(() => compiler.Compile<int>("[[2 1 + 5 + +]]".ToStack()));
   }
 

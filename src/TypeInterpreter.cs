@@ -35,7 +35,7 @@ public class TypeInterpreter : StrictInterpreter {
   /** Take the output from a bunch of DetermineTypeInstructions and create a
       list of what the program consumes and what it produces.
   */
-  public static (Stack, Stack) ConsumesAndProduces(Stack stack) {
+  public static Tuple<Stack, Stack> ConsumesAndProduces(Stack stack) {
     var consumeStack = new Stack();
     var producesStack = new Stack();
     var bindings = new Dictionary<string, object>();
@@ -52,7 +52,7 @@ public class TypeInterpreter : StrictInterpreter {
     }
     consumeStack = ((IEnumerable) Unifier.Substitute(bindings, consumeStack)).ToStack();
     producesStack = ((IEnumerable) Unifier.Substitute(bindings, producesStack)).ToStack();
-    return (consumeStack, new Stack(producesStack));
+    return Tuple.Create(consumeStack, new Stack(producesStack));
   }
 }
 }

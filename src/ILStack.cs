@@ -133,6 +133,8 @@ public class ILStack : ICloneable {
       Pop();
   }
 
+  // public void FilterStack(
+
   public void UnrollStack() {
     /*
       If this weren't in IL. It'd be:
