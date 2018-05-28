@@ -261,22 +261,8 @@ public class Compiler : StrictInterpreter {
                                     typeof(Compiler).Module);
     ILGenerator il = dynMeth.GetILGenerator(256);
     var ils = new ILStack(il);
-    var result = il.DeclareLocal(typeof(T));
     ils.PushStackContents(new Stack(program));
-    if (! ils.types.Contains(typeof(T)))
-      throw new Exception("No such type on stack.");
-    while (ils.types.Any()) {
-      var t = ils.types.Peek();
-      if (t == typeof(T)) {
-        il.Emit(OpCodes.Stloc, result.LocalIndex);
-        ils.types.Pop();
-        break;
-      } else {
-        ils.Pop();
-      }
-    }
-    ils.Clear();
-    il.Emit(OpCodes.Ldloc, result.LocalIndex);
+    ils.FilterStack<T>();
     il.Emit(OpCodes.Ret);
     return (Func<T>) dynMeth.CreateDelegate(typeof(Func<T>));
   }
@@ -291,28 +277,7 @@ public class Compiler : StrictInterpreter {
     ILGenerator il = dynMeth.GetILGenerator(256);
     var ils = new ILStack(il);
     Compile(program, ils, new [] { instructions });
-    // ils.PushStackContents(program);
-    if (! ils.types.Contains(typeof(T)))
-      throw new Exception($"No such type {typeof(T).PrettyName()} on stack.");
-    while (ils.types.Any()) {
-      var t = ils.types.Peek();
-      if (t == typeof(T)) {
-        if (ils.types.Count > 1) {
-          // We have to store it and pop the rest.
-          var temp = ils.GetTemp(typeof(T));
-          il.Emit(OpCodes.Stloc, temp);
-          ils.types.Pop();
-          while (ils.types.Any())
-            ils.Pop();
-          il.Emit(OpCodes.Ldloc, temp);
-        } else {
-          // We just have one item on the stack.  Let' s go!
-        }
-        break;
-      } else {
-        ils.Pop();
-      }
-    }
+    ils.FilterStack<T>();
     il.Emit(OpCodes.Ret);
     return (Func<T>) dynMeth.CreateDelegate(typeof(Func<T>));
   }

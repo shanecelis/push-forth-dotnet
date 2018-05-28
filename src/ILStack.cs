@@ -133,7 +133,34 @@ public class ILStack : ICloneable {
       Pop();
   }
 
-  // public void FilterStack(
+  /*
+    Filter the vm's stack for the first instance of Type t.  Throw everything
+    else away.
+   */
+  public void FilterStack<T>() {
+    var ils = this;
+    if (! ils.types.Contains(typeof(T)))
+      throw new Exception($"No such type {typeof(T).PrettyName()} on stack.");
+    while (ils.types.Any()) {
+      var t = ils.types.Peek();
+      if (t == typeof(T)) {
+        if (ils.types.Count > 1) {
+          // We have to store it and pop the rest.
+          var temp = ils.GetTemp(typeof(T));
+          il.Emit(OpCodes.Stloc, temp);
+          ils.types.Pop();
+          while (ils.types.Any())
+            ils.Pop();
+          il.Emit(OpCodes.Ldloc, temp);
+        } else {
+          // We just have one item on the stack.  Let' s go!
+        }
+        break;
+      } else {
+        ils.Pop();
+      }
+    }
+  }
 
   public void UnrollStack() {
     /*
