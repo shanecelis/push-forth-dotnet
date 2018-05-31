@@ -446,6 +446,23 @@ public static class PushForthExtensions {
     return s;
   }
 
+  public static T Pop<T>(this Stack s, T defaultItem) {
+    while (s.Any()) {
+      object o = s.Pop();
+      if (o != null && o is T x)
+        return x;
+    }
+    return defaultItem;
+  }
+
+  public static T Peek<T>(this Stack s, T defaultItem) {
+    foreach (object o in s) {
+      if (o != null && o is T x)
+        return x;
+    }
+    return defaultItem;
+  }
+
   public static Parser<T> FailOnThrow<T>(this Parser<T> parser) {
     if (parser == null) throw new ArgumentNullException("parser");
 
