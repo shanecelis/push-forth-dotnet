@@ -396,6 +396,8 @@ public static class PushForthExtensions {
       return t.PrettyName();
     else if (v is bool b)
       return b ? "true" : "false";
+    else if (v == null)
+      return "null";
     else
       return v.ToString();
   }

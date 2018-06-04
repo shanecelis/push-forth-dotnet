@@ -163,5 +163,27 @@ public class ReorderInterpreterTests : InterpreterTestUtil {
     Assert.Throws<InvalidOperationException>(() => strict.Run("[[+]]".ToStack()));
   }
 
+  [Fact]
+  public void TestReorderBugFoundInWild() {
+    interpreter = reorderInterpreter;
+    Assert.Equal("[[]]", Run("[[dup]]"));
+    Assert.Equal("[[]]", Run("[[pop]]"));
+    // Assert.Equal("[[] R[-3 pop]]", Run("[[-3 pop]]"));
+    Assert.Equal("[[] R<EmptyStack>[-3 pop]]", Run("[[-3 pop]]"));
+    Assert.Equal("[[] R<EmptyStack>[R<EmptyStack>[R<EmptyStack>[-3 pop] dup] dup] R<EmptyStack>[] R<EmptyStack>[]]", Run("[[dup / pop < swap -3 pop dup dup]]"));
+    Assert.Equal("[]", ReorderInterpreter.RunReorderPost("[]".ToStack()).ToRepr());
+    Assert.Equal("[[]]", ReorderInterpreter.RunReorderPost("[[]]".ToStack()).ToRepr());
+    Assert.Equal("[[-3 pop dup dup]]", Reorder("[[dup / pop < swap -3 pop dup dup]]"));
+  }
+
+  [Fact]
+  public void TestReorderBugFoundInWild2() {
+    interpreter = reorderInterpreter;
+    Assert.Equal("[[-2 =]]", Reorder("[[< -2 = >]]"));
+    Assert.Equal("[[]]", Reorder("[[dup]]"));
+    Assert.Equal("[R<int>[-2 dup] R<int>[]]", reorderInterpreter.instructions["dup"].Apply("[-2]".ToStack()).ToRepr());
+    Assert.Equal("[[-2 dup]]", Reorder("[[-2 dup]]"));
+    Assert.Equal("[[-2 dup > =]]", Reorder("[[< -2 dup = >]]"));
+  }
 }
 }

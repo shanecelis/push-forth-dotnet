@@ -71,9 +71,49 @@ public class DeferInstruction : TypedInstruction {
     var code = new Stack();
     code.Push(new Symbol(name));
     int inputCount = inputTypes.Count();
+    // XXX I could develop my own binding here instead of forking that off to ReorderWrapper.
     for (int i = 0; i < inputCount; i++)
       code.Push(stack.Pop());
-    stack.Push(new Defer(code, outputTypes.FirstOrDefault()));
+    Defer deferred = null;
+    foreach(var outputType in outputTypes.Reverse()) {
+      /*
+        We add an entry for each thing, but only the first one has the code.
+       */
+      if (deferred == null)
+        deferred = new Defer(code, outputType);
+      else
+        deferred = new Defer(new Stack(), outputType);
+      stack.Push(deferred);
+    }
+    return stack;
+  }
+
+  public Stack ApplyWithBindings(Stack stack, Dictionary<string, Type> bindings) {
+    var code = new Stack();
+    code.Push(new Symbol(name));
+    int inputCount = inputTypes.Count();
+    // XXX I could develop my own binding here instead of forking that off to ReorderWrapper.
+    for (int i = 0; i < inputCount; i++)
+      code.Push(stack.Pop());
+    int j = 0;
+    int outputCount = outputTypes.Count();
+    if (outputCount == 0) {
+      stack.Push(new Defer(code, null));
+    } else {
+      foreach(var _outputType in outputTypes.Reverse()) {
+        Type outputType = _outputType;
+        if (Variable.IsVariableType(outputType)) {
+          var v = Variable.Instantiate(outputType);
+          outputType = bindings[v.name];
+        }
+        /*
+          We add an entry for each thing, but only the top one has the code.
+
+          Might need to do something more clever later.
+        */
+        stack.Push(new Defer(++j == outputCount ? code : new Stack(), outputType));
+      }
+    }
     return stack;
   }
 }
@@ -82,7 +122,11 @@ public class Defer : Tuple<Stack, Type>, IReprType {
   public Defer(Stack s) : base(s, null) { }
   public Defer(Stack s, Type t) : base(s, t) { }
   public Stack stack => Item1;
-  public Type type => Item2;
+  private Type _type = null;
+  public Type type {
+    get => _type == null ? Item2 : _type;
+    set => _type = value;
+  }
   public override string ToString() {
     if (type != null)
       return $"R<{type.PrettyName()}>{stack.ToRepr()}";
@@ -95,6 +139,7 @@ public class Defer : Tuple<Stack, Type>, IReprType {
 public interface IReprType {
   Type type { get; }
 }
+
 
 public class Dummy : IReprType {
   public Dummy(Type type) {

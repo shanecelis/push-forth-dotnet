@@ -61,17 +61,17 @@ public class StrictInterpreter : Interpreter {
           stack.Pop();
         return stack;
       });
-    instructions["pop"] = instructionFactory.Operation(stack => {
+    AddInstruction("pop", instructionFactory.Operation(stack => {
         if (isStrict || stack.Any())
           stack.Pop();
-      }, new Type[] { typeof(Variable.A) }, Type.EmptyTypes);
-    instructions["dup"] = instructionFactory.Operation(stack => {
-        if (isStrict || stack.Any())
-          stack.Push(stack.Peek().Duplicate());
-      },
-      new [] { typeof(Variable.A) },
-      new [] { typeof(Variable.A), typeof(Variable.A) });
-    instructions["swap"] = instructionFactory.Operation(stack => {
+        }, new Type[] { typeof(Variable.A) }, Type.EmptyTypes));
+    AddInstruction("dup", instructionFactory.Operation(stack => {
+          if (isStrict || stack.Any())
+            stack.Push(stack.Peek().Duplicate());
+        },
+        new [] { typeof(Variable.A) },
+        new [] { typeof(Variable.A), typeof(Variable.A) }));
+    AddInstruction("swap", instructionFactory.Operation(stack => {
         if (isStrict || stack.Count >= 2) {
           var a = stack.Pop();
           var b = stack.Pop();
@@ -80,7 +80,7 @@ public class StrictInterpreter : Interpreter {
         }
       },
       new [] { typeof(Variable.A), typeof(Variable.B) },
-      new [] { typeof(Variable.B), typeof(Variable.A) });
+        new [] { typeof(Variable.B), typeof(Variable.A) }));
     AddInstruction("cons", (object a, Stack b) => Cons(a, b));
     AddInstruction("cat", (object a, object b) => {
         var s = new Stack();

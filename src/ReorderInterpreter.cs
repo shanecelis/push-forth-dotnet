@@ -18,30 +18,38 @@ using System.Linq;
 
 namespace PushForth {
 
+// Doing some type sentinels here. This represents the type for an empty stack.
+// Ugh.
+public class EmptyStack { }
+
 public class ReorderInterpreter : StrictInterpreter {
 
   DeferInstruction di = null;
   public ReorderInterpreter() {
     // XXX This weird data piping is because an Instruction doesn't and probably shouldn't know its own name.
-    this.instructionFactory = ReorderWrapper.GetFactory(StrictInstruction.factory.Compose(i => {
+    this.instructionFactory = StrictInstruction.factory
+      .Compose(i => {
           di = new DeferInstruction(null, i);
           return (TypedInstruction) di;
-        }));
+        })
+      .Compose(i => new ReorderWrapper(null, i));
     isStrict = false;
+    // Let this be lazy, why don't cha?
     LoadInstructions();
-
   }
 
   public override void LoadInstructions() {
     base.LoadInstructions();
     // Damn, the reorder is more complicated than the thing in itself.
     instructions["pop"] = new InstructionFunc(stack => {
+        if (stack.Any()) {
           var o = stack.Pop();
-          var t = stack.Any() ? stack.Peek().GetType() : null;
+          var t = stack.Any() ? stack.Peek().GetType() : typeof(EmptyStack);
           var s = new Stack();
           s.Push(new Symbol("pop"));
           s.Push(o);
           stack.Push(new Defer(s, t));
+        }
       });
   }
 
@@ -55,7 +63,12 @@ public class ReorderInterpreter : StrictInterpreter {
   }
 
   public Stack Reorder(Stack stack) {
-    return RunReorderPost(Run(stack));
+    var str = stack.ToRepr();
+    try {
+      return RunReorderPost(Run(stack));
+    } catch (Exception e) {
+      throw new Exception($"Failed to reorder stack {str}.", e);
+    }
   }
 
   // public Stack ReorderPre(Stack stack) {
@@ -63,6 +76,8 @@ public class ReorderInterpreter : StrictInterpreter {
   // }
 
   public static bool IsReorderPostDone(Stack stack) {
+    if (! stack.Any())
+      return true;
     var code = (Stack) stack.Pop();
     var data = stack;
     bool done = ! data.Any();

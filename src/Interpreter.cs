@@ -21,7 +21,10 @@ namespace PushForth {
 /** Everything on the stack is what it is, but barewords are converted into
     symbols. */
 public class Symbol : Tuple<string> {
-  public Symbol(string s) : base(s) { }
+  public Symbol(string s) : base(s) {
+    if (s == null)
+      throw new NullReferenceException();
+  }
 
   public string name => Item1;
   public override string ToString() => Item1;
@@ -195,7 +198,7 @@ public class Interpreter {
       Instruction ins;
       if (obj is Symbol s) {
         foreach(var _instructions in instructionSets) {
-          if (_instructions.TryGetValue(s.Item1, out ins)) {
+          if (_instructions.TryGetValue(s.name, out ins)) {
             // Console.WriteLine("Got an instruction!");
             obj = ins;
             break;
