@@ -483,6 +483,19 @@ public static class PushForthExtensions {
     return val;
   }
 
+  public static Stack DeepClone(this Stack s) {
+    var result = new Stack();
+    foreach (object o in new Stack(s)) {
+      object r;
+      if (o is Stack innerStack)
+        r = innerStack.DeepClone();
+      else
+        r = o;
+      result.Push(r);
+    }
+    return result;
+  }
+
   public static object Duplicate(this object o) {
     if (o is Stack s) {
       return s.Clone();

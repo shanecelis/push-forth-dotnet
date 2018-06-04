@@ -138,15 +138,19 @@ public class ILStack : ICloneable {
     else away.
    */
   public void FilterStack<T>() {
+    FilterStack(typeof(T));
+  }
+
+  public void FilterStack(Type type) {
     var ils = this;
-    if (! ils.types.Contains(typeof(T)))
-      throw new Exception($"No such type {typeof(T).PrettyName()} on stack.");
+    if (! ils.types.Contains(type))
+      throw new Exception($"No such type {type.PrettyName()} on stack.");
     while (ils.types.Any()) {
       var t = ils.types.Peek();
-      if (t == typeof(T)) {
+      if (t == type) {
         if (ils.types.Count > 1) {
           // We have to store it and pop the rest.
-          var temp = ils.GetTemp(typeof(T));
+          var temp = ils.GetTemp(type);
           il.Emit(OpCodes.Stloc, temp);
           ils.types.Pop();
           while (ils.types.Any())

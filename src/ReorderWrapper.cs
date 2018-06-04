@@ -25,7 +25,7 @@ public class ReorderWrapper : TypedInstruction {
   public IEnumerable<Type> inputTypes { get; set; }
   public IEnumerable<Type> outputTypes { get; set; }
   public readonly string name;
-  public Func<object, Type> getType = o => o is IReprType d ? d.type : o.GetType();
+  public Func<object, Type> getType = o => o is IReprType d ? d.type : (o != null ? o.GetType() : typeof(object));
   public Func<Type, object> putType = o => new Dummy(o);
   protected Instruction innerInstruction;
   protected Dictionary<string, Type> lastBinding = null;
