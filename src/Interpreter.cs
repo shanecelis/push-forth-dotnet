@@ -61,6 +61,9 @@ public class Interpreter {
   // TypedInstructionFactory but it can go the other way.
   public FuncFactory<TypedInstruction> instructionFactory = StrictInstruction.factory;
 
+  // Do we really want to have arguments here?
+  public Dictionary<string, Instruction> arguments = new Dictionary<string, Instruction>();
+
   public Interpreter() { }
 
   public virtual void LoadInstructions() {
@@ -163,7 +166,7 @@ public class Interpreter {
   }
 
   public Stack Eval(Stack stack) {
-    return Eval(stack, new [] { instructions });
+    return Eval(stack, new [] { arguments, instructions });
   }
 
   public static Stack Eval(Stack stack,
@@ -214,6 +217,10 @@ public class Interpreter {
       // to halt in the next eval.
       return Cons(new Stack(), Cons(first, stack));
     }
+  }
+
+  public void AddArgument<T>(string name, T value) {
+    arguments.Add(name, instructionFactory.Nullary(() => value));
   }
 
   public Stack Run(Stack s, int maxSteps = -1) {

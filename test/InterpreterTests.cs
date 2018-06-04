@@ -833,6 +833,13 @@ public class InterpreterTests : InterpreterTestUtil {
     Assert.Equal("[[] -1]", Run("[[1 2 -]]"));
   }
 
+  [Fact]
+  public void TestArguments() {
+    Assert.Equal("[[] x x]", Run("[[x x +]]"));
+    interpreter.AddArgument("x", 1);
+    Assert.Equal("[[] 2]", Run("[[x x +]]"));
+  }
+
 }
 
 }
