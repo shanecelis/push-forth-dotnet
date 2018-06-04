@@ -101,7 +101,7 @@ public class StrictInterpreter : Interpreter {
     AddInstruction("-", (int a, int b) => a - b);
     AddInstruction("+", (int a, int b) => a + b);
     AddInstruction("*", (int a, int b) => a * b);
-    AddInstruction("/", (int a, int b) => a / b);
+    AddInstruction("/", (int a, int b) => b != 0 ? a / b : 0);
 
     AddInstruction("or", (bool a, bool b) => a || b);
     AddInstruction("and", (bool a, bool b) => a && b);

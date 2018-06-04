@@ -50,6 +50,13 @@ public class Interpreter {
     get {
       if (_instructions == null) {
         _instructions = new Dictionary<string, Instruction>();
+        /*
+          A plus of doing this here is that LoadInsructions will be called on
+          the derived types. If it were done in the constructor, I believe it
+          would only be called on the concrete class. Also instruction loading
+          is lazy. You don't pay for it unless you need it (mainly a boon for
+          unit testing).
+         */
         LoadInstructions();
       }
       return _instructions;
@@ -61,7 +68,7 @@ public class Interpreter {
   // TypedInstructionFactory but it can go the other way.
   public FuncFactory<TypedInstruction> instructionFactory = StrictInstruction.factory;
 
-  // Do we really want to have arguments here?
+  // XXX Do we really want to have arguments here?
   public Dictionary<string, Instruction> arguments = new Dictionary<string, Instruction>();
 
   public Interpreter() { }
@@ -221,6 +228,10 @@ public class Interpreter {
 
   public void AddArgument<T>(string name, T value) {
     arguments.Add(name, instructionFactory.Nullary(() => value));
+  }
+
+  public void SetArgument<T>(string name, T value) {
+    arguments[name] = instructionFactory.Nullary(() => value);
   }
 
   public Stack Run(Stack s, int maxSteps = -1) {
