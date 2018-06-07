@@ -68,24 +68,25 @@ public class DeferInstruction : TypedInstruction {
     : this(name, ins.inputTypes, ins.outputTypes) { }
 
   public Stack Apply(Stack stack) {
-    var code = new Stack();
-    code.Push(new Symbol(name));
-    int inputCount = inputTypes.Count();
-    // XXX I could develop my own binding here instead of forking that off to ReorderWrapper.
-    for (int i = 0; i < inputCount; i++)
-      code.Push(stack.Pop());
-    Defer deferred = null;
-    foreach(var outputType in outputTypes.Reverse()) {
-      /*
-        We add an entry for each thing, but only the first one has the code.
-       */
-      if (deferred == null)
-        deferred = new Defer(code, outputType);
-      else
-        deferred = new Defer(new Stack(), outputType);
-      stack.Push(deferred);
-    }
-    return stack;
+    return ApplyWithBindings(stack, null);
+    // var code = new Stack();
+    // code.Push(new Symbol(name));
+    // int inputCount = inputTypes.Count();
+    // // XXX I could develop my own binding here instead of forking that off to ReorderWrapper.
+    // for (int i = 0; i < inputCount; i++)
+    //   code.Push(stack.Pop());
+    // Defer deferred = null;
+    // foreach(var outputType in outputTypes.Reverse()) {
+    //   /*
+    //     We add an entry for each thing, but only the first one has the code.
+    //    */
+    //   if (deferred == null)
+    //     deferred = new Defer(code, outputType);
+    //   else
+    //     deferred = new Defer(new Stack(), outputType);
+    //   stack.Push(deferred);
+    // }
+    // return stack;
   }
 
   public Stack ApplyWithBindings(Stack stack, Dictionary<string, Type> bindings) {
@@ -98,11 +99,11 @@ public class DeferInstruction : TypedInstruction {
     int j = 0;
     int outputCount = outputTypes.Count();
     if (outputCount == 0) {
-      stack.Push(new Defer(code, null));
+      stack.Push(new Defer(code, typeof(void)));
     } else {
       foreach(var _outputType in outputTypes.Reverse()) {
         Type outputType = _outputType;
-        if (Variable.IsVariableType(outputType)) {
+        if (bindings != null && Variable.IsVariableType(outputType)) {
           var v = Variable.Instantiate(outputType);
           outputType = bindings[v.name];
         }
@@ -111,7 +112,9 @@ public class DeferInstruction : TypedInstruction {
 
           Might need to do something more clever later.
         */
-        stack.Push(new Defer(++j == outputCount ? code : new Stack(), outputType));
+        stack.Push(new Defer(//++j == outputCount ? code : new Stack(),
+                             code,
+                             outputType));
       }
     }
     return stack;

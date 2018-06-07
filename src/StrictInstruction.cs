@@ -90,6 +90,37 @@ public class StrictInstruction : TypedInstruction {
         _outputTypes = new [] { typeof(W) } };
     }
 
+    public TypedInstruction Nullary<X>(Func <Stack,X> func) {
+      return new StrictInstruction((stack) => {
+          stack.Push(func(stack));
+        }) { _outputTypes = new [] { typeof(X) } };
+    }
+
+    public TypedInstruction Unary<X,Y>(Func <Stack,X,Y> func) {
+      return new StrictInstruction((stack) => {
+          stack.Push(func(stack, (X) stack.Pop()));
+        }) { _inputTypes = new [] { typeof(X) },
+        _outputTypes = new [] { typeof(Y) } };
+    }
+
+    public TypedInstruction Binary<X,Y,Z>(Func <Stack,X,Y,Z> func) {
+      return new StrictInstruction((stack) => {
+          var y = (Y) stack.Pop();
+          var x = (X) stack.Pop();
+          stack.Push(func(stack, x, y));
+        }) { _inputTypes = new [] { typeof(X), typeof(Y) },
+        _outputTypes = new [] { typeof(Z) } };
+    }
+    public TypedInstruction Trinary<X,Y,Z,W>(Func <Stack,X,Y,Z,W> func) {
+      return new StrictInstruction((stack) => {
+          var z = (Z) stack.Pop();
+          var y = (Y) stack.Pop();
+          var x = (X) stack.Pop();
+          stack.Push(func(stack, x, y, z));
+        }) { _inputTypes = new [] { typeof(X), typeof(Y), typeof(Z) },
+        _outputTypes = new [] { typeof(W) } };
+    }
+
     public TypedInstruction Nullary(Action func) {
       return new StrictInstruction((_) => {
           func();

@@ -70,9 +70,9 @@ public class ReorderInterpreterTests : InterpreterTestUtil {
     Assert.True(e2.MoveNext());
     Assert.Equal("[[! 2 a] 3 a]", e2.Current);
     Assert.True(e2.MoveNext());
-    Assert.Equal("[[2 a] R[a 3 !]]", e2.Current);
+    Assert.Equal("[[2 a] R<Void>[a 3 !]]", e2.Current);
     Assert.True(e2.MoveNext());
-    Assert.Equal("[[a] 2 R[a 3 !]]", e2.Current);
+    Assert.Equal("[[a] 2 R<Void>[a 3 !]]", e2.Current);
 
     Assert.Equal("[[a 3 ! 2 a]]", Reorder("[[a 2 3 ! a]]"));
 
@@ -85,11 +85,11 @@ public class ReorderInterpreterTests : InterpreterTestUtil {
     // Assert.Equal(new Symbol("a"), s.Peek());
     var i = interpreter.instructions["!"];
     // Assert.Equal("[C[! 2] a]", i.Apply(s).ToRepr());
-    Assert.Equal("[R[a 2 !]]", i.Apply(s).ToRepr());
+    Assert.Equal("[R<Void>[a 2 !]]", i.Apply(s).ToRepr());
 
     s = "[2 a]".ToStack();
     i = interpreter.instructions["!int"];
-    Assert.Equal("[R[a 2 !int]]", i.Apply(s).ToRepr());
+    Assert.Equal("[R<Void>[a 2 !int]]", i.Apply(s).ToRepr());
   }
 
   [Fact]
@@ -184,6 +184,38 @@ public class ReorderInterpreterTests : InterpreterTestUtil {
     Assert.Equal("[R<int>[-2 dup] R<int>[]]", reorderInterpreter.instructions["dup"].Apply("[-2]".ToStack()).ToRepr());
     Assert.Equal("[[-2 dup]]", Reorder("[[-2 dup]]"));
     Assert.Equal("[[-2 dup > =]]", Reorder("[[< -2 dup = >]]"));
+  }
+
+  [Fact]
+  public void TestReorderBugFoundInWild3() {
+    Assert.Equal("[[1 depth / x pop dup pop swap x dup]]", Reorder("[[x - < pop 1 do-times / dup > pop + swap x / < depth / < % dup *]]"));
+    // Assert.Equal("", Reorder("[[do-times < % swap depth / -3 * [x] x - < pop 1 do-times / dup > pop + swap x / < depth / < % dup *]]"));
+    Assert.Equal("[[depth -3 * depth / [x] x pop 1 do-times dup pop swap x dup]]", Reorder("[[do-times < % swap depth / -3 * [x] x - < pop 1 do-times / dup > pop + swap x / < depth / < % dup *]]"));
+  }
+
+  [Fact]
+  public void TestReorderWithVoid() {
+    Assert.Equal("[[1 3 + x 2 !]]", Reorder("[[1 x 2 ! 3 +]]"));
+    Assert.Equal("[[] 4]", Run("[[1 x 2 ! 3 +]]"));
+    interpreter.instructions.Remove("x");
+    Assert.Equal("[[] 4]", Run("[[1 3 + x 2 !]]"));
+  }
+
+  /* XXX This demonstrates a real problem with assignment and actions.
+     Anything that produces side effects should have its order preserved.
+
+     ReorderWrapper might need to handle assignment effects specifically by
+     walking over the stack, and changing each symbol to a R<int>[x] or
+     something.
+   */
+  [Fact]
+  public void TestReorderWithAssignment() {
+    Assert.Equal("[[] 3]", Run("[[1 x 2 ! x +]]"));
+    Assert.Equal("[[1 x 2 ! x +]]", Reorder("[[1 x 2 ! x +]]"));
+    interpreter.instructions.Remove("x");
+    Assert.Equal("[[] x 1]", Run("[[1 x + x 2 !]]"));
+    interpreter.instructions.Remove("x");
+    Assert.Equal("[[] 2 1]", Run("[[1 x 2 ! x]]"));
   }
 }
 }

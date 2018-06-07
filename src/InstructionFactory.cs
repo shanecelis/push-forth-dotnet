@@ -32,6 +32,11 @@ public interface FuncFactory<out T> {
   T Binary<X,Y,Z>(Func<X,Y,Z> func);
   T Trinary<X,Y,Z,W>(Func<X,Y,Z,W> func);
 
+  T Nullary<X>(Func<Stack,X> func);
+  T Unary<X,Y>(Func<Stack,X,Y> func);
+  T Binary<X,Y,Z>(Func<Stack,X,Y,Z> func);
+  T Trinary<X,Y,Z,W>(Func<Stack,X,Y,Z,W> func);
+
   T Nullary(Action action);
   T Unary<X>(Action<X> action);
   T Binary<X,Y>(Action<X,Y> action);
@@ -69,6 +74,11 @@ public class FuncFactoryAdapter<S,T> : FuncFactory<T> {
   public T Unary<X,Y>(Func<X,Y> func) => converter(factory.Unary(func));
   public T Binary<X,Y,Z>(Func<X,Y,Z> func) => converter(factory.Binary(func));
   public T Trinary<X,Y,Z,W>(Func<X,Y,Z,W> func) => converter(factory.Trinary(func));
+
+  public T Nullary<X>(Func<Stack,X> func) => converter(factory.Nullary(func));
+  public T Unary<X,Y>(Func<Stack,X,Y> func) => converter(factory.Unary(func));
+  public T Binary<X,Y,Z>(Func<Stack,X,Y,Z> func) => converter(factory.Binary(func));
+  public T Trinary<X,Y,Z,W>(Func<Stack,X,Y,Z,W> func) => converter(factory.Trinary(func));
 
   public T Nullary(Action action) => converter(factory.Nullary(action));
   public T Unary<X>(Action<X> action) => converter(factory.Unary(action));

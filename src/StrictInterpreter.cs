@@ -97,11 +97,14 @@ public class StrictInterpreter : Interpreter {
         return s;
       });
 
+    AddInstruction("depth", instructionFactory.Nullary((Stack s) => s.Count));
+
     AddInstruction("minus", (int a, int b) => a - b);
+    AddInstruction("%", (int a, int b) => (isStrict || b != 0) ? a % b : 0);
     AddInstruction("-", (int a, int b) => a - b);
     AddInstruction("+", (int a, int b) => a + b);
     AddInstruction("*", (int a, int b) => a * b);
-    AddInstruction("/", (int a, int b) => b != 0 ? a / b : 0);
+    AddInstruction("/", (int a, int b) => (isStrict || b != 0) ? a / b : 0);
 
     AddInstruction("or", (bool a, bool b) => a || b);
     AddInstruction("and", (bool a, bool b) => a && b);
