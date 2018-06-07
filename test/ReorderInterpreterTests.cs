@@ -73,7 +73,7 @@ public class ReorderInterpreterTests : InterpreterTestUtil {
     Assert.Equal("[[2 a] R<Void>[a 3 !]]", e2.Current);
     Assert.True(e2.MoveNext());
     Assert.Equal("[[a] 2 R<Void>[a 3 !]]", e2.Current);
-
+    reorderInterpreter.instructions.Remove("a");
     Assert.Equal("[[a 3 ! 2 a]]", Reorder("[[a 2 3 ! a]]"));
 
   }
@@ -154,7 +154,7 @@ public class ReorderInterpreterTests : InterpreterTestUtil {
     var strict = new StrictInterpreter();
     // The non-strict interpreter moves around arguments such that they will continue to work.
     Assert.Equal("[[] d c b a 3]", Run("[[2 a negate 3 pop b c 5 + d + +]]"));
-    Assert.Equal("[[2 negate 5 + a 3 pop b c d]]", Reorder("[[2 a negate 3 pop b c 5 + d + +]]"));
+    Assert.Equal("[[3 pop 2 negate 5 + a b c d]]", Reorder("[[2 a negate 3 pop b c 5 + d + +]]"));
     // The same output is produced.
     Assert.Equal("[[] d c b a 3]", strict.Run("[[2 negate 5 + a 3 pop b c d]]".ToStack()).ToRepr());
     // Can't run the original with the strict interpreter.
@@ -169,11 +169,16 @@ public class ReorderInterpreterTests : InterpreterTestUtil {
     Assert.Equal("[[]]", Run("[[dup]]"));
     Assert.Equal("[[]]", Run("[[pop]]"));
     // Assert.Equal("[[] R[-3 pop]]", Run("[[-3 pop]]"));
-    Assert.Equal("[[] R<EmptyStack>[-3 pop]]", Run("[[-3 pop]]"));
-    Assert.Equal("[[] R<EmptyStack>[R<EmptyStack>[R<EmptyStack>[-3 pop] dup] dup] R<EmptyStack>[] R<EmptyStack>[]]", Run("[[dup / pop < swap -3 pop dup dup]]"));
+    Assert.Equal("[[] R<Void>[-3 pop]]", Run("[[-3 pop]]"));
+    Assert.Equal("[[] R<int>[1 dup] R<int>[1 dup] R<Void>[-3 pop]]", Run("[[1 -3 pop dup]]"));
+
+    Assert.Equal("[[] R<Void>[-3 pop]]", Run("[[-3 pop]]"));
+    Assert.Equal("[[] R<Void>[-3 pop]]", Run("[[-3 pop dup]]"));
+    Assert.Equal("[[] R<Void>[-3 pop]]", Run("[[swap -3 pop dup]]"));
+    Assert.Equal("[[] R<Void>[-3 pop]]", Run("[[dup / pop < swap -3 pop dup dup]]"));
     Assert.Equal("[]", ReorderInterpreter.RunReorderPost("[]".ToStack()).ToRepr());
     Assert.Equal("[[]]", ReorderInterpreter.RunReorderPost("[[]]".ToStack()).ToRepr());
-    Assert.Equal("[[-3 pop dup dup]]", Reorder("[[dup / pop < swap -3 pop dup dup]]"));
+    Assert.Equal("[[-3 pop]]", Reorder("[[dup / pop < swap -3 pop dup dup]]"));
   }
 
   [Fact]
@@ -181,24 +186,28 @@ public class ReorderInterpreterTests : InterpreterTestUtil {
     interpreter = reorderInterpreter;
     Assert.Equal("[[-2 =]]", Reorder("[[< -2 = >]]"));
     Assert.Equal("[[]]", Reorder("[[dup]]"));
-    Assert.Equal("[R<int>[-2 dup] R<int>[]]", reorderInterpreter.instructions["dup"].Apply("[-2]".ToStack()).ToRepr());
+    Assert.Equal("[R<int>[-2 dup] R<int>[-2 dup]]", reorderInterpreter.instructions["dup"].Apply("[-2]".ToStack()).ToRepr());
     Assert.Equal("[[-2 dup]]", Reorder("[[-2 dup]]"));
     Assert.Equal("[[-2 dup > =]]", Reorder("[[< -2 dup = >]]"));
   }
 
   [Fact]
   public void TestReorderBugFoundInWild3() {
-    Assert.Equal("[[1 depth / x pop dup pop swap x dup]]", Reorder("[[x - < pop 1 do-times / dup > pop + swap x / < depth / < % dup *]]"));
+    reorderInterpreter.AddInstruction("x", () => 5);
+    // Assert.Equal("[[1 depth / x pop dup pop swap x dup]]",
+    Assert.Equal("[[x pop 1 dup > pop x depth / dup *]]",
+                 Reorder("[[x - < pop 1 do-times / dup > pop + swap x / < depth / < % dup *]]"));
     // Assert.Equal("", Reorder("[[do-times < % swap depth / -3 * [x] x - < pop 1 do-times / dup > pop + swap x / < depth / < % dup *]]"));
-    Assert.Equal("[[depth -3 * depth / [x] x pop 1 do-times dup pop swap x dup]]", Reorder("[[do-times < % swap depth / -3 * [x] x - < pop 1 do-times / dup > pop + swap x / < depth / < % dup *]]"));
+    Assert.Equal("[[[x] pop 1 depth -3 * x - / dup > pop x depth / dup *]]",
+                 Reorder("[[do-times < % swap depth / -3 * [x] x - < pop 1 do-times / dup > pop + swap x / < depth / < % dup *]]"));
   }
 
   [Fact]
   public void TestReorderWithVoid() {
-    Assert.Equal("[[1 3 + x 2 !]]", Reorder("[[1 x 2 ! 3 +]]"));
+    Assert.Equal("[[x 2 ! 1 3 +]]", Reorder("[[1 x 2 ! 3 +]]"));
     Assert.Equal("[[] 4]", Run("[[1 x 2 ! 3 +]]"));
     interpreter.instructions.Remove("x");
-    Assert.Equal("[[] 4]", Run("[[1 3 + x 2 !]]"));
+    Assert.Equal("[[] 4]", Run("[[x 2 ! 1 3 +]]"));
   }
 
   /* XXX This demonstrates a real problem with assignment and actions.
@@ -211,11 +220,31 @@ public class ReorderInterpreterTests : InterpreterTestUtil {
   [Fact]
   public void TestReorderWithAssignment() {
     Assert.Equal("[[] 3]", Run("[[1 x 2 ! x +]]"));
-    Assert.Equal("[[1 x 2 ! x +]]", Reorder("[[1 x 2 ! x +]]"));
+    var s = new Stack(new object[] { new Defer("[x 2 !]".ToStack(), typeof(void)),
+        new Defer("[1 x +]".ToStack(), typeof(int)), new Stack() });
+    Assert.Equal("[[] R<int>[1 x +] R<Void>[x 2 !]]", s.ToRepr());
+    Assert.Equal("[[x 2 ! 1 x +]]", ReorderInterpreter.RunReorderPost(s).ToRepr());
+    Assert.Equal("[[] R<int>[1 R<int>[x] +] R<Void>[x 2 !]]", ReorderPre("[[1 x 2 ! x +]]"));
+    reorderInterpreter.instructions.Remove("x");
+    Assert.Equal("[[x 2 ! 1 x +]]", Reorder("[[1 x 2 ! x +]]"));
     interpreter.instructions.Remove("x");
     Assert.Equal("[[] x 1]", Run("[[1 x + x 2 !]]"));
     interpreter.instructions.Remove("x");
     Assert.Equal("[[] 2 1]", Run("[[1 x 2 ! x]]"));
+  }
+
+  [Fact]
+  public void TestReorderWithAssignmentStream() {
+    var e2 = reorderInterpreter.EvalStream("[[1 x 2 ! x +]]".ToStack())
+      .Select(s => reorderInterpreter.StackToString(s))
+      .GetEnumerator();
+    Assert.True(e2.MoveNext());
+    Assert.Equal("[[x 2 ! x +] 1]", e2.Current); Assert.True(e2.MoveNext());
+    Assert.Equal("[[2 ! x +] x 1]", e2.Current); Assert.True(e2.MoveNext());
+    Assert.Equal("[[! x +] 2 x 1]", e2.Current); Assert.True(e2.MoveNext());
+    Assert.Equal("[[x +] R<Void>[x 2 !] 1]", e2.Current); Assert.True(e2.MoveNext());
+    Assert.Equal("[[+] R<int>[x] R<Void>[x 2 !] 1]", e2.Current); Assert.True(e2.MoveNext());
+    Assert.Equal("[[] R<int>[1 R<int>[x] +] R<Void>[x 2 !]]", e2.Current); Assert.False(e2.MoveNext());
   }
 }
 }

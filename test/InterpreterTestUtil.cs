@@ -76,7 +76,18 @@ public class InterpreterTestUtil {
   public string Reorder(string code) {
     var d0 = code.ToStack();
     var d1 = reorderInterpreter.Reorder(d0);
-    // Assert.Equal(Interpreter.ParseString("[[[1 +] [[1 +] while] i] 0]"), d1);
+    return interpreter.StackToString(d1);
+  }
+
+  public string ReorderPre(string code) {
+    var d0 = code.ToStack();
+    var d1 = reorderInterpreter.Run(d0);
+    return interpreter.StackToString(d1);
+  }
+
+  public string ReorderPost(string code) {
+    var d0 = code.ToStack();
+    var d1 = ReorderInterpreter.RunReorderPost(d0);
     return interpreter.StackToString(d1);
   }
 

@@ -48,6 +48,23 @@ public class ConsumeInstruction : TypedInstruction {
   }
 }
 
+// public class DoAndDeferInstruction : DeferInstruction {
+//   TypedInstruction innerInstruction;
+//   public DeferInstruction(string name, TypedInstruction ins)
+//     : this(name, ins.inputTypes, ins.outputTypes) {
+//     innerInstruction = ins;
+//   }
+
+
+//   public override Stack ApplyWithBindings(Stack stack, Dictionary<string, Type> bindings) {
+//     stack = base.ApplyWithBindings(stack, bindings);
+//     if (stack.Peek() is Defer d) {
+//       // Let's run it.
+//       d.code;
+//     }
+//   }
+// }
+
 /** Record an instruction that was called. */
 public class DeferInstruction : TypedInstruction {
   internal string name;
@@ -69,27 +86,9 @@ public class DeferInstruction : TypedInstruction {
 
   public Stack Apply(Stack stack) {
     return ApplyWithBindings(stack, null);
-    // var code = new Stack();
-    // code.Push(new Symbol(name));
-    // int inputCount = inputTypes.Count();
-    // // XXX I could develop my own binding here instead of forking that off to ReorderWrapper.
-    // for (int i = 0; i < inputCount; i++)
-    //   code.Push(stack.Pop());
-    // Defer deferred = null;
-    // foreach(var outputType in outputTypes.Reverse()) {
-    //   /*
-    //     We add an entry for each thing, but only the first one has the code.
-    //    */
-    //   if (deferred == null)
-    //     deferred = new Defer(code, outputType);
-    //   else
-    //     deferred = new Defer(new Stack(), outputType);
-    //   stack.Push(deferred);
-    // }
-    // return stack;
   }
 
-  public Stack ApplyWithBindings(Stack stack, Dictionary<string, Type> bindings) {
+  public virtual Stack ApplyWithBindings(Stack stack, Dictionary<string, Type> bindings) {
     var code = new Stack();
     code.Push(new Symbol(name));
     int inputCount = inputTypes.Count();

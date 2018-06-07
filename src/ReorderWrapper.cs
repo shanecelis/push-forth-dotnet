@@ -72,15 +72,26 @@ public class ReorderWrapper : TypedInstruction {
   public virtual Stack Apply(Stack stack) {
     var acceptedArguments = new Stack();
     var binding = lastBinding = new Dictionary<string, Type>();
-    foreach(Type consume in inputTypes.Reverse()) {
+    var code = new Stack();
+    Type[] inputTypesArray = inputTypes.Reverse().ToArray();
+    // foreach(Type consume in inputTypes.Reverse()) {
+    for (int i = 0; i < inputTypesArray.Length; i++) {
+      Type consume = inputTypesArray[i];
       if (! stack.Any()) {
         // Not enough elements.
+        while (code.Any())
+          stack.Push(code.Pop());
         return NotEnoughElements(stack, acceptedArguments);
       }
 
       object o = stack.Pop();
       var t = getType(o);
       Type consumeType = consume;
+      if (t == typeof(void)) {
+        code.Push(o);
+        i--;
+        continue;
+      }
       // if (t == consume) {
       if (Variable.IsVariableType(consume)) {
         // XXX What is going on here?
@@ -103,10 +114,14 @@ public class ReorderWrapper : TypedInstruction {
       if (consumeType.IsAssignableFrom(t)) {
         acceptedArguments.Push(o);
       } else {
+        while (code.Any())
+          stack.Push(code.Pop());
         return TypeMismatch(stack, acceptedArguments, o, consumeType);
       }
     }
 
+    while (code.Any())
+      stack.Push(code.Pop());
     // Push the good arguments back onto the stack.
     foreach(var arg in acceptedArguments)
       stack.Push(arg);
@@ -127,6 +142,8 @@ public class ReorderWrapper : TypedInstruction {
     //   while (temp.Any())
     //     stack.Push(temp.Pop());
     // }
+    // if (code.Any())
+    //   stack.Push(new Continuation(code));
     return stack;
   }
 

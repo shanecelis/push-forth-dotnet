@@ -20,11 +20,13 @@ namespace PushForth {
 
 // Doing some type sentinels here. This represents the type for an empty stack.
 // Ugh.
-public class EmptyStack { }
+// public class EmptyStack { }
 
 public class ReorderInterpreter : StrictInterpreter {
 
   DeferInstruction di = null;
+  // Dictionary<string, Instruction> strictInstructions
+  //   = new Dictionary<string, Instruction>();
   public ReorderInterpreter() {
     // XXX This weird data piping is because an Instruction doesn't and probably shouldn't know its own name.
     this.instructionFactory = StrictInstruction.factory
@@ -40,22 +42,43 @@ public class ReorderInterpreter : StrictInterpreter {
 
   public override void LoadInstructions() {
     base.LoadInstructions();
+    instructions["!"]
+      = new ReorderWrapper("!",
+                           StrictInstruction.factory.Binary((Stack stack, Symbol s, object x) => {
+          AddInstruction(s.name, new DeferInstruction(s.name, Type.EmptyTypes, new Type[] { x.GetType() }));
+          var code = new Stack();
+          code.Push(new Symbol("!"));
+          code.Push(x);
+          code.Push(s);
+          stack.Push(new Defer(code, typeof(void)));
+          }));
+    // How do I let one instruction go through?
     // Damn, the reorder is more complicated than the thing in itself.
-    instructions["pop"] = new InstructionFunc(stack => {
-        if (stack.Any()) {
-          var o = stack.Pop();
-          var t = stack.Any() ? stack.Peek().GetType() : typeof(EmptyStack);
-          var s = new Stack();
-          s.Push(new Symbol("pop"));
-          s.Push(o);
-          stack.Push(new Defer(s, t));
-        }
-      });
+    // instructions["pop"] = new InstructionFunc(stack => {
+    //     if (stack.Any()) {
+    //       var o = stack.Pop();
+    //       var t = typeof(void);
+    //       var s = new Stack();
+    //       s.Push(new Symbol("pop"));
+    //       s.Push(o);
+    //       stack.Push(new Defer(s, t));
+    //     }
+    //   });
   }
 
   public override void AddInstruction(string name, Instruction i) {
     // if (i is DeferInstruction di)
     //   di.name = name;
+    // if (name == "!") {
+
+    //   var instructionFactory = StrictInstruction.factory
+    //     // .Compose(i => {
+    //     //     di = new DeferInstruction(null, i);
+    //     //     return (TypedInstruction) di;
+    //     //   })
+    //     .Compose(i => new ReorderWrapper(null, i))
+    //     .;
+    // }
     base.AddInstruction(name, i);
     if (di != null)
       di.name = name;
@@ -101,6 +124,7 @@ public class ReorderInterpreter : StrictInterpreter {
       if (o is Defer r) {
         // Recurse.
         var s = new Stack(r.stack); // This reverses the stack.
+        r.stack.Clear();
         s.Push(new Stack());
         s = RunReorderPost(s);
         var newCode = (Stack) s.Pop();
