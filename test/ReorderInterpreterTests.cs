@@ -247,7 +247,6 @@ public class ReorderInterpreterTests : InterpreterTestUtil {
     Assert.Equal("[[] R<int>[1 R<int>[x] +] R<Void>[x 2 !]]", e2.Current); Assert.False(e2.MoveNext());
   }
 
-
   [Fact]
   public void TestReorderBugFoundInWild4() {
     Assert.Equal("[[x pop [x] 1 do-times depth -3 * dup > pop depth x dup]]", Reorder("[[do-times < % swap depth / -3 * [x] x - < pop 1 do-times / dup > pop + swap x / < depth / < % dup *]]"));

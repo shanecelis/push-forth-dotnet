@@ -29,6 +29,12 @@
    If // :: [bool ([X] -> [Y]) ([X] -> [Y])]
 
    I may need a unifier.
+*** This should be supported by the language like so:
+
+    pop - pops the first item.
+    pop<T> - pops the first item of type T.
+    peek - pops and pushes the top item (a nop).
+    peek<T> - pops the first item of type T and pushes it.
 
 * Compiler Notes
 ** If
