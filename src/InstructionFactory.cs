@@ -27,29 +27,26 @@ public interface FuncFactory<out T> {
               IEnumerable<Type> inputTypes,
               IEnumerable<Type> outputTypes);
 
-  T Nullary<X>(Func<X> func);
-  T Unary<X,Y>(Func<X,Y> func);
-  T Binary<X,Y,Z>(Func<X,Y,Z> func);
-  T Trinary<X,Y,Z,W>(Func<X,Y,Z,W> func);
+  // T Nullary<X>(Func<X> func);
+  // T Unary<X,Y>(Func<X,Y> func);
+  // T Binary<X,Y,Z>(Func<X,Y,Z> func);
+  // T Trinary<X,Y,Z,W>(Func<X,Y,Z,W> func);
 
-  T Nullary<X>(Func<Stack,X> func);
-  T Unary<X,Y>(Func<Stack,X,Y> func);
-  T Binary<X,Y,Z>(Func<Stack,X,Y,Z> func);
-  T Trinary<X,Y,Z,W>(Func<Stack,X,Y,Z,W> func);
+  // T Nullary<X>(Func<Stack,X> func);
+  // T Unary<X,Y>(Func<Stack,X,Y> func);
+  // T Binary<X,Y,Z>(Func<Stack,X,Y,Z> func);
+  // T Trinary<X,Y,Z,W>(Func<Stack,X,Y,Z,W> func);
 
-  T Nullary(Action action);
-  T Unary<X>(Action<X> action);
-  T Binary<X,Y>(Action<X,Y> action);
-  T Trinary<X,Y,Z>(Action<X,Y,Z> action);
+  // T Nullary(Action action);
+  // T Unary<X>(Action<X> action);
+  // T Binary<X,Y>(Action<X,Y> action);
+  // T Trinary<X,Y,Z>(Action<X,Y,Z> action);
 
-  T Nullary(Action<Stack> action);
-  T Unary<X>(Action<Stack,X> action);
-  T Binary<X,Y>(Action<Stack,X,Y> action);
-  T Trinary<X,Y,Z>(Action<Stack,X,Y,Z> action);
+  // T Nullary(Action<Stack> action);
+  // T Unary<X>(Action<Stack,X> action);
+  // T Binary<X,Y>(Action<Stack,X,Y> action);
+  // T Trinary<X,Y,Z>(Action<Stack,X,Y,Z> action);
 }
-
-// public interface InstructionFactory : FuncFactory<Instruction> { }
-// public interface TypedInstructionFactory : FuncFactory<TypedInstruction> { }
 
 public class FuncFactoryAdapter<S,T> : FuncFactory<T> {
   FuncFactory<S> factory;
@@ -69,31 +66,165 @@ public class FuncFactoryAdapter<S,T> : FuncFactory<T> {
                      IEnumerable<Type> inputTypes,
                      IEnumerable<Type> outputTypes)
     => converter(factory.Operation(action, inputTypes, outputTypes));
-
-  public T Nullary<X>(Func<X> func) => converter(factory.Nullary(func));
-  public T Unary<X,Y>(Func<X,Y> func) => converter(factory.Unary(func));
-  public T Binary<X,Y,Z>(Func<X,Y,Z> func) => converter(factory.Binary(func));
-  public T Trinary<X,Y,Z,W>(Func<X,Y,Z,W> func) => converter(factory.Trinary(func));
-
-  public T Nullary<X>(Func<Stack,X> func) => converter(factory.Nullary(func));
-  public T Unary<X,Y>(Func<Stack,X,Y> func) => converter(factory.Unary(func));
-  public T Binary<X,Y,Z>(Func<Stack,X,Y,Z> func) => converter(factory.Binary(func));
-  public T Trinary<X,Y,Z,W>(Func<Stack,X,Y,Z,W> func) => converter(factory.Trinary(func));
-
-  public T Nullary(Action action) => converter(factory.Nullary(action));
-  public T Unary<X>(Action<X> action) => converter(factory.Unary(action));
-  public T Binary<X,Y>(Action<X,Y> action) => converter(factory.Binary(action));
-  public T Trinary<X,Y,Z>(Action<X,Y,Z> action) => converter(factory.Trinary(action));
-
-  public T Nullary(Action<Stack> action) => converter(factory.Nullary(action));
-  public T Unary<X>(Action<Stack,X> action) => converter(factory.Unary(action));
-  public T Binary<X,Y>(Action<Stack,X,Y> action) => converter(factory.Binary(action));
-  public T Trinary<X,Y,Z>(Action<Stack,X,Y,Z> action) => converter(factory.Trinary(action));
 }
 
 public static class FuncFactoryExtensions {
-  public static FuncFactory<Y> Compose<X,Y>(this FuncFactory<X> factory, Func<X,Y> converter) {
+
+  public static FuncFactory<Y> Compose<X,Y>(this FuncFactory<X> factory,
+                                            Func<X,Y> converter) {
     return new FuncFactoryAdapter<X,Y>(factory, converter);
+  }
+
+  /* XXX Maybe should just be rolled into a ConvenienceFactory, but for now
+     this'll do.
+   */
+  public static T Nullary<T,X>(this FuncFactory<T> factory,
+                               Func <X> func)
+    => factory.Operation((stack) => {
+        stack.Push(func());
+      },
+      Type.EmptyTypes,
+      new [] { typeof(X) });
+
+  public static T Unary<T,X,Y>(this FuncFactory<T> factory,
+                      Func <X,Y> func) {
+    return factory.Operation((stack) => {
+        stack.Push(func((X) stack.Pop()));
+      }, new [] { typeof(X) },
+      new [] { typeof(Y) });
+  }
+
+  public static T Binary<T,X,Y,Z>(this FuncFactory<T> factory,
+                         Func <X,Y,Z> func) {
+    return factory.Operation((stack) => {
+        var y = (Y) stack.Pop();
+        var x = (X) stack.Pop();
+        stack.Push(func(x, y));
+      }, new [] { typeof(X), typeof(Y) },
+      new [] { typeof(Z) });
+  }
+  public static T Trinary<T,X,Y,Z,W>(this FuncFactory<T> factory,
+                            Func <X,Y,Z,W> func) {
+    return factory.Operation((stack) => {
+        var z = (Z) stack.Pop();
+        var y = (Y) stack.Pop();
+        var x = (X) stack.Pop();
+        stack.Push(func(x, y, z));
+      }, new [] { typeof(X), typeof(Y), typeof(Z) },
+      new [] { typeof(W) });
+  }
+
+  public static T Nullary<T,X>(this FuncFactory<T> factory,
+                             Func <Stack,X> func) {
+    return factory.Operation((stack) => {
+        stack.Push(func(stack));
+      },
+      Type.EmptyTypes,
+      new [] { typeof(X) });
+  }
+
+  public static T Unary<T,X,Y>(this FuncFactory<T> factory,
+                               Func <Stack,X,Y> func) {
+    return factory.Operation((stack) => {
+        stack.Push(func(stack, (X) stack.Pop()));
+      }, new [] { typeof(X) },
+      new [] { typeof(Y) });
+  }
+
+  public static T Binary<T,X,Y,Z>(this FuncFactory<T> factory,
+                         Func <Stack,X,Y,Z> func) {
+    return factory.Operation((stack) => {
+        var y = (Y) stack.Pop();
+        var x = (X) stack.Pop();
+        stack.Push(func(stack, x, y));
+      }, new [] { typeof(X), typeof(Y) },
+      new [] { typeof(Z) });
+  }
+  public static T Trinary<T,X,Y,Z,W>(this FuncFactory<T> factory,
+                            Func <Stack,X,Y,Z,W> func) {
+    return factory.Operation((stack) => {
+        var z = (Z) stack.Pop();
+        var y = (Y) stack.Pop();
+        var x = (X) stack.Pop();
+        stack.Push(func(stack, x, y, z));
+      }, new [] { typeof(X), typeof(Y), typeof(Z) },
+      new [] { typeof(W) });
+  }
+
+  public static T Nullary<T>(this FuncFactory<T> factory,
+                             Action func) {
+    return factory.Operation((_) => {
+        func();
+      },
+      Type.EmptyTypes,
+      Type.EmptyTypes);
+  }
+
+  public static T Unary<T,X>(this FuncFactory<T> factory,
+                             Action<X> func) {
+    return factory.Operation((stack) => {
+        func((X) stack.Pop());
+      },
+      new [] { typeof(X) },
+      Type.EmptyTypes);
+  }
+
+  public static T Binary<T,X,Y>(this FuncFactory<T> factory,
+                                Action<X,Y> func) {
+    return factory.Operation((stack) => {
+        var y = (Y) stack.Pop();
+        var x = (X) stack.Pop();
+        func(x, y);
+      },
+      new [] { typeof(X), typeof(Y) },
+      Type.EmptyTypes);
+  }
+  public static T Trinary<T,X,Y,Z>(this FuncFactory<T> factory,
+                                   Action<X,Y,Z> func) {
+    return factory.Operation((stack) => {
+        var z = (Z) stack.Pop();
+        var y = (Y) stack.Pop();
+        var x = (X) stack.Pop();
+        func(x, y, z);
+      },
+      new [] { typeof(X), typeof(Y), typeof(Z) },
+      Type.EmptyTypes);
+  }
+
+  public static T Nullary<T>(this FuncFactory<T> factory,
+                             Action<Stack> func) {
+    return factory.Operation((stack) => {
+        func(stack);
+      }, Type.EmptyTypes, Type.EmptyTypes);
+  }
+
+  public static T Unary<T,X>(this FuncFactory<T> factory,
+                    Action<Stack, X> func) {
+    return factory.Operation((stack) => {
+        func(stack, (X) stack.Pop());
+      }, new [] { typeof(X) }, Type.EmptyTypes);
+  }
+
+  public static T Binary<T,X,Y>(this FuncFactory<T> factory,
+                                Action<Stack, X,Y> func) {
+    return factory.Operation((stack) => {
+        var y = (Y) stack.Pop();
+        var x = (X) stack.Pop();
+        func(stack, x, y);
+      },
+      new [] { typeof(X), typeof(Y) },
+      Type.EmptyTypes);
+  }
+  public static T Trinary<T,X,Y,Z>(this FuncFactory<T> factory,
+                                   Action<Stack, X,Y,Z> func) {
+    return factory.Operation((stack) => {
+        var z = (Z) stack.Pop();
+        var y = (Y) stack.Pop();
+        var x = (X) stack.Pop();
+        func(stack, x, y, z);
+      },
+      new [] { typeof(X), typeof(Y), typeof(Z) },
+      Type.EmptyTypes);
   }
 }
 
