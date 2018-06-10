@@ -37,6 +37,40 @@ public class PolymorphicTests : InterpreterTestUtil{
     Assert.Equal("helloworld", lastRun.Pop());
 
     Assert.Throws<Exception>(() => Run("[[1 2.5f +]]"));
+    Assert.Throws<Exception>(() => Run("[[1 +]]"));
+  }
+
+  [Fact]
+  public void TestPolymorphicInstructionTryBestFit() {
+    interpreter = cleanInterpreter;
+    var addInt = StrictInstruction.factory.Binary((int a, int b) => a + b);
+    var addFloat = StrictInstruction.factory.Binary((float a, float b) => a + b);
+    var addString = StrictInstruction.factory.Binary((string a, string b) => a + b);
+
+    var addPoly = new PolymorphicInstruction(new [] { addInt, addFloat, addString })
+      { tryBestFit = true };
+    interpreter.AddInstruction("+", addPoly);
+    Assert.Equal("[[] 3]", Run("[[1 2 +]]"));
+    Assert.Equal("[[] 3.5]", Run("[[1f 2.5f +]]"));
+    Assert.Equal(@"[[] ""helloworld""]", Run(@"[[""hello"" ""world"" +]]"));
+    // Assert.Equal(@"[[] helloworld]", Run(@"[[""hello"" ""world"" +]]"));
+    lastRun.Pop();
+    Assert.Equal("helloworld", lastRun.Pop());
+
+    var e = EvalStream("[[2.5 1 +]]").GetEnumerator();
+    Assert.True(e.MoveNext());
+    Assert.Equal("[[1 +] 2.5]", e.Current); Assert.True(e.MoveNext());
+    Assert.Equal("[[+] 1 2.5]", e.Current); Assert.True(e.MoveNext());
+    Assert.Equal("[[+ 2.5] 1]", e.Current); Assert.True(e.MoveNext());
+    Assert.Equal("[[2.5] 1]", e.Current); Assert.True(e.MoveNext());
+    Assert.Equal("[[] 2.5 1]", e.Current); Assert.False(e.MoveNext());
+
+    Assert.Equal("[[] 2.5 1]", Run("[[2.5f 1 +]]"));
+
+    Assert.Equal("[[] 2.5 1]", Run("[[1 2.5f]]"));
+    Assert.Equal("[[] 2.5 1]", Run("[[2.5f 1 +]]"));
+    Assert.Equal("[[] 1 2.5]", Run("[[1 2.5f +]]"));
+    Assert.Equal("[[] 1]", Run("[[1 +]]"));
   }
 
   [Fact]

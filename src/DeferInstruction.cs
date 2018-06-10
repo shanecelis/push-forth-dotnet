@@ -95,7 +95,6 @@ public class DeferInstruction : TypedInstruction {
     // XXX I could develop my own binding here instead of forking that off to ReorderWrapper.
     for (int i = 0; i < inputCount; i++)
       code.Push(stack.Pop());
-    int j = 0;
     int outputCount = outputTypes.Count();
     if (outputCount == 0) {
       stack.Push(new Defer(code, typeof(void)));

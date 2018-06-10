@@ -18,11 +18,24 @@ using OneOf;
 
 namespace PushForth {
 
-/** Wraps an instruction such that mistyped arguments are _reordered_ and lack
-    of arguments causes noops.
+/**
+   Represents overloaded instructions which require different types. For
+   instance, one can represent a "+" instruction that works for integers,
+   floating-point numbers, and strings like so:
+
+   ```cs
+   var addInt = StrictInstruction.factory.Binary((int a, int b) => a + b);
+   var addFloat = StrictInstruction.factory.Binary((float a, float b) => a + b);
+   var addString = StrictInstruction.factory.Binary((string a, string b) => a + b);
+
+   var addPoly = new PolymorphicInstruction(new [] { addInt, addFloat, addString });
+   ```
  */
 public class PolymorphicInstruction : Instruction {
   IEnumerable<TypedInstruction> instructions;
+  /** XXX rename to strict?
+
+   */
   public bool tryBestFit = false;
   public PolymorphicInstruction(IEnumerable<TypedInstruction> instructions) {
     this.instructions = instructions;
@@ -54,7 +67,11 @@ public class PolymorphicInstruction : Instruction {
         if (! stackContents.MoveNext()) {
           // Not enough elements.
           // break;
-          goto notFound;
+          if (tryBestFit)
+            return stack;
+          else
+            throw new Exception("Not enough arguments.");
+          // goto notFound;
           // return NotEnoughElements(stack, acceptedArguments);
         }
         object o = stackContents.Current;
@@ -83,6 +100,7 @@ public class PolymorphicInstruction : Instruction {
         }
       }
       foundInstruction = instruction;
+      // break;
     notFound:
       ;
       i++;
@@ -95,28 +113,21 @@ public class PolymorphicInstruction : Instruction {
         throw new Exception($"Unable to find an instruction that matches the types.");
       else {
         var max = acceptedArgumentsCount.Max();
-        if (max == 0) {
-          // There is no best fit for this instruction. Let's just move the top
-          // argument away.
-          if (stack.Any()) {
-            var code = new Stack();
-            code.Push(stack.Pop());
-            code.Push(this);
-            stack.Push(new Continuation(code));
-            return stack;
-          } else {
-            // Drop the instruction.
-            return stack;
-          }
-        } else {
-          for (int j = 0; j < acceptedArgumentsCount.Length; j++) {
-            if (acceptedArgumentsCount[j] == max) {
-              var bestInstruction = instructions.ToArray()[j];
-              return bestInstruction.Apply(stack);
-            }
-          }
-          throw new Exception("Unable to find best fitting instruction.");
-        }
+        // We're going to do a little reordering of the first argument that
+        // doesn't match the max number of arguments.
+        var temp = new Stack();
+        // Capture the good arguments.
+        for (int j = 0; j < max; j++)
+          temp.Push(stack.Pop());
+        // Create a continuation for the bad argument.
+        var code = new Stack();
+        code.Push(stack.Pop());
+        code.Push(this);
+        // Push the good arguments back onto the stack.
+        while (temp.Any())
+          stack.Push(temp.Pop());
+        stack.Push(new Continuation(code));
+        return stack;
       }
     }
   }
