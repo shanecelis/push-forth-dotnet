@@ -45,7 +45,20 @@ public class StackParser {
 
   public static readonly Parser<string> bareWord = Parse.CharExcept(" \n\t[]•").AtLeastOnce().Text().Token();
 
-  public static readonly Parser<Symbol> symbol = bareWord.Select(s => new Symbol(s));
+  // public static readonly Parser<Symbol> symbol = bareWord.Select(s => new Symbol(s));
+  public static readonly Parser<Symbol> unrolledSymbol =
+    from first in Parse.CharExcept(" \n\t[]•")
+    from rest in Parse.CharExcept(" \n\t[]•<>").Many().Text()
+    from trailingSpaces in Parse.WhiteSpace.Many()
+    select new Symbol($"{first}{rest}");
+
+  public static readonly Parser<Symbol> symbol = unrolledSymbol;
+
+  public static readonly Parser<QualifiedSymbol> qualifiedSymbol =
+    from first in Parse.CharExcept(" \n\t[]•")
+    from rest in Parse.CharExcept(" \n\t[]•<>").Many().Text()
+    from types in typeLiteral.DelimitedBy(Parse.Char(',').Token()).Contained(Parse.Char('<').NoTrailingWhitespace(), Parse.Char('>').Token())
+    select new QualifiedSymbol($"{first}{rest}", types);
 
   // https://stackoverflow.com/questions/21414309/sprache-parse-signed-integer
   private static readonly Parser<int> integer =
@@ -96,7 +109,7 @@ public class StackParser {
   private static readonly Parser<object> cell =
     // quotedString.Or(bareWord).Or(integer.Select(i => i.ToString()));
     // quotedString.ToCell().Or(integer.ToCell()).Or(symbol.ToCell());
-    quotedString.ToCell().Or(quotedChar.ToCell()).Or(booleanLiteral.ToCell()).Or(floatRep.ToCell()).Or(doubleRep.ToCell()).Or(integer.ToCell()).Or(typeofLiteral.ToCell()).Or(symbol.ToCell());
+    quotedString.ToCell().Or(quotedChar.ToCell()).Or(booleanLiteral.ToCell()).Or(floatRep.ToCell()).Or(doubleRep.ToCell()).Or(integer.ToCell()).Or(typeofLiteral.ToCell()).Or(qualifiedSymbol.ToCell()).Or(symbol.ToCell());
 
   internal static readonly Parser<Stack> stackRep =
     from precedingSpaces in Parse.WhiteSpace.Many()
@@ -119,8 +132,14 @@ public class StackParser {
     from trailingSpaces in Parse.WhiteSpace.Many()
     select Variable.TypeFromChar(c);
 
+  private static readonly Parser<string> id =
+    from first in Parse.Letter
+    from rest in Parse.LetterOrDigit.Many().Text()
+    from trailingSpaces in Parse.WhiteSpace.Many()
+    select $"{first}{rest}";
+
   private static readonly Parser<Type> typeLiteral =
-    from s in bareWord
+    from s in id
     select s.ToType();
 
   internal static readonly Parser<Stack> typeRep =
@@ -191,6 +210,15 @@ public class StackParser {
       from trailingSpaces in Parse.WhiteSpace.Many()
       select new Stack(contents.Reverse().ToArray());
     return stackRep.Parse(s);
+  }
+}
+
+public static class StackParserExtensions {
+  public static Parser<T> NoTrailingWhitespace<T>(this Parser<T> parser) {
+    return
+      from x in parser
+      from trailingSpaces in Parse.WhiteSpace.Many()
+      select x;
   }
 }
 }

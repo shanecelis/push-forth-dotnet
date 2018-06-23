@@ -30,6 +30,16 @@ public class Symbol : Tuple<string> {
   public override string ToString() => Item1;
 }
 
+public class QualifiedSymbol : Tuple<string, IEnumerable<Type>> {
+  public QualifiedSymbol(string s, IEnumerable<Type> types) : base(s, types) {
+    if (s == null)
+      throw new NullReferenceException();
+  }
+  public string name => Item1;
+  public IEnumerable<Type> types => Item2;
+  public override string ToString() => Item1 + "<" + string.Join(",", types.Select(t => t.PrettyName())) + ">";
+}
+
 /** Mark a stack as something that should be pushed back onto the code stack.
     This is push-forth's primary means of execution control. */
 public class Continuation : Tuple<Stack> {
@@ -83,6 +93,10 @@ public class Interpreter {
   public virtual void AddInstruction(string name, Instruction i) {
     instructions[name] = i;
   }
+
+  // public virtual void AddGenericInstruction<X>(string name, Instruction i) {
+  //   AddInstruction(name,
+  // }
 
   public void AddInstruction(string name, Action action) {
     AddInstruction(name, instructionFactory.Nullary(action));
@@ -205,6 +219,7 @@ public class Interpreter {
           }
         }
       }
+      // if (obj is GenericInstruction
       if (obj is Instruction i) {
         ins = i;
         var result = ins.Apply(data);

@@ -49,7 +49,7 @@ public class InstructionCompiler : Instruction {
         //                            },
         //   returnType);
 
-  public InstructionCompiler(int argCount, 
+  public InstructionCompiler(int argCount,
                              Action<ILStack> emitter,
                              Func<Stack, Type> getReturnType) {
     this.argCount = argCount;

@@ -40,7 +40,7 @@ public class StrictInstruction : TypedInstruction {
 
   class StrictInstructionFactory : FuncFactory<TypedInstruction> {
 
-    public TypedInstruction Operation(Func <Stack, Stack> func,
+    public TypedInstruction Operation(Func<Stack,Stack> func,
                                       IEnumerable<Type> inputTypes,
                                       IEnumerable<Type> outputTypes) {
       return new StrictInstruction((stack) => {

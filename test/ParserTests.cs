@@ -61,6 +61,57 @@ public class ParserTests {
   }
 
   [Fact]
+  public void TestParseWithTypeQualifier() {
+    var s = "[+<int>]".ToStack();
+    var sym = (QualifiedSymbol) s.Pop();
+    Assert.Equal("+", sym.name);
+    Assert.Equal(new [] { typeof(int) }, sym.types);
+  }
+  [Fact]
+  public void TestParseQualifiedSymbol() {
+    var r = StackParser.qualifiedSymbol.Parse("+<int>");
+    Assert.Equal("+", r.name);
+    Assert.Equal(new [] { typeof(int) }, r.types);
+
+    r = StackParser.qualifiedSymbol.Parse("+<int,int>");
+    Assert.Equal("+", r.name);
+    Assert.Equal(new [] { typeof(int), typeof(int) }, r.types);
+
+    r = StackParser.qualifiedSymbol.Parse("+<int  ,  int>");
+    Assert.Equal("+", r.name);
+    Assert.Equal(new [] { typeof(int), typeof(int) }, r.types);
+
+    r = StackParser.qualifiedSymbol.Parse("+<int  ,  float>");
+    Assert.Equal("+", r.name);
+    Assert.Equal(new [] { typeof(int), typeof(float) }, r.types);
+
+    r = StackParser.qualifiedSymbol.Parse("+<   int  ,  float   >");
+    Assert.Equal("+", r.name);
+    Assert.Equal(new [] { typeof(int), typeof(float) }, r.types);
+
+
+    Assert.Throws<TypeLoadException>(() => StackParser.qualifiedSymbol.Parse("+<   int  ,  floaty   >"));
+    Assert.Throws<ParseException>(() => StackParser.qualifiedSymbol.Parse("+<   int  ,  float-y   >"));
+
+  }
+
+  [Fact]
+  public void TestParseUnrolledSymbol() {
+    var r = StackParser.unrolledSymbol.Parse("+");
+    Assert.Equal("+", r.name);
+    r = StackParser.unrolledSymbol.Parse("++");
+    Assert.Equal("++", r.name);
+    r = StackParser.unrolledSymbol.Parse("++   ");
+    Assert.Equal("++", r.name);
+    r = StackParser.unrolledSymbol.Parse("++   o");
+    Assert.Equal("++", r.name);
+    r = StackParser.unrolledSymbol.Parse("++   ]");
+    Assert.Equal("++", r.name);
+    r = StackParser.unrolledSymbol.Parse("++]");
+    Assert.Equal("++", r.name);
+  }
+
+  [Fact]
   public void TestPrecedingSpace() {
     var s = "   []".ToStack();
   }

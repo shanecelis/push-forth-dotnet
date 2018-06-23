@@ -72,14 +72,14 @@ public class StrictInterpreter : Interpreter {
         new [] { typeof(Variable.A) },
         new [] { typeof(Variable.A), typeof(Variable.A) }));
     AddInstruction("swap", instructionFactory.Operation(stack => {
-        if (isStrict || stack.Count >= 2) {
-          var a = stack.Pop();
-          var b = stack.Pop();
-          stack.Push(a);
-          stack.Push(b);
-        }
-      },
-      new [] { typeof(Variable.A), typeof(Variable.B) },
+          if (isStrict || stack.Count >= 2) {
+            var a = stack.Pop();
+            var b = stack.Pop();
+            stack.Push(a);
+            stack.Push(b);
+          }
+        },
+        new [] { typeof(Variable.A), typeof(Variable.B) },
         new [] { typeof(Variable.B), typeof(Variable.A) }));
     AddInstruction("cons", (object a, Stack b) => Cons(a, b));
     AddInstruction("cat", (object a, object b) => {
@@ -98,6 +98,13 @@ public class StrictInterpreter : Interpreter {
       });
 
     AddInstruction("depth", instructionFactory.Nullary((Stack s) => s.Count));
+    // AddGenericInstruction<T>("depth", instructionFactory.Nullary((Stack s) => {
+    //       int count = 0;
+    //       foreach (var x in s)
+    //         if (x is T)
+    //           count++;
+    //       return count;
+    //     }));
 
     AddInstruction("minus", (int a, int b) => a - b);
     AddInstruction("%", (int a, int b) => (isStrict || b != 0) ? a % b : 0);

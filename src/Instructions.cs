@@ -32,6 +32,10 @@ public interface TypedInstruction : Instruction {
   IEnumerable<Type> outputTypes { get; }
 }
 
+public interface GenericInstruction {
+  TypedInstruction GetInstruction(IEnumerable<Type> types);
+}
+
 public class NoopInstruction : Instruction {
   public Stack Apply(Stack stack) {
     return stack;
