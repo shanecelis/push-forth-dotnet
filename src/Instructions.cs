@@ -32,8 +32,8 @@ public interface TypedInstruction : Instruction {
   IEnumerable<Type> outputTypes { get; }
 }
 
-public interface GenericInstruction {
-  TypedInstruction GetInstruction(IEnumerable<Type> types);
+public interface GenericInstruction : Instruction {
+  Instruction GetInstruction(IEnumerable<Type> types);
 }
 
 public class NoopInstruction : Instruction {

@@ -38,4 +38,22 @@ public static class CompilerFunctions {
   }
 }
 
+public static class GenericInstructions {
+  /**
+    If the first argument is a Stack, it is given the data stack.
+
+    If the instruction doesn't use the stack but wants a Stack s from the data
+    stack, it must have a signature like this:
+
+    int Depth<T>(Stack data, Stack s)
+   */
+  public static int Depth<T>(Stack s) {
+    int count = 0;
+    foreach (var x in s)
+      if (x is T)
+        count++;
+    return count;
+  }
+}
+
 }

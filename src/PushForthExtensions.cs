@@ -390,6 +390,8 @@ public static class PushForthExtensions {
       return d.ToRepr();
     else if (v is string str)
       return str.ToRepr();
+    else if (v is char c)
+      return $"'{c}'";
     else if (v is IEnumerable e)
       return e.ToRepr();
     else if (v is Type t)

@@ -97,7 +97,11 @@ public class StrictInterpreter : Interpreter {
         return s;
       });
 
-    AddInstruction("depth", instructionFactory.Nullary((Stack s) => s.Count));
+    // AddInstruction("depth", instructionFactory.Nullary((Stack s) => s.Count));
+    AddInstruction("depth",
+                   new GenericMethodInstruction<TypedInstruction>(instructionFactory,
+                                                                  typeof(GenericInstructions).GetMethod("Depth"))
+                   { innerInstruction = instructionFactory.Nullary((Stack s) => s.Count) });
     // AddGenericInstruction<T>("depth", instructionFactory.Nullary((Stack s) => {
     //       int count = 0;
     //       foreach (var x in s)
@@ -278,7 +282,17 @@ public class StrictInterpreter : Interpreter {
           stack.Push(new Continuation(code));
         }
       });
+
   }
+
+
+  // AddGenericInstruction<T>("depth", instructionFactory.Nullary((Stack s) => {
+  //       int count = 0;
+  //       foreach (var x in s)
+  //         if (x is T)
+  //           count++;
+  //       return count;
+  //     }));
 }
 
 public class NonstrictInterpreter : StrictInterpreter {

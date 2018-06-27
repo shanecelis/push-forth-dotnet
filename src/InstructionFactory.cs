@@ -13,6 +13,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Linq;
 
 namespace PushForth {
 
@@ -225,6 +227,35 @@ public static class FuncFactoryExtensions {
       },
       new [] { typeof(X), typeof(Y), typeof(Z) },
       Type.EmptyTypes);
+  }
+
+  public static T FromMethod<T>(this FuncFactory<T> factory,
+                                MethodInfo methodInfo) {
+    if (methodInfo.IsGenericMethodDefinition) {
+      // XXX Bad code smell.
+      return (T) (object) new GenericMethodInstruction<T>(factory, methodInfo);
+    }
+
+    var parameters = methodInfo.GetParameters();
+    bool stackFirstParameter = parameters.Any() && parameters[0].ParameterType == typeof(Stack);
+    return factory.Operation(stack => {
+        int count = parameters.Length;
+        var args = new Object[count];
+        for (int i = 0; i < count - 1; i++)
+          args[count - 1 - i] = stack.Pop();
+        // if (stackFirstParameter)
+          args[0] = stackFirstParameter ? stack : stack.Pop();
+        // else
+        //   args[0] = stack.Pop();
+        // Console.WriteLine("from method invoked");
+        var result = methodInfo.Invoke(null, args);
+        if (methodInfo.ReturnType != typeof(void))
+          stack.Push(result);
+      },
+      stackFirstParameter
+      ? parameters.Skip(1).Select(pi => pi.ParameterType)
+      : parameters.Select(pi => pi.ParameterType),
+      methodInfo.ReturnType != typeof(void) ? new [] { methodInfo.ReturnType } : Type.EmptyTypes);
   }
 }
 

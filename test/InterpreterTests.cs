@@ -14,6 +14,7 @@ using System;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using Xunit;
 
 namespace PushForth {
@@ -838,6 +839,50 @@ public class InterpreterTests : InterpreterTestUtil {
     Assert.Equal("[[] x x]", Run("[[x x +]]"));
     interpreter.AddArgument("x", 1);
     Assert.Equal("[[] 2]", Run("[[x x +]]"));
+  }
+
+  [Fact]
+  public void TestDepthGeneric() {
+    Assert.Equal("[[] 3 1 2 'c']", Run("[[depth] 1 2 'c']"));
+    // Assert.Equal("", "This would work but for the stack argument.");
+    // Assert.Equal("[[] 2]", Run("[[depth<int>] [1 2 'c']]"));
+    Assert.Equal("[[] 2 1 2 'c']", Run("[[depth<int>] 1 2 'c']"));
+  }
+
+  public static void Dummy<T,S>(T a, int b, S c) {
+  }
+
+  [Fact]
+  public void TestGenericMethodInfo() {
+    var methodInfo = typeof(InterpreterTests).GetMethod("Dummy");
+    var dummyInt = methodInfo.MakeGenericMethod(typeof(int), typeof(char));
+    Assert.True(methodInfo.IsGenericMethod);
+    Assert.True(methodInfo.IsGenericMethodDefinition);
+    Assert.True(dummyInt.IsGenericMethod);
+    Assert.False(dummyInt.IsGenericMethodDefinition);
+    Type ta = methodInfo.GetParameters()[0].ParameterType;
+    Type tb = methodInfo.GetParameters()[1].ParameterType;
+    Type tc = methodInfo.GetParameters()[2].ParameterType;
+    Assert.True(ta.IsGenericParameter);
+    Assert.False(ta.IsGenericType);
+    Assert.False(ta.IsGenericTypeDefinition);
+    Assert.Equal((GenericParameterAttributes) 0, ta.GenericParameterAttributes);
+    Assert.Equal(0, ta.GenericParameterPosition);
+    Assert.Equal("T", ta.Name);
+
+    Assert.True(tc.IsGenericParameter);
+    Assert.False(tc.IsGenericType);
+    Assert.False(tc.IsGenericTypeDefinition);
+    Assert.Equal((GenericParameterAttributes) 0, tc.GenericParameterAttributes);
+    Assert.Equal(1, tc.GenericParameterPosition);
+    Assert.Equal("S", tc.Name);
+
+    Assert.False(tb.IsGenericParameter);
+    Assert.False(tb.IsGenericType);
+    Assert.Throws<InvalidOperationException>(() => tb.GenericParameterAttributes);
+    Assert.Throws<InvalidOperationException>(() => tb.GenericParameterPosition);
+
+    // Assert.Equal(Type.EmptyTypes, methodInfo.GetParameters().Select(pi => pi.ParameterType));
   }
 
 }

@@ -30,6 +30,8 @@ public class Symbol : Tuple<string> {
   public override string ToString() => Item1;
 }
 
+/** Certain symbols can be qualified by a list of types. This is to implement
+    generic instructions. */
 public class QualifiedSymbol : Tuple<string, IEnumerable<Type>> {
   public QualifiedSymbol(string s, IEnumerable<Type> types) : base(s, types) {
     if (s == null)
@@ -77,6 +79,7 @@ public class Interpreter {
   }
 
   public Dictionary<string, Instruction> _instructions = null;
+  // public Dictionary<string, GenericInstruction> genericInstructions = new Dictionary<string, GenericInstruction>();
   // XXX a FuncFactory<TypedInstruction> can't convert to a
   // TypedInstructionFactory but it can go the other way.
   public FuncFactory<TypedInstruction> instructionFactory = StrictInstruction.factory;
@@ -93,10 +96,6 @@ public class Interpreter {
   public virtual void AddInstruction(string name, Instruction i) {
     instructions[name] = i;
   }
-
-  // public virtual void AddGenericInstruction<X>(string name, Instruction i) {
-  //   AddInstruction(name,
-  // }
 
   public void AddInstruction(string name, Action action) {
     AddInstruction(name, instructionFactory.Nullary(action));
@@ -210,6 +209,20 @@ public class Interpreter {
       var data = stack;
       object obj = code.Pop();
       Instruction ins;
+      if (obj is QualifiedSymbol qs) {
+        foreach(var _instructions in instructionSets) {
+          // XXX Maybe we can do some caching.
+          // _instructions[qs.ToString()] = gi.GetInstruction(qs.types);
+          if (_instructions.TryGetValue(qs.name, out ins)) {
+            // Console.WriteLine("Got a instruction for qualified symbol!");
+            if (ins is GenericInstruction gi) {
+              // Console.WriteLine("Got a generic instruction!");
+              obj = gi.GetInstruction(qs.types);
+              break;
+            }
+          }
+        }
+      }
       if (obj is Symbol s) {
         foreach(var _instructions in instructionSets) {
           if (_instructions.TryGetValue(s.name, out ins)) {
